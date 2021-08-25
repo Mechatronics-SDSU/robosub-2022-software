@@ -17,7 +17,7 @@ All code should be pushed to a `yourfeaturename-beta` branch where a PR is then 
 
 [Python installation and setup guide](src/man/python_setup_guide.md)
 
-Python styling guide: All code in Python must follow [our styling guide](src/man/git_guide.md).
+Python styling guide: All code in Python must follow [our styling guide](src/man/styling_guide.md).
 
 C/C++ styling guide: All C/C++ code must follow the [Linux Kernal styling guide](https://www.kernel.org/doc/html/v4.10/process/coding-style.html).
 
