@@ -14,13 +14,15 @@ def test_camera(cam: cv2.VideoCapture, input_res: str):
     """
     res = list(map(int, input_res.split('x')))  # width, height
     img_name = f'{res}_{datetime.now()}'
+    cam.set(cv2.CAP_PROP_FRAME_HEIGHT, res[0])
+    cam.set(cv2.CAP_PROP_FRAME_WIDTH, res[1])
 
     while True:
         access, frame = cam.read()
         if not access:
             print("!Can't open camera")
             break
-        frame = cv2.resize(frame, res, interpolation=cv2.INTER_AREA)
+        # frame = cv2.resize(frame, res, interpolation=cv2.INTER_AREA)
         cv2.imshow(img_name, frame)
 
         key = cv2.waitKey(1)
