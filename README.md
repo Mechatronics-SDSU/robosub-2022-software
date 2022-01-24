@@ -6,14 +6,16 @@
 
 # About this repo
 
-This repository has mandatory code styling and commit rules.
+This repository has required code styling and commit rules. See style guide below for details.
 
-- ONLY upload source code. Do NOT commit binaries or Docker containers to this repository.
+ONLY upload source code. Do NOT commit binaries or Docker containers to this repository.
 
 Pull request to master requirements:
-Approved PR in `yourfeaturename-beta` branch from ANY project manager or software lead is *REQUIRED*. 
+Approved PR in `yourfeaturename-beta` branch from ANY project manager or the software lead is *required*. See below for details.
 
-All code should be pushed to a `yourfeaturename-beta` branch where a PR is then submitted, along with linking relevant issues here on GitHub. ***If you do NOT name your branch with the*** `-beta` ***naming convention, it is assumed the code is not ready to be merged and as a result will not be merged***.
+To begin development on a new feature, it is *recommended* to create a new branch from the `beta` branch, not the `master` branch, naming it `yourfeaturename` or `yourfeaturename-dev` to indicate the branch is in development. When code is ready for submission, code is *required* be merged to a `yourfeaturename-beta` branch where a PR is then submitted, along with linking relevant issues here on GitHub. ***If you do NOT name your branch with the*** `-beta` ***naming convention, it is assumed the code is not ready to be merged and as a result will not be merged***.
+
+Contributions are tracked via Git and GitHub but it is still *recommended* to comment your name and date on files worked on.
 
 [Python installation and setup guide](src/man/python_setup_guide.md)
 
