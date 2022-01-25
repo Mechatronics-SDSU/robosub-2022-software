@@ -2,7 +2,13 @@
 
 ![Logo](img/logo.jpg)
 
-#### This Repository is under construction.
+
+# About contributions
+
+If you are unsure where to start, refer to the Kanban board on Trello or ask Software Project Manager or Software Lead.
+
+Build and environment setup instructions are located in the docs. Refer to them before running `git clone` on this repository!
+
 
 # About this repo
 
@@ -25,8 +31,8 @@ C/C++ styling guide: All C/C++ code must follow the [Linux Kernal styling guide]
 
 Git naming conventions and usage: To make your own branches and push to this repository, read [our Git Guide](src/man/git_guide.md).
 
+
 # About Scion
 
 ### Scion is the SDSU Mechatronics robot for the 2022 RoboSub Competition.
 ![Scion](img/scion.png)
-
