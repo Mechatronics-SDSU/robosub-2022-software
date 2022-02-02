@@ -7,7 +7,7 @@
 
 /* Help command printout */
 char *helparguments[] = {
-	"Scion Startup Program",
+	"Scion Master Process",
 	"Arguments:",
 	" -a : [a]ll, Starts up all programs + utilities",
 	" -h : [h]elp, Prints this screen",
