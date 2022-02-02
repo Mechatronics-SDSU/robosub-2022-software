@@ -37,6 +37,8 @@ int execprogram(int prognum)
  * argc: arg count given to main.
  * argv: argument list given to main.
  * sptr: pointer to set where the -s argument begins.
+ * 
+ * Returns nonzero on failure, 0 on success
  */
 
 int argparse(int argc, char *argv[], char **sptr) 
@@ -57,11 +59,12 @@ int argparse(int argc, char *argv[], char **sptr)
 				/*switch for what each character does*/
 
 
-				
+
 				newarg = 0;
 			}
 		}
 	}
+	return 0; /*Successful parsing*/
 }
 
 
@@ -71,9 +74,14 @@ int main(int argc, char *argv[])
 	char *sptr = NULL;
 	if (argc > 1)
 		argResult = argparse(argc, argv, *sptr);
-	else /*Need arguments to specify what master process does*/
+	else { /*Need arguments to specify what master process does*/
 		printf("Error: no arguments. Run masterprocess -h for help.\n");
 		exit(EXIT_FAILURE);
-	
+	}
+	if (argResult != 0) { /*Did argparse set sptr or was there an error?*/
+		printf("Error: argument parsing error.\n");
+		exit(EXIT_FAILURE);
+	}
+
 	return 0;
 }
