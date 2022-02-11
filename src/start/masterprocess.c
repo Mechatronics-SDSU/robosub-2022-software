@@ -30,6 +30,7 @@ int helpcommand()
 int execprogram(int prognum) 
 {
 	/*Exec and context switch to new program*/
+	execvp(programStartup[prognum], &programStartup[prognum]);
 }
 
 /** argparse()
@@ -41,17 +42,17 @@ int execprogram(int prognum)
  * Returns nonzero on failure, 0 on success
  */
 
-int argparse(int argc, char *argv[], char **sptr) 
+int argparse(int argc, char *argv[], char *sptr) 
 {
 	int i = 1;
 	int newarg = 0; /*bool for if we hit a -*/
-	int newargc = '\0'; /*character after the -*/
+	char newargc = '\0'; /*character after the -*/
 	/*Grab all arguments*/
 	for (; i < argc; i++) {
 		/*Hit an argument*/
-		if (*(argv + i) == '-') {
+		if (*(*argv + i) == '-') {
 			newarg = 1;
-			newargc = *(argv + i + 1);
+			newargc = *(*argv + i + 1);
 		}
 		else { 
 			/*Check character*/
@@ -73,7 +74,7 @@ int main(int argc, char *argv[])
 	int argResult = 0;
 	char *sptr = NULL;
 	if (argc > 1)
-		argResult = argparse(argc, argv, *sptr);
+		argResult = argparse(argc, argv, sptr);
 	else { /*Need arguments to specify what master process does*/
 		printf("Error: no arguments. Run masterprocess -h for help.\n");
 		exit(EXIT_FAILURE);
@@ -82,6 +83,6 @@ int main(int argc, char *argv[])
 		printf("Error: argument parsing error.\n");
 		exit(EXIT_FAILURE);
 	}
-
+	execprogram(0);
 	return 0;
 }
