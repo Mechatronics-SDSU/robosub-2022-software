@@ -3,7 +3,8 @@
  * 
  * Contributers: 
  * Ian Reichard
- * /
+ */
+#include <stdlib.h>
 
 /* Help command printout */
 char *helparguments[] = {
@@ -15,24 +16,53 @@ char *helparguments[] = {
 	" -s <number>: [s]tart, Start programs based on program integer."
 };
 
+/* All commands are defined here in comma separated string consts for execvp */
 char *lsCommand[] = {
-	"/bin/ls", "."
+	"ls", ".", NULL
+};
+char *loggingSubsystem[] = {
+	"python3", "logging_sys.py", NULL
+};
+char *visionSubsystem[] = {
+	"python3", "vision_sys.py", NULL
+};
+char *sensorSubsystem[] = {
+	"python3", "sensor_sys.py", NULL
+};
+char *thrusterSubsystem[] = {
+	"python3", "thruster_sys.py", NULL
+};
+char *weaponsSubsystem[] = {
+	"python3", "weapons_sys.py", NULL
+};
+char *heuristicsSubsystem[] = {
+	"python3", "heuristics_sys.py", NULL
+};
+char *sensorAggSubsystem[] = {
+	"python3", "sensor_agg_sys.py", NULL
+};
+char *trackingSubsystem[] = {
+	"python3", "tracking_sys.py", NULL
+};
+char *detectionSubsystem[] = {
+	"python3", "detection_sys.py", NULL
 };
 
 /**
 * List of programs to start up, with all default arguments.
 * Indexed by power of 2 in regard to the arguent chart.
 */
-char *programStartup[] = {
-	*lsCommand[0]
-/*	"python3 vision_SYSTEM.py",
-	"python3 sensors_SYSTEM.py",
-	"python3 thrusters_SYSTEM.py",
-	"python3 weapons_SYSTEM.py",
-	"python3 heuristics_SYSTEM.py",
-	"python3 sensor_aggregation_SYSTEM.py",
-	"python3 tracking_SYSTEM.py",
-	"python3 detection_SYSTEM.py"*/
+char **programStartup[] = {
+	lsCommand,
+	loggingSubsystem,
+	visionSubsystem,
+	sensorSubsystem,
+	thrusterSubsystem,
+	weaponsSubsystem,
+	heuristicsSubsystem,
+	sensorAggSubsystem,
+	trackingSubsystem,
+	detectionSubsystem
 };
 
 int helpcommand();

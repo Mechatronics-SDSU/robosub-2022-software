@@ -8,7 +8,6 @@
 #include "masterprocess.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 
 
@@ -30,7 +29,7 @@ int helpcommand()
 int execprogram(int prognum) 
 {
 	/*Exec and context switch to new program*/
-	execvp(programStartup[prognum], &programStartup[prognum]);
+	execvp(*programStartup[prognum], programStartup[prognum]);
 }
 
 /** argparse()
@@ -73,6 +72,7 @@ int main(int argc, char *argv[])
 {
 	int argResult = 0;
 	char *sptr = NULL;
+	int s;
 	if (argc > 1)
 		argResult = argparse(argc, argv, sptr);
 	else { /*Need arguments to specify what master process does*/
@@ -83,6 +83,13 @@ int main(int argc, char *argv[])
 		printf("Error: argument parsing error.\n");
 		exit(EXIT_FAILURE);
 	}
-	execprogram(0);
+	/*Successful parsing indicates sptr was set, convert to int*/
+	s = atoi(sptr);
+	/*Bitwise AND to figure out programs set in s argument*/
+
+	/*Fork and exec when we have a new program to run*/
+	/*AFTER ARG PARSE IS DONE UNCOMMENT
+	execprogram(s);
+	*/
 	return 0;
 }
