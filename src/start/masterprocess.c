@@ -9,7 +9,8 @@
 
 #include <stdio.h>
 #include <unistd.h>
-
+#include <sys/wait.h>
+#include <math.h>
 
 /** helpcommand()
  * Print helpful info
@@ -70,9 +71,10 @@ int argparse(int argc, char *argv[], char *sptr)
 
 int main(int argc, char *argv[]) 
 {
+	int i;
 	int argResult = 0;
 	char *sptr = NULL;
-	int s;
+	int s = 394;
 	if (argc > 1)
 		argResult = argparse(argc, argv, sptr);
 	else { /*Need arguments to specify what master process does*/
@@ -84,12 +86,32 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 	/*Successful parsing indicates sptr was set, convert to int*/
-	s = atoi(sptr);
-	/*Bitwise AND to figure out programs set in s argument*/
-
+	//s = atoi(sptr);
+	if (s < 1) { /*Don't fork, integer failed to correctly parse*/
+		printf("Error: -s argument  less than 1.\n");
+		exit(EXIT_FAILURE);
+	}
+	/*Print out a list of all programs, leaving this here commented out*/
+	/*printf("%s\n", "Complete list of all programs that startup can run:");
+	for (i = 1; i < sizeof(programStartup)/sizeof(programStartup[0]); i++) {
+		printf("%s %s\n", *(*(programStartup + i)), 
+		*(*(programStartup + i)+ 1));
+	}*/
+	/*Perform bitwise AND until we go through everything*/
+	int numPrograms = sizeof(programStartup)/sizeof(programStartup[0]);
+	for (i = numPrograms-1; i > 0; i--) {
+		//printf("%d\n", (int)pow(2, i-1));
+		if (s & (int)pow(2, i-1)) {
+			//fork
+			//execvp if child
+			//printf("Starting up %s\n", *(*(programStartup + i)+1));
+		}
+	}
 	/*Fork and exec when we have a new program to run*/
-	/*AFTER ARG PARSE IS DONE UNCOMMENT
-	execprogram(s);
-	*/
+	/*AFTER ARG PARSE IS DONE UNCOMMENT*/
+	/*execprogram(s);*/
+
+	exit(EXIT_SUCCESS);
 	return 0;
 }
+
