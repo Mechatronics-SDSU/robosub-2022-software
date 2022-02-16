@@ -99,18 +99,24 @@ int main(int argc, char *argv[])
 	}*/
 	/*Perform bitwise AND until we go through everything*/
 	int numPrograms = sizeof(programStartup)/sizeof(programStartup[0]);
+	pid_t myPid = getpid();
+	pid_t childPid;
+	//printf("%s %d\n", "My PID: ", myPid);
 	for (i = numPrograms-1; i > 0; i--) {
 		//printf("%d\n", (int)pow(2, i-1));
 		if (s & (int)pow(2, i-1)) {
 			//fork
+			childPid = fork();
+			if (0 == childPid) { //This is child
+				printf("PID: %d | Starting up %s\n", getpid(), *(*(programStartup + i)+1));
+				execprogram(i);
+				exit(EXIT_SUCCESS);
+			}
 			//execvp if child
 			//printf("Starting up %s\n", *(*(programStartup + i)+1));
 		}
 	}
-	/*Fork and exec when we have a new program to run*/
-	/*AFTER ARG PARSE IS DONE UNCOMMENT*/
-	/*execprogram(s);*/
-
+	wait(&childPid);
 	exit(EXIT_SUCCESS);
 	return 0;
 }
