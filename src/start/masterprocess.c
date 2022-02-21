@@ -17,7 +17,11 @@
  */
 int helpcommand() 
 {
-
+	int i;
+	for (i = 0; i < sizeof(helparguments)/sizeof(helparguments[0]); i++) {
+		printf("%s\n", helparguments[i]);
+	}
+	exit(EXIT_SUCCESS);
 }
 
 /** execprogram()
@@ -42,7 +46,7 @@ int execprogram(int prognum)
  * Returns nonzero on failure, 0 on success
  */
 
-int argparse(int argc, char *argv[], char *sptr) 
+int argparse(int argc, char *argv[], argdef *argstructptr) 
 {
 	int i = 1;
 	int newarg = 0; /*bool for if we hit a -*/
@@ -50,18 +54,22 @@ int argparse(int argc, char *argv[], char *sptr)
 	/*Grab all arguments*/
 	for (; i < argc; i++) {
 		/*Hit an argument*/
-		if (*(*argv + i) == '-') {
-			newarg = 1;
-			newargc = *(*argv + i + 1);
-		}
-		else { 
-			/*Check character*/
-			if (newarg == 1) {
-				/*switch for what each character does*/
-
-
-
-				newarg = 0;
+		if (*(*(argv + i)) == '-') {
+			switch(*(*(argv + i) + 1)) {
+				case 'a':
+					argstructptr->setaarg = 1;
+					break;
+				case 'h':
+					argstructptr->setharg = 1;
+					break;
+				case 'i':
+					argstructptr->setiarg = 1;
+					break;
+				case 's':
+					argstructptr->setsarg = 1;
+					argstructptr->sptr = *(argv + i + 1);
+					break;
+				default:;
 			}
 		}
 	}
@@ -72,11 +80,18 @@ int argparse(int argc, char *argv[], char *sptr)
 int main(int argc, char *argv[]) 
 {
 	int i;
+	int s;
 	int argResult = 0;
-	char *sptr = NULL;
-	int s = 394;
+	argdef argstruct;
+	argstruct.sptr = NULL;
+	argstruct.setaarg = 0;
+	argstruct.setharg = 0;
+	argstruct.setiarg = 0;
+	argstruct.setsarg = 0;
+	argdef *argstructptr = &argstruct;
+	//helpcommand();
 	if (argc > 1)
-		argResult = argparse(argc, argv, sptr);
+		argResult = argparse(argc, argv, argstructptr);
 	else { /*Need arguments to specify what master process does*/
 		printf("Error: no arguments. Run masterprocess -h for help.\n");
 		exit(EXIT_FAILURE);
@@ -85,8 +100,19 @@ int main(int argc, char *argv[])
 		printf("Error: argument parsing error.\n");
 		exit(EXIT_FAILURE);
 	}
+	/*Test to see if help argument was issued first, if it was ignore all others*/
+	if (argstruct.setharg)
+		helpcommand();
+	/*Comment this out to add I/O capability once that has been coded elsewhere*/
+	//if (argstruct.setiarg)   
 	/*Successful parsing indicates sptr was set, convert to int*/
-	//s = atoi(sptr);
+	if (NULL != argstruct.sptr)
+		s = atoi(argstruct.sptr);
+	else
+		s = 0;
+	/*If a was set, change s to be everything*/
+	if (argstruct.setaarg)
+		s = 511; /*Every other arg added together*/
 	if (s < 1) { /*Don't fork, integer failed to correctly parse*/
 		printf("Error: -s argument  less than 1.\n");
 		exit(EXIT_FAILURE);

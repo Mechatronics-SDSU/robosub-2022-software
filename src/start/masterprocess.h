@@ -6,6 +6,16 @@
  */
 #include <stdlib.h>
 
+/* Struct for holding information about program's arguments */
+typedef struct {
+	int setaarg;
+	int setharg;
+	int setiarg;
+	int setsarg;
+	char *sptr;
+}argdef;
+
+
 /* Help command printout */
 char *helparguments[] = {
 	"Scion Master Process",
