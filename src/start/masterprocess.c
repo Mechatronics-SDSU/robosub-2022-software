@@ -17,7 +17,7 @@
  */
 int helpcommand() 
 {
-	int i;
+	long unsigned int i;
 	for (i = 0; i < sizeof(helparguments)/sizeof(helparguments[0]); i++) {
 		printf("%s\n", helparguments[i]);
 	}
@@ -31,7 +31,7 @@ int helpcommand()
  * 
  * prognum is the program integer derived from the -s argument
  */
-int execprogram(int prognum) 
+void execprogram(int prognum) 
 {
 	/*Exec and context switch to new program*/
 	execvp(*programStartup[prognum], programStartup[prognum]);
@@ -49,8 +49,6 @@ int execprogram(int prognum)
 int argparse(int argc, char *argv[], argdef *argstructptr) 
 {
 	int i = 1;
-	int newarg = 0; /*bool for if we hit a -*/
-	char newargc = '\0'; /*character after the -*/
 	/*Grab all arguments*/
 	for (; i < argc; i++) {
 		/*Hit an argument*/
@@ -89,7 +87,6 @@ int main(int argc, char *argv[])
 	argstruct.setiarg = 0;
 	argstruct.setsarg = 0;
 	argdef *argstructptr = &argstruct;
-	//helpcommand();
 	if (argc > 1)
 		argResult = argparse(argc, argv, argstructptr);
 	else { /*Need arguments to specify what master process does*/
@@ -104,7 +101,7 @@ int main(int argc, char *argv[])
 	if (argstruct.setharg)
 		helpcommand();
 	/*Comment this out to add I/O capability once that has been coded elsewhere*/
-	//if (argstruct.setiarg)   
+	/* if (argstruct.setiarg) */
 	/*Successful parsing indicates sptr was set, convert to int*/
 	if (NULL != argstruct.sptr)
 		s = atoi(argstruct.sptr);
@@ -117,31 +114,24 @@ int main(int argc, char *argv[])
 		printf("Error: -s argument  less than 1.\n");
 		exit(EXIT_FAILURE);
 	}
-	/*Print out a list of all programs, leaving this here commented out*/
-	/*printf("%s\n", "Complete list of all programs that startup can run:");
-	for (i = 1; i < sizeof(programStartup)/sizeof(programStartup[0]); i++) {
-		printf("%s %s\n", *(*(programStartup + i)), 
-		*(*(programStartup + i)+ 1));
-	}*/
-	/*Perform bitwise AND until we go through everything*/
+	/*Go through everything in s argument*/
 	int numPrograms = sizeof(programStartup)/sizeof(programStartup[0]);
-	pid_t myPid = getpid();
+	/*Commented out myPid line until we need it later*/
+	/* pid_t myPid = getpid();*/
 	pid_t childPid;
-	//printf("%s %d\n", "My PID: ", myPid);
 	for (i = numPrograms-1; i > 0; i--) {
-		//printf("%d\n", (int)pow(2, i-1));
+		/*Bitwise AND with the powers of 2 in s argument*/
 		if (s & (int)pow(2, i-1)) {
-			//fork
 			childPid = fork();
-			if (0 == childPid) { //This is child
+			if (0 == childPid) {
+				/*Begin child*/
 				printf("PID: %d | Starting up %s\n", getpid(), *(*(programStartup + i)+1));
 				execprogram(i);
 				exit(EXIT_SUCCESS);
 			}
-			//execvp if child
-			//printf("Starting up %s\n", *(*(programStartup + i)+1));
 		}
 	}
+	/*Additional functionality to be added here. For now waits for last child pid*/
 	wait(&childPid);
 	exit(EXIT_SUCCESS);
 	return 0;

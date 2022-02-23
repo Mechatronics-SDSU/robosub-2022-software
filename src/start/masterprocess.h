@@ -76,5 +76,5 @@ char **programStartup[] = {
 };
 
 int helpcommand();
-int execprogram(int prognum);
+void execprogram(int prognum);
 int argParse();
