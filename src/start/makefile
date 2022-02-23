@@ -9,4 +9,3 @@ masterprocess.o: masterprocess.c
 
 clean:
 	rm *.o
-	rm masterprocess_executable
