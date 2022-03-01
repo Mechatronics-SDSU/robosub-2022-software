@@ -46,6 +46,27 @@ ________________________________________________________________________________
                     [SUB] (All of Pico's Containers/Files)
 """
 
+"""
+TODO List for Scion's GUI:
+
+1. Controller Code for Pygame joystick is commented out. Needs to be refactored for Scion. One of
+Scion's requirements is to have it run autonomously while tethered without a controller plugged in
+and that is unsupported on current GUI.
+
+2. Sensor update for all of Scion's current and planned sensors to be implemented.
+CAN bus:
+
+USB: 
+Camera
+
+Other:
+
+3. Local logger (?)
+
+4. Selective startup to Scion's master prorcess with check boxes for which systems to start up
+
+"""
+
 # Python
 from __future__ import print_function
 import multiprocessing as mp
@@ -303,7 +324,8 @@ class Window(tk.Frame):
             self.port_pilot_socket = ip.pilot_port
 
         # Pygame for controller
-        pg.init()
+       	"""
+	 pg.init()
         pg.joystick.init()
         self.js = pg.joystick.Joystick(0)
         self.js.init()
@@ -311,7 +333,7 @@ class Window(tk.Frame):
             joystick_drift_compensation=0.1,
             base_net_turn=20,
             base_net_strafe=-20)
-
+	"""
         # Main window
         tk.Frame.__init__(self, master)
         self.master = master
