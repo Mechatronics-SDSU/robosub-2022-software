@@ -44,9 +44,7 @@ ____________________________________________________________________________
 ==============     ================   ==================   ================
 ___________________________________________________________________________________
                     [SUB] (All of Pico's Containers/Files)
-"""
 
-"""
 TODO List for Scion's GUI:
 
 1. Controller Code for Pygame joystick is commented out. Needs to be refactored for Scion. One of
@@ -104,7 +102,6 @@ import src.utils.logger as sub_logging
 import src.utils.telemetry as sensor_tel
 import src.utils.command_configuration as cmd
 
-
 system.modules['ip_config'] = ip_config
 
 # Ports
@@ -122,7 +119,6 @@ default_ports = {
     'Telemetry': 50003,
     'Pilot': 50004
 }
-
 
 # GUI
 top_bar_size = 30
@@ -145,7 +141,7 @@ def request_to_value(r: any) -> str:
         if r[i] == '\"' and first == -1:
             first = i
         elif r[i] == '\"' and first != -1:
-            result = r[first+1:i]
+            result = r[first + 1:i]
     return result
 
 
@@ -194,6 +190,7 @@ def peek(d: deque) -> any:
 class LoggerWrapper:
     """Provides easy methods for logging with formatting.
     """
+
     def __init__(self, showtime=True) -> None:
         self.queue = mp.Queue()
         self.add_timestamp = showtime
@@ -225,6 +222,7 @@ class LoggerWrapper:
 class PortConfigWrapper:
     """Allows for real time changes to ports in the prompt.
     """
+
     def __init__(self, command: any, video: any, logger: any, telemetry: any, pilot: any) -> None:
         self.port_config_labels = {
             'Command': command,
@@ -238,6 +236,7 @@ class PortConfigWrapper:
 class CMDGrpcClient:
     """Handles GRPC clients with related methods.
     """
+
     def __init__(self, hostname: str, port: int, logger: LoggerWrapper) -> None:
         self.remote_client = str(hostname)
         self.port = str(port)
@@ -271,6 +270,7 @@ class CMDGrpcClient:
 class Window(tk.Frame):
     """Window class, handles the GUI's 'master' or 'root' window and all subwindows
     """
+
     def __init__(self, pilot_pipe: mp.Pipe, master=None) -> None:
         # Load ports from config file or set to defaults
         self.remote_hostname = default_hostname
@@ -324,8 +324,8 @@ class Window(tk.Frame):
             self.port_pilot_socket = ip.pilot_port
 
         # Pygame for controller
-       	"""
-	 pg.init()
+        """
+        pg.init()
         pg.joystick.init()
         self.js = pg.joystick.Joystick(0)
         self.js.init()
@@ -333,7 +333,7 @@ class Window(tk.Frame):
             joystick_drift_compensation=0.1,
             base_net_turn=20,
             base_net_strafe=-20)
-	"""
+        """
         # Main window
         tk.Frame.__init__(self, master)
         self.master = master
@@ -376,7 +376,7 @@ class Window(tk.Frame):
         self.info_window_pico_text_img = ImageTk.PhotoImage(PILImage.open('img/pico_status_text.png'))
         self.info_window_pico_text.create_image((2, 2), anchor=tk.NW, image=self.info_window_pico_text_img)
         self.pico_kill_button = tk.Button(master=self.info_window, text='KILL PICO', command=partial(
-                        self.kill_pico_grpc))
+            self.kill_pico_grpc))
 
         # Config
         self.config_is_set = False
@@ -481,8 +481,8 @@ class Window(tk.Frame):
         # Images to draw joystick map
         self.joystick_l = tk.Canvas(master=self.controller_window_joysticks_l, width=40, height=40, bg='green')
         self.joystick_l_text = tk.Label(master=self.controller_window_joysticks_l, text='LJ', bd=0, anchor='e',
-                                bg='white',
-                                justify=tk.RIGHT)
+                                        bg='white',
+                                        justify=tk.RIGHT)
         self.joystick_r = tk.Canvas(master=self.controller_window_joysticks_r, width=40, height=40, bg='green')
         self.joystick_r_text = tk.Label(master=self.controller_window_joysticks_r, text='RJ', bd=0, anchor='w',
                                         bg='white',
@@ -786,15 +786,15 @@ class Window(tk.Frame):
                                 pilot=port_pilot_text)
         # Buttons
         port_grpc_button = tk.Button(master=port_grpc_diag, text='Set', command=partial(
-                        self.port_text_box, 'Command', self.port_command_grpc, top, pcr, port_grpc_text))
+            self.port_text_box, 'Command', self.port_command_grpc, top, pcr, port_grpc_text))
         port_video_button = tk.Button(master=port_video_diag, text='Set', command=partial(
-                        self.port_text_box, 'Video', self.port_video_socket, top, pcr, port_video_text))
+            self.port_text_box, 'Video', self.port_video_socket, top, pcr, port_video_text))
         port_logger_button = tk.Button(master=port_logger_diag, text='Set', command=partial(
-                        self.port_text_box, 'Logging', self.port_logging_socket, top, pcr, port_logger_text))
+            self.port_text_box, 'Logging', self.port_logging_socket, top, pcr, port_logger_text))
         port_telemetry_button = tk.Button(master=port_telemetry_diag, text='Set', command=partial(
-                        self.port_text_box, 'Telemetry', self.port_telemetry_socket, top, pcr, port_telemetry_text))
+            self.port_text_box, 'Telemetry', self.port_telemetry_socket, top, pcr, port_telemetry_text))
         port_pilot_button = tk.Button(master=port_pilot_diag, text='Set', command=partial(
-                        self.port_text_box, 'Pilot', self.port_pilot_socket, top, pcr, port_pilot_text))
+            self.port_text_box, 'Pilot', self.port_pilot_socket, top, pcr, port_pilot_text))
 
         port_grpc_text.grid(column=0, row=0, sticky=W)
         port_grpc_button.grid(column=1, row=0, sticky=W)
@@ -849,8 +849,8 @@ class Window(tk.Frame):
         config = cmd.CommandConfiguration(socket_codes=[self.logging_socket_level.get(),
                                                         get_int_from_bool(self.video_socket_is_enabled.get()),
                                                         get_int_from_bool(self.telemetry_socket_is_enabled.get())],
-                                        pilot_control=self.pilot_socket_is_enabled.get(),
-                                        mission=self.mission_config_string.get().lower())
+                                          pilot_control=self.pilot_socket_is_enabled.get(),
+                                          mission=self.mission_config_string.get().lower())
         self.cmd_config = config.gen_packet()
         self.config_is_set = True
         self.update_host_display()
@@ -975,7 +975,6 @@ class Window(tk.Frame):
         # Ports
         coordinates_y = [70, 95, 120, 145, 170]
         counter = 0
-        color = terminal_green
         for i in self.ports_dict:  # Render port list for all port
             if self.conn_dict_by_string[i]:  # Connected, draw in green
                 color = terminal_green
@@ -1021,8 +1020,6 @@ class Window(tk.Frame):
         # Enabled Sockets
         coordinates_y = [70, 95, 120, 145, 170]
         counter = 0
-        color = terminal_green
-        enable_text = ''
         for i in self.enable_dict_by_string:
             if self.enable_dict_by_string[i] > 0:  # Green, enabled
                 color = terminal_green
@@ -1133,9 +1130,9 @@ class Window(tk.Frame):
         """
         if self.js.get_init() and self.pilot_socket_is_connected:
             control_in = np.zeros(shape=(1,
-                                    self.js.get_numaxes()
-                                     + self.js.get_numbuttons()
-                                     + self.js.get_numhats()))
+                                         self.js.get_numaxes()
+                                         + self.js.get_numbuttons()
+                                         + self.js.get_numhats()))
             for i in range(self.js.get_numaxes()):
                 control_in.put(i, self.js.get_axis(i))
             for i in range(self.js.get_numaxes(), self.js.get_numbuttons()):  # Buttons
@@ -1200,15 +1197,15 @@ class Window(tk.Frame):
             else:
                 result_r2_y_top = 19 - steps_r
             button_frame = cv2.rectangle(img=button_frame,
-                                    pt1=(result_l2_x_top, result_l2_y_top),
-                                    pt2=(result_l2_x_bot, result_l2_y_bot),
-                                    color=(255, 0, 0),
-                                    thickness=-1)
-            button_frame_2 = cv2.rectangle(img=button_frame_2,
-                                         pt1=(result_r2_x_top, result_r2_y_top),
-                                         pt2=(result_r2_x_bot, result_r2_y_bot),
+                                         pt1=(result_l2_x_top, result_l2_y_top),
+                                         pt2=(result_l2_x_bot, result_l2_y_bot),
                                          color=(255, 0, 0),
                                          thickness=-1)
+            button_frame_2 = cv2.rectangle(img=button_frame_2,
+                                           pt1=(result_r2_x_top, result_r2_y_top),
+                                           pt2=(result_r2_x_bot, result_r2_y_bot),
+                                           color=(255, 0, 0),
+                                           thickness=-1)
             # Alternate between frames similar to update_frames function
             self.lr_button_frame_counter += 1
             if self.joystick_frame_counter % 2 == 1:
@@ -1339,15 +1336,15 @@ class Window(tk.Frame):
                 result_r_y_top = start_pos_r[0][1] - (19 - step_r_y)
                 result_r_x_bot = result_r_x_top + 1
                 result_r_y_bot = result_r_y_top + 1
-            frame_l = cv2.line(frame, pt1=(result_l_x_top, 0), pt2=(result_l_x_bot-1, 39), color=(0, 180, 0),
+            frame_l = cv2.line(frame, pt1=(result_l_x_top, 0), pt2=(result_l_x_bot - 1, 39), color=(0, 180, 0),
                                thickness=1)
-            frame_l = cv2.line(frame_l, pt1=(0, result_l_y_top), pt2=(39, result_l_y_bot-1), color=(0, 180, 0),
+            frame_l = cv2.line(frame_l, pt1=(0, result_l_y_top), pt2=(39, result_l_y_bot - 1), color=(0, 180, 0),
                                thickness=1)
             frame_l = cv2.rectangle(img=frame_l,
-                                  pt1=(result_l_x_top, result_l_y_top),
-                                  pt2=(result_l_x_bot, result_l_y_bot),
-                                  color=(255, 255, 255),
-                                  thickness=1)
+                                    pt1=(result_l_x_top, result_l_y_top),
+                                    pt2=(result_l_x_bot, result_l_y_bot),
+                                    color=(255, 255, 255),
+                                    thickness=1)
             frame_r = cv2.line(frame_2, pt1=(result_r_x_top, 0), pt2=(result_r_x_bot - 1, 39), color=(0, 180, 0),
                                thickness=1)
             frame_r = cv2.line(frame_r, pt1=(0, result_r_y_top), pt2=(39, result_r_y_bot - 1), color=(0, 180, 0),
@@ -1407,11 +1404,11 @@ class Window(tk.Frame):
             # Thruster update
             thruster_frame = cv2.imread('img/maestro_conn.png')
             thruster_remap = [self.maestro_controls[0],
-                     self.maestro_controls[1],
-                     self.maestro_controls[5],
-                     self.maestro_controls[2],
-                     self.maestro_controls[4],
-                     self.maestro_controls[3]]
+                              self.maestro_controls[1],
+                              self.maestro_controls[5],
+                              self.maestro_controls[2],
+                              self.maestro_controls[4],
+                              self.maestro_controls[3]]
             halves = [0, 0, 0, 0, 0, 0]
             x_bot_vals = [3, 32, 61, 90, 119, 148]
             x_top_vals = [24, 53, 82, 111, 140, 169]
@@ -1420,10 +1417,10 @@ class Window(tk.Frame):
                     halves[i] = 1
                     px_add_y_count = -1 * math.ceil(math.fabs(thruster_remap[i] / 2) - 50)
                     thruster_frame = cv2.rectangle(img=thruster_frame,
-                                            pt1=(x_bot_vals[i], 53),
-                                            pt2=(x_top_vals[i], int(3 + px_add_y_count)),
-                                            color=(0, 0, 255),
-                                            thickness=-1)
+                                                   pt1=(x_bot_vals[i], 53),
+                                                   pt2=(x_top_vals[i], int(3 + px_add_y_count)),
+                                                   color=(0, 0, 255),
+                                                   thickness=-1)
                 elif thruster_remap[i] < 0:
                     halves[i] = -1
                     thruster_remap[i] = math.fabs(thruster_remap[i])
@@ -1756,8 +1753,8 @@ def video_proc_udp(logger: LoggerWrapper, video_pipe_in: mp.Pipe, video_pipe_out
         elif code == 'initialize':
             # Start up a GRPC client
             client = CMDGrpcClient(hostname=default_hostname,
-                                port=grpc_remote_client_port_default,
-                                logger=logger)
+                                   port=grpc_remote_client_port_default,
+                                   logger=logger)
             response = client.send(2)
             response = request_to_value(str(response))
             if response[0] == '@':
@@ -1792,7 +1789,7 @@ def video_proc_udp(logger: LoggerWrapper, video_pipe_in: mp.Pipe, video_pipe_out
                 t2 = time.time()
                 print(t1)
                 print(t2)
-                print(str(t2-t1) + ' seconds')
+                print(str(t2 - t1) + ' seconds')
                 print(len(data))
                 print('[@VPROC] Received data of size ' + str(len(data)))
                 data = np.frombuffer(buffer=data, dtype=np.uint8)
@@ -2029,7 +2026,7 @@ def pilot_proc(logger: LoggerWrapper, pilot_pipe_in: mp.Pipe, pilot_pipe_out: mp
                         data = None
                         controller_input = mp.connection.wait([pipe_in_from_gui], timeout=-1)
                         if len(controller_input) > 0:
-                            last_input = controller_input[len(controller_input)-1].recv()
+                            last_input = controller_input[len(controller_input) - 1].recv()
                             try:
                                 s.sendall(last_input)
                             except (ConnectionAbortedError, ConnectionResetError) as e:
@@ -2127,36 +2124,42 @@ def main() -> None:
     pipe_to_video_from_router, vid_pipe_in_from_router = context.Pipe()
     pipe_to_router_from_video, pipe_in_from_video = context.Pipe()
     if use_udp:
-        video_proc = context.Process(target=video_proc_udp, args=(gui_logger, vid_pipe_in_from_router, pipe_to_router_from_video, pipe_to_gui_from_video))
+        video_proc = context.Process(target=video_proc_udp, args=(
+            gui_logger, vid_pipe_in_from_router, pipe_to_router_from_video, pipe_to_gui_from_video))
     else:
-        video_proc = context.Process(target=video_proc_tcp, args=(gui_logger, vid_pipe_in_from_router, pipe_to_router_from_video, pipe_to_gui_from_video))
+        video_proc = context.Process(target=video_proc_tcp, args=(
+            gui_logger, vid_pipe_in_from_router, pipe_to_router_from_video, pipe_to_gui_from_video))
     video_proc.start()
 
     # Logging socket
     pipe_to_logger_from_router, log_pipe_in_from_router = context.Pipe()
     pipe_to_router_from_logger, pipe_in_from_logger = context.Pipe()
-    logger_proc = context.Process(target=logging_proc, args=(gui_logger, log_pipe_in_from_router, pipe_to_router_from_logger))
+    logger_proc = context.Process(target=logging_proc,
+                                  args=(gui_logger, log_pipe_in_from_router, pipe_to_router_from_logger))
     logger_proc.start()
 
     # Telemetry socket
     pipe_to_telemetry_from_router, tel_pipe_in_from_router = context.Pipe()
     pipe_to_router_from_telemetry, pipe_in_from_telemetry = context.Pipe()
-    tel_proc = context.Process(target=telemetry_proc, args=(gui_logger, tel_pipe_in_from_router, pipe_to_router_from_telemetry))
+    tel_proc = context.Process(target=telemetry_proc,
+                               args=(gui_logger, tel_pipe_in_from_router, pipe_to_router_from_telemetry))
     tel_proc.start()
 
     # Pilot socket
     pipe_to_pilot_from_router, plt_pipe_in_from_router = context.Pipe()
     pipe_to_router_from_pilot, pipe_in_from_pilot = context.Pipe()
-    plt_proc = context.Process(target=pilot_proc, args=(gui_logger, plt_pipe_in_from_router, pipe_to_router_from_pilot, pilot_pipe_in_from_gui))
+    plt_proc = context.Process(target=pilot_proc, args=(
+        gui_logger, plt_pipe_in_from_router, pipe_to_router_from_pilot, pilot_pipe_in_from_gui))
     plt_proc.start()
 
     # Message Router between processes
     router_proc = context.Process(target=router, args=(gui_logger,
-                                                    pipe_in_from_gui, pipe_to_gui_from_router,  # Gui
-                                                    pipe_in_from_video, pipe_to_video_from_router,  # Video
-                                                    pipe_in_from_logger, pipe_to_logger_from_router,  # Logger
-                                                    pipe_in_from_telemetry, pipe_to_telemetry_from_router,  # Telemetry
-                                                    pipe_in_from_pilot, pipe_to_pilot_from_router,))  # Pilot
+                                                       pipe_in_from_gui, pipe_to_gui_from_router,  # Gui
+                                                       pipe_in_from_video, pipe_to_video_from_router,  # Video
+                                                       pipe_in_from_logger, pipe_to_logger_from_router,  # Logger
+                                                       pipe_in_from_telemetry, pipe_to_telemetry_from_router,
+                                                       # Telemetry
+                                                       pipe_in_from_pilot, pipe_to_pilot_from_router,))  # Pilot
     router_proc.start()
 
 
