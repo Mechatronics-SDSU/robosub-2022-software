@@ -21,15 +21,15 @@ b. Once a connection is made, a prompt is issued for what programs on Scion to s
 Design:
 Check which systems you would like to start:
 
-[] Logging
-[] Vision Driver
-[] Sensors
-[] Thrusters
-[] Weapons
-[] Heuristics
-[] Sensor Aggregation
-[] Tracking
-[] Detection
+- [x] Logging
+- [x] Vision Driver
+- [x] Sensors
+- [x] Thrusters
+- [x] Weapons
+- [x] Heuristics
+- [x] Sensor Aggregation
+- [x] Tracking
+- [x] Detection
 
 #### Feature 5: Functional Kill Button, Autonomous Button, Restart Computer Button
 a. The Kill button shall function as if the hardware kill button were pushed.
