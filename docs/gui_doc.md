@@ -18,6 +18,19 @@ With the master process completed, a new startup sequence on Scion requires a br
 a. Set the IP to Scion's IP and attempt to contact Scion with a timeout.
 b. Once a connection is made, a prompt is issued for what programs on Scion to start up. This in the backend will be checkboxes (not mutually exclusive with one another) Which shall add up to the master process's integer table. This integer is what is sent to Scion and will tell the master process what to start up.
 
+Design:
+Check which systems you would like to start:
+
+[] Logging
+[] Vision Driver
+[] Sensors
+[] Thrusters
+[] Weapons
+[] Heuristics
+[] Sensor Aggregation
+[] Tracking
+[] Detection
+
 #### Feature 5: Functional Kill Button, Autonomous Button, Restart Computer Button
 a. The Kill button shall function as if the hardware kill button were pushed.
 b. The Autonomous button shall function as if the autonomous button were pushed with the additional feature of ceasing manual control immediately. This will require consierable changes.
