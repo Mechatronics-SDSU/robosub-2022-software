@@ -1,3 +1,11 @@
+"""
+Scion's GUI Application (name is pending)
+
+Latest verification test:
+3/16/22 on Linux - IAR
+3/17/22 on Windows - IAR
+"""
+
 from __future__ import print_function
 import multiprocessing as mp
 import os
@@ -31,12 +39,17 @@ gui_update_ms = 10  # Update time for all GUI elements
 color_term_green = (74, 246, 38)
 color_error_red = (255, 0, 3)
 
+
 class GuiWindow(tk.Frame):
+    """GUI management class
+    Contains methods related to GUI functionality; calls to other functions in this file.
+    """
     def __init__(self, master):
         self.tk_master = master
         self.resolution = gui_resolution
         tk.Frame.__init__(self, self.tk_master)
         self.top_bar = tk.Frame(master=self.tk_master, width=self.resolution[0], height=top_bar_height, bg='white')
+
 
 def init_gui() -> None:
     """Starts up GUI window and all related programs
