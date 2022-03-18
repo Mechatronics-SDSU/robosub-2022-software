@@ -18,6 +18,9 @@ Port Forward Vectored Thruster PFVT-> / | \ <- Starboard Forward Vectored Thrust
    Port Aaft Vectored Thruster PAVT-> \ | / <- Starboard Aft Vectored Thruster SAVT
           Port Aft Z Thurster PAZT -> 0===0 <- Starboard Aft Z Thruster SAZT
                                       Stern
+                                      asdasd
+
+                                      asdasdas
 """
 
 from ast import Pass
