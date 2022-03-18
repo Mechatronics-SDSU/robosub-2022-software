@@ -18,9 +18,6 @@ Port Forward Vectored Thruster PFVT-> / | \ <- Starboard Forward Vectored Thrust
    Port Aaft Vectored Thruster PAVT-> \ | / <- Starboard Aft Vectored Thruster SAVT
           Port Aft Z Thurster PAZT -> 0===0 <- Starboard Aft Z Thruster SAZT
                                       Stern
-                                      asdasd
-
-                                      asdasdas
 """
 
 from ast import Pass
@@ -136,20 +133,13 @@ def translate_to_maestro_controller(self, inputs) -> list:
             pass
 
         elif (math.fabs(LJ_X) > self.joystick_drift_compensation) and (LJ_Y < self.joystick_drift_compensation):  # Strafe Starboard
-            if delta < 100:
-                SFVT = self.offset + math.ceil((LJ_X * -1 * delta) / 4)
-                PAVT = SFVT
-                PFVT = self.offset + math.floor((LJ_X * delta) / 4)
-                SAVT = PFVT
-            else: #FIX ME
-                S
+            SFVT  = PAVT = self.offset + math.ceil(LJ_X * -100)
+            PFVT = SAVT = self.offset + math.floor(LJ_X * 100)
+        
+        elif (math.fabs(LJ_X) < self.joystick_drift_compensation) and (LJ_Y < self.joystick_drift_compensation):  # Strafe Port 
+            SFVT = PAVT = math.floor(LJ_X * 100)
+            PFVT = SAVT = math.ceil(LJ_X * -100)
 
-        elif (math.fabs(LJ_X) < self.joystick_drift_compensation) and (LJ_Y > self.joystick_drift_compensation):  # Strafe Port 
-            if delta < 100:
-                SFVT = PAVT = self.offset + math.ceil((LJ_X * delta) / 4)
-                PFVT = SAVT= self.offset + math.floor((LJ_X * -1 * delta) / 4)
-            else: #FIXME
-                S
         elif(): #strafe Starboard diagonally
             pass
 
