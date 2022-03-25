@@ -27,10 +27,10 @@ import numpy as np
 import pygame 
 
 class ControllerTranslator:
- """Gets controller state as a numpy array and translates it into controls sent to the maestro.
+    """Gets controller state as a numpy array and translates it into controls sent to the maestro.
     """
 
-def __init__(self,
+    def __init__(self,
                  offset=0,
                  invert_controls=False,
                  joystick_drift_compensation=0.05,
@@ -45,7 +45,7 @@ def __init__(self,
         self.offset = offset  # amount to offset ESCs by when performing translation
         # Ex. ESC needs value of 50 to begin moving thrusters. Offset of 49 means 0 is mapped to 49
 
-def translate_to_maestro_controller(self, inputs) -> list:
+    def translate_to_maestro_controller(self, inputs) -> list:
         """Accepts a numpy array from pygame controller, translates into maestro instructions.
         :return: list of instructions for the maestro
         """
@@ -211,7 +211,7 @@ def translate_to_maestro_controller(self, inputs) -> list:
                 PAZT = PFZT = math.ceil(LJ_X * 100)
                 SFZT = SAZT = math.ceil(self.base_net_strafe)
 
-        return [PFZT, SFZT, SYT, SAZT, PAZT, PYT]
+        return [PFZT, SFZT, SAZT, PAZT, PFVT, PAVT, SFVT, SAVT]
 
 def translate_to_maestro_intelligence(self):
         """Accepts instructions sent from intelligence, translates into maestro instructions.
