@@ -127,10 +127,14 @@ def translate_to_maestro_controller(self, inputs) -> list:
             SAVT = 0
 
         elif ((quadrant_LJ == 3) or (quadrant_LJ == 4)) and (RJ_X > self.joystick_drift_compensation):  # Inverted turn to port
-            pass
+            SAVT = 0
+            PAVT = SFVT = math.floor(LJ_Y * 100)
+            PFVT = math.floor(RJ_X)
 
         elif ((quadrant_LJ == 3) or (quadrant_LJ == 4)) and (RJ_X < (-1 * self.joystick_drift_compensation)):  # Inverted turn to starboard
-            pass
+            PAVT = 0
+            PFVT = SAVT = math.floor(LJ_Y * 100)
+            SFVT = math.ceil(RJ_X * -100)
 
         elif (math.fabs(LJ_X) > self.joystick_drift_compensation) and (LJ_Y < self.joystick_drift_compensation):  # Strafe Starboard
             SFVT  = PAVT = self.offset + math.ceil(LJ_X * -100)
@@ -140,17 +144,22 @@ def translate_to_maestro_controller(self, inputs) -> list:
             SFVT = PAVT = math.floor(LJ_X * 100)
             PFVT = SAVT = math.ceil(LJ_X * -100)
 
-        elif(): #strafe Starboard diagonally
-            pass
+        elif((LJ_Y > self.joystick_drift_compensation) and (LJ_X < (-1 * self.joystick_drift_compensation)) and  (RJ_X < self.joystick_drift_compensation)): #45 Port Strafe
+            PFVT = 0
+            SAVT = 0
+            PAVT = SFVT = ((math.floor((LJ_Y * 100) + math.ceil(LJ_X * -100))) / 2)
 
-        elif(): #Strafe Port diagonally
-            pass
+        elif((LJ_Y > self.joystick_drift_compensation) and (LJ_X < self.joystick_drift_compensation) and  (RJ_X < self.joystick_drift_compensation)): #45 Starboard Strafe
+            PAVT = SFVT = 0
+            PFVT = SAVT = math.floor(((LJ_Y * 100) + (LJ_X * 100)) / 2)
 
-        elif(): #Strafe Starboard diagonally
-            pass
+        elif((LJ_Y < ( -1 * self.joystick_drift_compensation)) and (LJ_X < (-1 * self.joystick_drift_compensation)) and  (RJ_X < self.joystick_drift_compensation)): #45 Inverted Port Strafe
+            PFVT = SAVT = 0
+            PAVT = SFVT = math.floor(((LJ_Y * 100) + (LJ_X * 100)) / 2)
 
-        elif(): #Strafe Port diagonally
-            pass
+        elif((LJ_Y < ( -1 * self.joystick_drift_compensation)) and (LJ_X > self.joystick_drift_compensation) and  (RJ_X < self.joystick_drift_compensation)): #45 Inverted Starboard Strafe
+            PFVT = SAVT = ((math.ceil(LJ_Y * -100) + math.floor(LJ_X * 100)) / 2)
+            PAVT = SFVT = 0
 
         elif (math.fabs(RJ_X) > self.joystick_drift_compensation) and (RJ_X > 0):  # Turn in-place to starboard
             if delta < 100:
