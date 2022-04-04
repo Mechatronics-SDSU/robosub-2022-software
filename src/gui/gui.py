@@ -30,11 +30,17 @@ import numpy as np
 import cv2
 
 # GUI constants
-top_bar_height = 30
 edge_size = 2
 # Resolution height = top bar + video1 + edge + video2
 gui_resolution = (1600, 960)
 camera_resolution = (640, 480)
+top_bar_resolution = (640, 30)
+button_display_resolution = (100, 240)
+weapons_status_resolution = (270, 240)
+thruster_status_resolution = (270, 240)
+logging_resolution = (640, 690)
+sensor_resolution = (320, 960)
+
 gui_update_ms = 10  # Update time for all GUI elements 
 color_term_green = (74, 246, 38)
 color_error_red = (255, 0, 3)
@@ -48,7 +54,7 @@ class GuiWindow(tk.Frame):
         self.tk_master = master
         self.resolution = gui_resolution
         tk.Frame.__init__(self, self.tk_master)
-        self.top_bar = tk.Frame(master=self.tk_master, width=self.resolution[0], height=top_bar_height, bg='white')
+        self.top_bar = tk.Frame(master=self.tk_master, width=self.resolution[0], height=top_bar_resolution[1], bg='white')
 
 
 def init_gui() -> None:
