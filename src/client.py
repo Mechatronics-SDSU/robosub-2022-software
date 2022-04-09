@@ -1,3 +1,6 @@
+"""
+Client reads frames from camera and creates folder in directory for frames to be saved
+"""
 import cv2
 import io
 import socket
@@ -10,6 +13,10 @@ import shutil
 
 
 def SearchFile():
+    """ 
+    searches for a folder named "Save" in directory, if it exist the method (shutil.rmtree()) will delete 
+    existing folder along with its contents.
+    """
     files = os.listdir()
     z = 0
     Max = (len(files))
@@ -21,12 +28,15 @@ def SearchFile():
 
 
 def CreateFile():
+    """ 
+    Creates new Save folder for frames to be stored
+    """
     parent = os.getcwd()
     directory = 'Save'
     Rpath = os.path.join(parent, directory)
     os.mkdir(Rpath)
 
-
+#connection to server
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect(('localhost', 1234))
 connection = client_socket.makefile('wb')
@@ -38,6 +48,8 @@ encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
 SearchFile()
 CreateFile()
 i = 0
+
+#while true, keep recieving frames and save to folder
 while True:
     ret, frame = cam.read()
     cv2.imwrite(os.path.join(os.getcwd(), 'Save/') + str(i) + '.jpg', frame)
