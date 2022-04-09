@@ -1,3 +1,6 @@
+"""
+Server connects to Client and displays read frames in window
+"""
 import socket
 import sys
 import cv2
@@ -22,6 +25,8 @@ conn,addr=s.accept()
 data = b""
 payload_size = struct.calcsize(">L")
 print("payload_size: {}".format(payload_size))
+
+#while true display frames and print
 while True:
     while len(data) < payload_size:
         print("Recv: {}".format(len(data)))
@@ -39,6 +44,7 @@ while True:
 
     frame=pickle.loads(frame_data, fix_imports=True, encoding="bytes")
     frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
+    #frames displayed
     cv2.imshow('frame',frame)
     if cv2.waitKey(1) == ord('q'):
         break
