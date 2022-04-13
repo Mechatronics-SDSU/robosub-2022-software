@@ -8,7 +8,7 @@ import pickle
 import struct
 
 def main() -> None:
-    """Runs server code for our client to have a connection, server receives and display frames
+    """Runs server code for our client to have a connection, server receives and displays frames
     """
     HOST = ''
     PORT = 1234
