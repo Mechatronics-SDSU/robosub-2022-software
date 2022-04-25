@@ -11,6 +11,7 @@ The GUI/Tether is for testing manual control of Scion for a wide variety of purp
 
 - [x] Scion (Or whatever robot we're testing)
 - [x] Ethernet Cable
+
 Optional:
 - [x] Adapter for Ethernet Cable if your computer does not have one 
 
