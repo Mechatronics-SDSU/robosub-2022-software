@@ -13,8 +13,8 @@ Logging                    |          |         |
 
 
 Latest verification test:
-3/16/22 on Linux - IAR
-3/17/22 on Windows - IAR
+3/26/22 on Linux - IAR
+3/26/22 on Windows - IAR
 """
 
 from __future__ import print_function
@@ -65,19 +65,28 @@ class GuiWindow(tk.Frame):
         self.tk_master = master
         self.resolution = gui_resolution
         tk.Frame.__init__(self, self.tk_master)
-        self.top_bar_fr = tk.Frame(master=self.tk_master, width=top_bar_resolution[0], height=top_bar_resolution[1], bg='black')
-        self.buttons_fr = tk.Frame(master=self.tk_master, width=button_display_resolution[0], height=button_display_resolution[1], bg='blue')
-        self.buttons_cv = tk.Canvas(master=self.buttons_fr, width=button_display_resolution[0], height=button_display_resolution[1], bg='blue')
+        self.top_bar_fr = tk.Frame(master=self.tk_master, width=top_bar_resolution[0], height=top_bar_resolution[1],
+                                   bg='black')
+        self.buttons_fr = tk.Frame(master=self.tk_master, width=button_display_resolution[0],
+                                   height=button_display_resolution[1], bg='blue')
+        self.buttons_cv = tk.Canvas(master=self.buttons_fr, width=button_display_resolution[0],
+                                    height=button_display_resolution[1], bg='blue')
         self.buttons_cv_img = ImageTk.PhotoImage(PILImage.open('img/buttons_22.png'))
-        self.buttons_cv.create_image((2, 2), anchor=tk.NW, image=self.buttons_cv_img)
-        self.weapons_fr = tk.Frame(master=self.tk_master, width=weapons_status_resolution[0], height=weapons_status_resolution[1], bg='red')
-        self.thrusters_fr = tk.Frame(master=self.tk_master, width=thruster_status_resolution[0], height=thruster_status_resolution[1], bg='green')
-        self.logging_fr = tk.Frame(master=self.tk_master, width=logging_resolution[0], height=logging_resolution[1], bg='grey')
-        self.cameras_fr = tk.Frame(master=self.tk_master, width=camera_resolution[0], height=camera_resolution[1]*2, bg='orange')
-        self.cameras_cv = tk.Canvas(master=self.cameras_fr, width=camera_resolution[0], height=camera_resolution[1]*2, bg='orange')
+        self.buttons_cv.create_image((edge_size, edge_size), anchor=tk.NW, image=self.buttons_cv_img)
+        self.weapons_fr = tk.Frame(master=self.tk_master, width=weapons_status_resolution[0],
+                                   height=weapons_status_resolution[1], bg='red')
+        self.thrusters_fr = tk.Frame(master=self.tk_master, width=thruster_status_resolution[0],
+                                     height=thruster_status_resolution[1], bg='green')
+        self.logging_fr = tk.Frame(master=self.tk_master, width=logging_resolution[0], height=logging_resolution[1],
+                                   bg='grey')
+        self.cameras_fr = tk.Frame(master=self.tk_master, width=camera_resolution[0], height=camera_resolution[1]*2,
+                                   bg='orange')
+        self.cameras_cv = tk.Canvas(master=self.cameras_fr, width=camera_resolution[0], height=camera_resolution[1]*2,
+                                    bg='orange')
         self.cameras_cv_img = ImageTk.PhotoImage(PILImage.open('img/camera_22.png'))
-        self.cameras_cv.create_image((2, 2), anchor=tk.NW, image=self.cameras_cv_img)
-        self.sensors_fr = tk.Frame(master=self.tk_master, width=sensor_resolution[0], height=sensor_resolution[1], bg='yellow')
+        self.cameras_cv.create_image((edge_size, edge_size), anchor=tk.NW, image=self.cameras_cv_img)
+        self.sensors_fr = tk.Frame(master=self.tk_master, width=sensor_resolution[0], height=sensor_resolution[1],
+                                   bg='yellow')
         # Main grid
         self.top_bar_fr.grid(row=0, column=0, columnspan=3)
         self.buttons_fr.grid(row=1, column=0)
@@ -92,6 +101,7 @@ class GuiWindow(tk.Frame):
         self.buttons_cv.grid()
         # Camera Grid
         self.cameras_cv.grid()
+
 
 def init_gui(host_os: str) -> None:
     """Starts up GUI window and all related programs
