@@ -65,21 +65,33 @@ class GuiWindow(tk.Frame):
         self.tk_master = master
         self.resolution = gui_resolution
         tk.Frame.__init__(self, self.tk_master)
-        self.top_bar = tk.Frame(master=self.tk_master, width=top_bar_resolution[0], height=top_bar_resolution[1], bg='black')
-        self.button_display = tk.Frame(master=self.tk_master, width=button_display_resolution[0], height=button_display_resolution[1], bg='blue')
-        self.weapons_status = tk.Frame(master=self.tk_master, width=weapons_status_resolution[0], height=weapons_status_resolution[1], bg='red')
-        self.thruster_status = tk.Frame(master=self.tk_master, width=thruster_status_resolution[0], height=thruster_status_resolution[1], bg='green')
-        self.logging = tk.Frame(master=self.tk_master, width=logging_resolution[0], height=logging_resolution[1], bg='grey')
-        self.camera = tk.Frame(master=self.tk_master, width=camera_resolution[0], height=camera_resolution[1]*2, bg='orange')
-        self.sensors = tk.Frame(master=self.tk_master, width=sensor_resolution[0], height=sensor_resolution[1], bg='yellow')
+        self.top_bar_fr = tk.Frame(master=self.tk_master, width=top_bar_resolution[0], height=top_bar_resolution[1], bg='black')
+        self.buttons_fr = tk.Frame(master=self.tk_master, width=button_display_resolution[0], height=button_display_resolution[1], bg='blue')
+        self.buttons_cv = tk.Canvas(master=self.buttons_fr, width=button_display_resolution[0], height=button_display_resolution[1], bg='blue')
+        self.buttons_cv_img = ImageTk.PhotoImage(PILImage.open('img/buttons_22.png'))
+        self.buttons_cv.create_image((2, 2), anchor=tk.NW, image=self.buttons_cv_img)
+        self.weapons_fr = tk.Frame(master=self.tk_master, width=weapons_status_resolution[0], height=weapons_status_resolution[1], bg='red')
+        self.thrusters_fr = tk.Frame(master=self.tk_master, width=thruster_status_resolution[0], height=thruster_status_resolution[1], bg='green')
+        self.logging_fr = tk.Frame(master=self.tk_master, width=logging_resolution[0], height=logging_resolution[1], bg='grey')
+        self.cameras_fr = tk.Frame(master=self.tk_master, width=camera_resolution[0], height=camera_resolution[1]*2, bg='orange')
+        self.cameras_cv = tk.Canvas(master=self.cameras_fr, width=camera_resolution[0], height=camera_resolution[1]*2, bg='orange')
+        self.cameras_cv_img = ImageTk.PhotoImage(PILImage.open('img/camera_22.png'))
+        self.cameras_cv.create_image((2, 2), anchor=tk.NW, image=self.cameras_cv_img)
+        self.sensors_fr = tk.Frame(master=self.tk_master, width=sensor_resolution[0], height=sensor_resolution[1], bg='yellow')
         # Main grid
-        self.top_bar.grid(row=0, column=0, columnspan=3)
-        self.button_display.grid(row=1, column=0)
-        self.weapons_status.grid(row=1, column=1)
-        self.thruster_status.grid(row=1, column=2)
-        self.logging.grid(row=2, column=0, columnspan=3)
-        self.camera.grid(row=0, column=3, rowspan=3)
-        self.sensors.grid(row=0, column=4, rowspan=3)
+        self.top_bar_fr.grid(row=0, column=0, columnspan=3)
+        self.buttons_fr.grid(row=1, column=0)
+        self.weapons_fr.grid(row=1, column=1)
+        self.thrusters_fr.grid(row=1, column=2)
+        self.logging_fr.grid(row=2, column=0, columnspan=3)
+        self.cameras_fr.grid(row=0, column=3, rowspan=3)
+        self.sensors_fr.grid(row=0, column=4, rowspan=3)
+
+        # Sub-grids
+        # Button Grid
+        self.buttons_cv.grid()
+        # Camera Grid
+        self.cameras_cv.grid()
 
 def init_gui(host_os: str) -> None:
     """Starts up GUI window and all related programs
