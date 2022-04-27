@@ -1,30 +1,40 @@
-
 """Translates raw control inputs from pygame into ESC instructions
 Maestro values: Anything from -100 to 100
 -100 is assumed to be down for Z thrusters, +100 is assumed to be up for Z thrusters
+
 Order of array to send to Maestro:
 [Port Forward Z Thruster,
 Starboard Forward Z Thruster,
-Starboard Y Thruster,
 Starboard Aft Z Thruster,
 Port Aft Z Thruster,
-Port Y Thruster]
-[PFZT, SFZT, SYT, SAZT, PAZT, PTY]
+Port Forward Vectored Thruster,
+Port Aft Vectored Thruster,
+Starboard Forward Vectored Thruster,
+Starboard Aft Vectored Thruster]
+
+[PFZT, SFZT, SAZT, PAZT, PFVT, PAVT, SFVT, SAVT]
 Diagram:
-                                       Bow
-      Port Forward Z Thurster PFZT -> 0===0 <- Starboard Forward Z Thurster SFZT
-Port Forward Vectored Thruster PFVT-> / | \ <- Starboard Forward Vectored Thruster SFVT                             
-                                        | 
-   Port Aaft Vectored Thruster PAVT-> \ | / <- Starboard Aft Vectored Thruster SAVT
-          Port Aft Z Thurster PAZT -> 0===0 <- Starboard Aft Z Thruster SAZT
-                                      Stern
+                                     Bow/Front
+      Port Forward Z Thurster PFZT ->  0===0 <- Starboard Forward Z Thurster SFZT
+Port Forward Vectored Thruster PFVT-> // | \\ <- Starboard Forward Vectored Thruster SFVT
+                                      || | ||
+   Port Aaft Vectored Thruster PAVT-> \\ | // <- Starboard Aft Vectored Thruster SAVT
+          Port Aft Z Thurster PAZT ->  0===0 <- Starboard Aft Z Thruster SAZT
+                                     Stern/Aft
+
+Testing on 4/26 (IAR):
+Forward movement: Return values from function are 1/4th expected on vectored thrusters only
+Aft movement: Return values from function are 1/4th expected on vectored thrusters only
+Port Strafe: Z thrusters engaged instead of vectored thrusters. Opposite thrusters to strafe direction only 1/5th of
+    expected value.
+Starboard Strafe: Z thrusters engaged instead of vectored thrusters. Opposite thrusters to strafe direction only 1/5th of
+    expected value.
+
 """
 
-from ast import Pass
 import math
-from re import S
 import numpy as np
-import pygame 
+
 
 class ControllerTranslator:
     """Gets controller state as a numpy array and translates it into controls sent to the maestro.
@@ -80,7 +90,8 @@ class ControllerTranslator:
                 ((LJ_X > self.joystick_drift_compensation) or (math.fabs(LJ_Y) > self.joystick_drift_compensation)):
             quadrant_LJ = 1
         elif ((LJ_X < 0) and (LJ_Y < 0)) and \
-                ((math.fabs(LJ_X) > self.joystick_drift_compensation) or (math.fabs(LJ_Y) > self.joystick_drift_compensation)):
+                ((math.fabs(LJ_X) > self.joystick_drift_compensation) or (
+                        math.fabs(LJ_Y) > self.joystick_drift_compensation)):
             quadrant_LJ = 2
         elif ((LJ_X < 0) and (LJ_Y >= 0)) and \
                 ((math.fabs(LJ_X) > self.joystick_drift_compensation) or (LJ_Y > self.joystick_drift_compensation)):
@@ -97,67 +108,80 @@ class ControllerTranslator:
         PAVT = 0
         SAVT = 0
         delta = 100 - self.offset
-        if ((quadrant_LJ == 1) or (quadrant_LJ == 2)) and (math.fabs(RJ_X) <= self.joystick_drift_compensation):  # Forward
+        if ((quadrant_LJ == 1) or (quadrant_LJ == 2)) and (
+                math.fabs(RJ_X) <= self.joystick_drift_compensation):  # Forward
             if delta < 100:  # Map proportionally starting at offset instead of 0
                 SFVT = math.floor((self.offset + math.floor(math.fabs(LJ_Y) * delta)) / 4)
-                
+
             else:
                 SFVT = math.floor((math.fabs(LJ_Y) * 100) / 4)
             PFVT = SFVT
             PAVT = SFVT
-            SAVT = SFVT # Going forward, both motors should be same values. Dividing by 4 since there are 4 motors to control this direction
-              
-        elif ((quadrant_LJ == 3) or (quadrant_LJ == 4)) and (math.fabs(RJ_X) <= self.joystick_drift_compensation):  # Backward
+            SAVT = SFVT  # Going forward, both motors should be same values. Dividing by 4 since there are 4 motors to control this direction
+
+        elif ((quadrant_LJ == 3) or (quadrant_LJ == 4)) and (
+                math.fabs(RJ_X) <= self.joystick_drift_compensation):  # Backward
             if delta < 100:
                 SFVT = math.floor(self.offset + math.ceil(-1 * LJ_Y * delta) / 4)
             else:
                 SFVT = math.ceil((-1 * LJ_Y * 100) / 4)
             PFVT = SFVT
             PAVT = SFVT
-            SAVT = SFVT # going backward
-            
-        elif ((quadrant_LJ == 1) or (quadrant_LJ == 2)) and (RJ_X > self.joystick_drift_compensation):  # Turn to starboard
+            SAVT = SFVT  # going backward
+
+        elif ((quadrant_LJ == 1) or (quadrant_LJ == 2)) and (
+                RJ_X > self.joystick_drift_compensation):  # Turn to starboard
             PFVT = SAVT = math.floor(LJ_Y * 100)
             SFVT = math.ceil(RJ_X * -100)
             PAVT = 0
 
-        elif ((quadrant_LJ == 1) or (quadrant_LJ == 2)) and (RJ_X < (-1 * self.joystick_drift_compensation)):  # Turn to port   
-            PFVT = math.ceil(RJ_X* -100) 
+        elif ((quadrant_LJ == 1) or (quadrant_LJ == 2)) and (
+                RJ_X < (-1 * self.joystick_drift_compensation)):  # Turn to port
+            PFVT = math.ceil(RJ_X * -100)
             PAVT = SFVT = math.floor(LJ_Y * 100)
             SAVT = 0
 
-        elif ((quadrant_LJ == 3) or (quadrant_LJ == 4)) and (RJ_X > self.joystick_drift_compensation):  # Inverted turn to port
+        elif ((quadrant_LJ == 3) or (quadrant_LJ == 4)) and (
+                RJ_X > self.joystick_drift_compensation):  # Inverted turn to port
             SAVT = 0
             PAVT = SFVT = math.floor(LJ_Y * 100)
             PFVT = math.floor(RJ_X)
 
-        elif ((quadrant_LJ == 3) or (quadrant_LJ == 4)) and (RJ_X < (-1 * self.joystick_drift_compensation)):  # Inverted turn to starboard
+        elif ((quadrant_LJ == 3) or (quadrant_LJ == 4)) and (
+                RJ_X < (-1 * self.joystick_drift_compensation)):  # Inverted turn to starboard
             PAVT = 0
             PFVT = SAVT = math.floor(LJ_Y * 100)
             SFVT = math.ceil(RJ_X * -100)
 
-        elif (math.fabs(LJ_X) > self.joystick_drift_compensation) and (LJ_Y < self.joystick_drift_compensation):  # Strafe Starboard
-            SFVT  = PAVT = self.offset + math.ceil(LJ_X * -100)
+        elif (math.fabs(LJ_X) > self.joystick_drift_compensation) and (
+                LJ_Y < self.joystick_drift_compensation):  # Strafe Starboard
+            SFVT = PAVT = self.offset + math.ceil(LJ_X * -100)
             PFVT = SAVT = self.offset + math.floor(LJ_X * 100)
-        
-        elif (math.fabs(LJ_X) < self.joystick_drift_compensation) and (LJ_Y < self.joystick_drift_compensation):  # Strafe Port 
+
+        elif (math.fabs(LJ_X) < self.joystick_drift_compensation) and (
+                LJ_Y < self.joystick_drift_compensation):  # Strafe Port
             SFVT = PAVT = math.floor(LJ_X * 100)
             PFVT = SAVT = math.ceil(LJ_X * -100)
 
-        elif((LJ_Y > self.joystick_drift_compensation) and (LJ_X < (-1 * self.joystick_drift_compensation)) and  (RJ_X < self.joystick_drift_compensation)): #45 Port Strafe
+        elif ((LJ_Y > self.joystick_drift_compensation) and (LJ_X < (-1 * self.joystick_drift_compensation)) and (
+                RJ_X < self.joystick_drift_compensation)):  # 45 Port Strafe
             PFVT = 0
             SAVT = 0
             PAVT = SFVT = ((math.floor((LJ_Y * 100) + math.ceil(LJ_X * -100))) / 2)
 
-        elif((LJ_Y > self.joystick_drift_compensation) and (LJ_X < self.joystick_drift_compensation) and  (RJ_X < self.joystick_drift_compensation)): #45 Starboard Strafe
+        elif ((LJ_Y > self.joystick_drift_compensation) and (LJ_X < self.joystick_drift_compensation) and (
+                RJ_X < self.joystick_drift_compensation)):  # 45 Starboard Strafe
             PAVT = SFVT = 0
             PFVT = SAVT = math.floor(((LJ_Y * 100) + (LJ_X * 100)) / 2)
 
-        elif((LJ_Y < ( -1 * self.joystick_drift_compensation)) and (LJ_X < (-1 * self.joystick_drift_compensation)) and  (RJ_X < self.joystick_drift_compensation)): #45 Inverted Port Strafe
+        elif ((LJ_Y < (-1 * self.joystick_drift_compensation)) and (
+                LJ_X < (-1 * self.joystick_drift_compensation)) and (
+                      RJ_X < self.joystick_drift_compensation)):  # 45 Inverted Port Strafe
             PFVT = SAVT = 0
             PAVT = SFVT = math.floor(((LJ_Y * 100) + (LJ_X * 100)) / 2)
 
-        elif((LJ_Y < ( -1 * self.joystick_drift_compensation)) and (LJ_X > self.joystick_drift_compensation) and  (RJ_X < self.joystick_drift_compensation)): #45 Inverted Starboard Strafe
+        elif ((LJ_Y < (-1 * self.joystick_drift_compensation)) and (LJ_X > self.joystick_drift_compensation) and (
+                RJ_X < self.joystick_drift_compensation)):  # 45 Inverted Starboard Strafe
             PFVT = SAVT = ((math.ceil(LJ_Y * -100) + math.floor(LJ_X * 100)) / 2)
             PAVT = SFVT = 0
 
@@ -165,14 +189,14 @@ class ControllerTranslator:
             if delta < 100:
                 SFVT = SAVT = self.offset + math.ceil(RJ_X * -1 * delta)  # Reverse on Starboard Y Thruster
                 PFVT = PAVT = self.offset + math.floor(RJ_X * delta)  # Forward on Port Y Thruster
-                
+
             else:
-                SYT = math.ceil(RJ_X * -100)  #FIXME
+                SYT = math.ceil(RJ_X * -100)  # FIXME
                 PYT = math.floor(RJ_X * 100)
 
         elif (math.fabs(RJ_X) > self.joystick_drift_compensation) and (RJ_X < 0):  # Turn in-place to port
             if delta < 100:
-                SFVT = self.offset + math.floor(RJ_X  * delta)  # Forward on Starboard Y Thruster
+                SFVT = self.offset + math.floor(RJ_X * delta)  # Forward on Starboard Y Thruster
                 PAFT = SFVT
                 PFVT = self.offset + math.ceil(RJ_X * -1 * delta)  # Reverse on Port Y Thruster
                 PAVT = PFVT
@@ -184,7 +208,6 @@ class ControllerTranslator:
             SAVT = 0
             PFVT = 0
             PAVT = 0
-            
 
         # PFZT, SFZT, SAZT, PAZT are a function of LJ_X and L2/R2
         PFZT = 0
@@ -203,7 +226,8 @@ class ControllerTranslator:
             else:
                 SFZT = SAZT = math.ceil(LJ_X * -100)
                 PAZT = PFZT = math.ceil(self.base_net_strafe)
-        elif ((-1 * LJ_X) > self.joystick_drift_compensation) and (z_abs <= self.z_drift_compensation):  # Strafe to Port
+        elif ((-1 * LJ_X) > self.joystick_drift_compensation) and (
+                z_abs <= self.z_drift_compensation):  # Strafe to Port
             if delta < 100:
                 PAZT = PFZT = (-1 * self.offset) + math.ceil(LJ_X * -1 * delta)
                 SFZT = SAZT = (-1 * self.offset) + self.base_net_strafe
@@ -212,12 +236,6 @@ class ControllerTranslator:
                 SFZT = SAZT = math.ceil(self.base_net_strafe)
 
         return [PFZT, SFZT, SAZT, PAZT, PFVT, PAVT, SFVT, SAVT]
-
-def translate_to_maestro_intelligence(self):
-        """Accepts instructions sent from intelligence, translates into maestro instructions.
-        (Might not need this?)
-        """
-        pass
 
 
 def _driver_test_code() -> None:
@@ -232,19 +250,21 @@ def _driver_test_code() -> None:
     while True:
         if js.get_init():
             control_in = np.zeros(shape=(1, js.get_numaxes()
-                                        + js.get_numbuttons()
-                                        + js.get_numhats()))
+                                         + js.get_numbuttons()
+                                         + js.get_numhats()))
             for i in range(js.get_numaxes()):
                 control_in.put(i, js.get_axis(i))
             for i in range(js.get_numaxes(), js.get_numbuttons()):  # Buttons
                 control_in.put(i, js.get_button(i - js.get_numaxes()))
 
             control_in.put((js.get_numaxes() + js.get_numbuttons()), js.get_hat(0))  # Hat
-            print(ct.translate_to_maestro_controller(control_in))
+            result = ct.translate_to_maestro_controller(control_in)
+            print(f"PFZ: {result[0]} SFZ: {result[1]} SAZ: {result[2]} PAZ: {result[3]} PFV: {result[4]} "
+                  f"PAV: {result[5]} SFV: {result[6]} SAV: {result[7]}")
         pg.event.pump()
 
 
 if __name__ == '__main__':
     _driver_test_code()
 else:
-    print('Initialized Controller Translator module')    
+    print('Initialized Controller Translator module')
