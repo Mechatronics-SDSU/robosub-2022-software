@@ -1,7 +1,7 @@
 Killswitch.h library for Arduino. Allows for simple 2-way communication
 between the Arduino and corrisponding python script running on the pc.
 
-Start by creating a Killswitch object
+Start by creating a Killswitch object (NOTE, initialize Serial to baud 9600 before using killswitch)
 	i.e.
 		Killswitch killswitch;
 
@@ -12,4 +12,6 @@ Get killswitch state (Killswitch object has boolean which can be accessed)
 Set killswitch state (Modifies boolean value stored in Killswitch object)
 	i.e.
 		killswitch.setState(true);
-
+Check for incoming data from computer (place in loop())
+	i.e.
+		killswitch.serialUpdare();

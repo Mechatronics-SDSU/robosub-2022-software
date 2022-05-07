@@ -9,8 +9,8 @@ class Killswitch {
         void serialUpdate();
         bool getState();
         void setState(bool state);
+		bool _killswitch_state = 0;	//Moved to public to (hopefully) make it work with Ken's code
     private:
-        bool _killswitch_state = 0;
         String _serial_in;
 };
 
