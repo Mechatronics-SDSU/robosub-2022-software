@@ -88,28 +88,23 @@ class ControllerTranslator:
         RJ_Y = inputs[0][3]  # Left in for future funtionality -IAR 5/7/22
 
         # Calculate Cartesian
+        print(f'{L2} | {R2}')
 
         # Calculate Z
-        z_abs = 0
         z_dir = 0
-        # L2 and R2 are mutually exclusive, one > -1 means other is -1. CHECKS L2 FIRST!!
+        # L2 and R2 are mutually exclusive but will be summed to average
         # Shift from range -1, 1 to 0, 2 such that -1 is mapped to 0 for rest state
-        if L2 > -1:
-            L2 += 1
-            z_abs = L2 / 2  # Divide by 2 to get range from 0, 1
-            z_dir = 1  # L2 mapped to up
+        L2 += 1
+        R2 += 1
+        z_abs_pos = L2 / 2  # Divide by 2 to get range from 0, 1
+        z_abs_neg = R2 / 2  # Divide by 2 to get range from 0, 1
+        z_abs = 0
+        if math.fabs(z_abs_pos) > math.fabs(z_abs_neg):
+            z_dir = 1
+            z_abs = z_abs_pos - z_abs_neg
         else:
-            L2 += 1
-            z_abs = L2 / 2  # Divide by 2 to get range from 0, 1
-            z_dir = -1  # L2 mapped to down
-        if R2 > -1:
-            R2 += 1
-            z_abs = R2 / 2  # Divide by 2 to get range from 0, 1
-            z_dir = 1  # R2 mapped to up
-        else:
-            R2 += 1
-            z_abs = R2 / 2  # Divide by 2 to get range from 0, 1
-            z_dir = -1  # R2 mapped to down
+            z_dir = -1
+            z_abs = z_abs_neg - z_abs_pos
         # z_abs now a percentile of how far to move, z_dir is positive if up and negative if down
 
         # Cartesian quadrant the joysticks are in
@@ -247,25 +242,12 @@ class ControllerTranslator:
         SAZT = 0
         PAZT = 0
 
+        print(f'z_abs: {z_abs} (MUST BE > COMP)')
+
         if (z_abs > self.z_drift_compensation) and (z_dir == 1):  # Ascend
             PFZT = SFZT = SAZT = PAZT = math.floor(100 * z_abs)
         elif (z_abs > self.z_drift_compensation) and (z_dir == -1):  # Descend
             PFZT = SFZT = SAZT = PAZT = math.ceil(-100 * z_abs)
-        elif (LJ_X > self.joystick_drift_compensation) and (z_abs <= self.z_drift_compensation):  # Strafe to Starboard
-            if delta < 100:
-                SFZT = SAZT = (-1 * self.offset) + math.ceil(LJ_X * -1 * delta)
-                PAZT = PFZT = (-1 * self.offset) + self.base_net_strafe
-            else:
-                SFZT = SAZT = math.ceil(LJ_X * -100)
-                PAZT = PFZT = math.ceil(self.base_net_strafe)
-        elif ((-1 * LJ_X) > self.joystick_drift_compensation) and (
-                z_abs <= self.z_drift_compensation):  # Strafe to Port
-            if delta < 100:
-                PAZT = PFZT = (-1 * self.offset) + math.ceil(LJ_X * -1 * delta)
-                SFZT = SAZT = (-1 * self.offset) + self.base_net_strafe
-            else:
-                PAZT = PFZT = math.ceil(LJ_X * 100)
-                SFZT = SAZT = math.ceil(self.base_net_strafe)
 
         return [PFZT, SFZT, SAZT, PAZT, PFVT, PAVT, SFVT, SAVT]
 
