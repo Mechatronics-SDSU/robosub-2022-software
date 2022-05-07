@@ -24,7 +24,9 @@ Port Forward Vectored Thruster PFVT-> // | \\ <- Starboard Forward Vectored Thru
 
 Testing on 4/26-5/6 (IAR):
 Forward movement: Return values from function are 1/4th expected on vectored thrusters only
+    5/7 Fixed and tested -IAR
 Aft movement: Return values from function are 1/4th expected on vectored thrusters only
+    5/7 Fixed and tested -IAR
 Port Strafe: Z thrusters engaged instead of vectored thrusters. Opposite thrusters to strafe direction only 1/5th of
     expected value.
 Starboard Strafe: Z thrusters engaged instead of vectored thrusters. Opposite thrusters to strafe direction only 1/5th
@@ -60,13 +62,15 @@ class ControllerTranslator:
                  joystick_drift_compensation=0.05,
                  base_net_turn=0,
                  z_drift_compensation=0,
-                 base_net_strafe=0):
+                 base_net_strafe=0,
+                 debug=False):
         self.invert = invert_controls
         self.joystick_drift_compensation = joystick_drift_compensation
         self.base_net_turn = base_net_turn
         self.z_drift_compensation = z_drift_compensation
         self.base_net_strafe = base_net_strafe
         self.offset = offset  # amount to offset ESCs by when performing translation
+        self.debug = debug
         # Ex. ESC needs value of 50 to begin moving thrusters. Offset of 49 means 0 is mapped to 49
 
     def translate_to_maestro_controller(self, inputs) -> list:
@@ -81,7 +85,9 @@ class ControllerTranslator:
         LJ_X = inputs[0][0]
         LJ_Y = inputs[0][1]
         RJ_X = inputs[0][2]
-        RJ_Y = inputs[0][3]  # Currently unused
+        RJ_Y = inputs[0][3]  # Left in for future funtionality -IAR 5/7/22
+
+        # Calculate Cartesian
 
         # Calculate Z
         z_abs = 0
@@ -114,6 +120,10 @@ class ControllerTranslator:
                 ((LJ_X > self.joystick_drift_compensation) or (LJ_Y > self.joystick_drift_compensation)):
             quadrant_LJ = 4
 
+        if self.debug:
+            print(f'DEBUG: L2: {L2} | R2: {R2} | RJ_X: {RJ_X} | LJ_X: {LJ_X} | LJ_Y: {LJ_Y} | Quadrant LJ: '
+                  f'{quadrant_LJ}')
+
         # Translate
 
         # SFVT/PFVT/SAVT/PAVT are a function of LJY and RJX
@@ -125,10 +135,10 @@ class ControllerTranslator:
         if ((quadrant_LJ == 1) or (quadrant_LJ == 2)) and (
                 math.fabs(RJ_X) <= self.joystick_drift_compensation):  # Forward
             if delta < 100:  # Map proportionally starting at offset instead of 0
-                SFVT = math.floor((self.offset + math.floor(math.fabs(LJ_Y) * delta)) / 4)
+                SFVT = math.floor((self.offset + math.floor(math.fabs(LJ_Y) * delta)))
 
             else:
-                SFVT = math.floor((math.fabs(LJ_Y) * 100) / 4)
+                SFVT = math.floor((math.fabs(LJ_Y) * 100))
             PFVT = SFVT
             PAVT = SFVT
             SAVT = SFVT  # Going forward, both motors should be same values. Dividing by 4 since there are 4 motors to control this direction
@@ -136,9 +146,9 @@ class ControllerTranslator:
         elif ((quadrant_LJ == 3) or (quadrant_LJ == 4)) and (
                 math.fabs(RJ_X) <= self.joystick_drift_compensation):  # Backward
             if delta < 100:
-                SFVT = math.floor(self.offset + math.ceil(-1 * LJ_Y * delta) / 4)
+                SFVT = math.floor(self.offset + math.ceil(-1 * LJ_Y * delta))
             else:
-                SFVT = math.ceil((-1 * LJ_Y * 100) / 4)
+                SFVT = math.ceil((-1 * LJ_Y * 100))
             PFVT = SFVT
             PAVT = SFVT
             SAVT = SFVT  # going backward
@@ -260,7 +270,7 @@ def _driver_test_code() -> None:
     js = pg.joystick.Joystick(0)
     js.init()
     print(str(js.get_numaxes()) + ' ' + str(js.get_numbuttons()) + ' ' + str(js.get_numhats()))
-    ct = ControllerTranslator(joystick_drift_compensation=0.1, base_net_turn=10, base_net_strafe=-20)
+    ct = ControllerTranslator(joystick_drift_compensation=0.1, base_net_turn=10, base_net_strafe=-20, debug=True)
     while True:
         if js.get_init():
             control_in = np.zeros(shape=(1, js.get_numaxes()
