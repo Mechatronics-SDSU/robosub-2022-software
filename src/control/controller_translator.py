@@ -22,13 +22,27 @@ Port Forward Vectored Thruster PFVT-> // | \\ <- Starboard Forward Vectored Thru
           Port Aft Z Thurster PAZT ->  0===0 <- Starboard Aft Z Thruster SAZT
                                      Stern/Aft
 
-Testing on 4/26 (IAR):
+Testing on 4/26-5/6 (IAR):
 Forward movement: Return values from function are 1/4th expected on vectored thrusters only
 Aft movement: Return values from function are 1/4th expected on vectored thrusters only
 Port Strafe: Z thrusters engaged instead of vectored thrusters. Opposite thrusters to strafe direction only 1/5th of
     expected value.
-Starboard Strafe: Z thrusters engaged instead of vectored thrusters. Opposite thrusters to strafe direction only 1/5th of
-    expected value.
+Starboard Strafe: Z thrusters engaged instead of vectored thrusters. Opposite thrusters to strafe direction only 1/5th
+    of expected value.
+In Place Port Turn: V Thrusters not engaged, all values are 0. Expected RJ_X.
+In Place Starboard Turn: V Thrusters not engages, all values are 0. Expected -RJ_X.
+Port Turn: V Thrusters absolute values are correct, but expected values are inverted.
+Starboard Turn: V Thrusters absolute values are correct, SFVT is correct, PFVT and SAVT are inverted.
+Inv Port Turn: V Thrusters incorrectly mapped, PAVT and SFVT are driving LJ_Y in spec, code is driving PFVT and SAVT,
+    and are in the wrong direction. PFV is wrong direction and mapped incorrectly to SFV.
+Inv Starboard Turn: V Thrusters incorrectly mapped, PFVT and SAVT are driving LJ_Y in spec, code is driving PAVT and
+    SFVT, and are in the wrong direction. SFVT is not even coded in.
+45 Port Strafe: All Vectored thrusters engaged at half of expected value. Z Thrusters engaged when not expected.
+45 Starboard Strafe: All Vectored thrusters engaged at half of expected value. Z Thrusters engaged when not expected.
+45 Inverted Port Strafe: All Vectored thrusters engaged at half of expected value. Z Thrusters engaged when not
+    expected.
+45 Inverted Starboard Strafe: All Vectored thrusters engaged at half of expected value. Z Thrusters engaged when not
+    expected.
 
 """
 
