@@ -92,12 +92,20 @@ class ControllerTranslator:
         # Calculate Z
         z_abs = 0
         z_dir = 0
-        # L2 and R2 are mutually exclusive, one > -1 means other is -1.
+        # L2 and R2 are mutually exclusive, one > -1 means other is -1. CHECKS L2 FIRST!!
         # Shift from range -1, 1 to 0, 2 such that -1 is mapped to 0 for rest state
         if L2 > -1:
             L2 += 1
             z_abs = L2 / 2  # Divide by 2 to get range from 0, 1
             z_dir = 1  # L2 mapped to up
+        else:
+            L2 += 1
+            z_abs = L2 / 2  # Divide by 2 to get range from 0, 1
+            z_dir = -1  # L2 mapped to down
+        if R2 > -1:
+            R2 += 1
+            z_abs = R2 / 2  # Divide by 2 to get range from 0, 1
+            z_dir = 1  # R2 mapped to up
         else:
             R2 += 1
             z_abs = R2 / 2  # Divide by 2 to get range from 0, 1
