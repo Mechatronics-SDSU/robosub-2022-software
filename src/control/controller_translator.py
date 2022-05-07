@@ -22,30 +22,43 @@ Port Forward Vectored Thruster PFVT-> // | \\ <- Starboard Forward Vectored Thru
           Port Aft Z Thurster PAZT ->  0===0 <- Starboard Aft Z Thruster SAZT
                                      Stern/Aft
 
-Testing on 4/26-5/6 (IAR):
+Testing on 4/26-5/7 (IAR):
+Z Thruster Down (R2): Working 5/7 -IAR
+Z Thruster Up (L2): Working 5/7 -IAR
 Forward movement: Return values from function are 1/4th expected on vectored thrusters only
     5/7 Fixed and tested -IAR
 Aft movement: Return values from function are 1/4th expected on vectored thrusters only
     5/7 Fixed and tested -IAR
 Port Strafe: Z thrusters engaged instead of vectored thrusters. Opposite thrusters to strafe direction only 1/5th of
     expected value.
+    5/7 tested -IAR
 Starboard Strafe: Z thrusters engaged instead of vectored thrusters. Opposite thrusters to strafe direction only 1/5th
     of expected value.
+    5/7 tested -IAR
 In Place Port Turn: V Thrusters not engaged, all values are 0. Expected RJ_X.
+    5/7 fixed and tested -IAR
 In Place Starboard Turn: V Thrusters not engages, all values are 0. Expected -RJ_X.
+    5/7 fixed and tested -IAR
 Port Turn: V Thrusters absolute values are correct, but expected values are inverted.
+    5/7 fixed and tested -IAR
 Starboard Turn: V Thrusters absolute values are correct, SFVT is correct, PFVT and SAVT are inverted.
+    5/7 fixed and tested -IAR
 Inv Port Turn: V Thrusters incorrectly mapped, PAVT and SFVT are driving LJ_Y in spec, code is driving PFVT and SAVT,
     and are in the wrong direction. PFV is wrong direction and mapped incorrectly to SFV.
+    5/7 fixed and tested - IAR
 Inv Starboard Turn: V Thrusters incorrectly mapped, PFVT and SAVT are driving LJ_Y in spec, code is driving PAVT and
     SFVT, and are in the wrong direction. SFVT is not even coded in.
+    5/7 fixed and tested - IAR
 45 Port Strafe: All Vectored thrusters engaged at half of expected value. Z Thrusters engaged when not expected.
+    5/7 fixed and tested - IAR
 45 Starboard Strafe: All Vectored thrusters engaged at half of expected value. Z Thrusters engaged when not expected.
+    5/7 fixed and tested - IAR
 45 Inverted Port Strafe: All Vectored thrusters engaged at half of expected value. Z Thrusters engaged when not
     expected.
+    5/7 fixed and tested - IAR
 45 Inverted Starboard Strafe: All Vectored thrusters engaged at half of expected value. Z Thrusters engaged when not
     expected.
-
+    5/7 fixed and tested - IAR
 """
 
 import math
@@ -88,7 +101,6 @@ class ControllerTranslator:
         RJ_Y = inputs[0][3]  # Left in for future funtionality -IAR 5/7/22
 
         # Calculate Cartesian
-        print(f'{L2} | {R2}')
 
         # Calculate Z
         z_dir = 0
@@ -135,8 +147,10 @@ class ControllerTranslator:
         PAVT = 0
         SAVT = 0
         delta = 100 - self.offset
-        if ((quadrant_LJ == 1) or (quadrant_LJ == 2)) and (
-                math.fabs(RJ_X) <= self.joystick_drift_compensation):  # Forward
+        if ((quadrant_LJ == 1) or (quadrant_LJ == 2)) and (math.fabs(LJ_Y) > self.joystick_drift_compensation) and (
+                math.fabs(LJ_X) <= self.joystick_drift_compensation * 4) and (
+                math.fabs(RJ_X) <= self.joystick_drift_compensation * 4):  # Forward
+            print('GOING FORWARD')
             if delta < 100:  # Map proportionally starting at offset instead of 0
                 SFVT = math.floor((self.offset + math.floor(math.fabs(LJ_Y) * delta)))
 
@@ -144,10 +158,12 @@ class ControllerTranslator:
                 SFVT = math.floor((math.fabs(LJ_Y) * 100))
             PFVT = SFVT
             PAVT = SFVT
-            SAVT = SFVT  # Going forward, both motors should be same values. Dividing by 4 since there are 4 motors to control this direction
+            SAVT = SFVT  # Going forward, both motors should be same values.
 
-        elif ((quadrant_LJ == 3) or (quadrant_LJ == 4)) and (
-                math.fabs(RJ_X) <= self.joystick_drift_compensation):  # Backward
+        elif ((quadrant_LJ == 3) or (quadrant_LJ == 4)) and (math.fabs(LJ_Y) > self.joystick_drift_compensation) and (
+                math.fabs(LJ_X) <= self.joystick_drift_compensation * 4) and (
+                math.fabs(RJ_X) <= self.joystick_drift_compensation * 4):  # Backward
+            print('GOING BACKWARD')
             if delta < 100:
                 SFVT = math.floor(self.offset + math.ceil(-1 * LJ_Y * delta))
             else:
@@ -158,79 +174,86 @@ class ControllerTranslator:
 
         elif ((quadrant_LJ == 1) or (quadrant_LJ == 2)) and (
                 RJ_X > self.joystick_drift_compensation):  # Turn to starboard
-            PFVT = SAVT = math.floor(LJ_Y * 100)
+            print('TURN STARBOARD')
+            PFVT = SAVT = math.floor(LJ_Y * -100)
             SFVT = math.ceil(RJ_X * -100)
             PAVT = 0
 
         elif ((quadrant_LJ == 1) or (quadrant_LJ == 2)) and (
                 RJ_X < (-1 * self.joystick_drift_compensation)):  # Turn to port
-            PFVT = math.ceil(RJ_X * -100)
-            PAVT = SFVT = math.floor(LJ_Y * 100)
+            print('TURN PORT')
+            PFVT = math.ceil(RJ_X * 100)
+            PAVT = SFVT = math.floor(LJ_Y * -100)
             SAVT = 0
 
         elif ((quadrant_LJ == 3) or (quadrant_LJ == 4)) and (
-                RJ_X > self.joystick_drift_compensation):  # Inverted turn to port
+                RJ_X < -1 * self.joystick_drift_compensation):  # Inverted turn to port
+            print('INV TURN PORT')
             SAVT = 0
-            PAVT = SFVT = math.floor(LJ_Y * 100)
-            PFVT = math.floor(RJ_X)
+            PAVT = SFVT = math.floor(LJ_Y * -100)
+            PFVT = math.floor(RJ_X * 100)
 
         elif ((quadrant_LJ == 3) or (quadrant_LJ == 4)) and (
-                RJ_X < (-1 * self.joystick_drift_compensation)):  # Inverted turn to starboard
+                RJ_X > self.joystick_drift_compensation):  # Inverted turn to starboard
+            print('INV TURN STARBOARD')
             PAVT = 0
-            PFVT = SAVT = math.floor(LJ_Y * 100)
+            PFVT = SAVT = math.floor(LJ_Y * -100)
             SFVT = math.ceil(RJ_X * -100)
 
-        elif (math.fabs(LJ_X) > self.joystick_drift_compensation) and (
-                LJ_Y < self.joystick_drift_compensation):  # Strafe Starboard
+        elif (math.fabs(LJ_X) > self.joystick_drift_compensation) and (quadrant_LJ == 1 or quadrant_LJ == 4) and (
+                math.fabs(LJ_Y) <= (self.joystick_drift_compensation * 2)):  # Strafe Starboard
+            print('STRAFE STARBOARD')
             SFVT = PAVT = self.offset + math.ceil(LJ_X * -100)
             PFVT = SAVT = self.offset + math.floor(LJ_X * 100)
 
-        elif (math.fabs(LJ_X) < self.joystick_drift_compensation) and (
-                LJ_Y < self.joystick_drift_compensation):  # Strafe Port
-            SFVT = PAVT = math.floor(LJ_X * 100)
-            PFVT = SAVT = math.ceil(LJ_X * -100)
+        elif (math.fabs(LJ_X) > self.joystick_drift_compensation) and (quadrant_LJ == 2 or quadrant_LJ == 3) and (
+                math.fabs(LJ_Y) <= (self.joystick_drift_compensation * 2)):  # Strafe Port
+            print('STRAFE PORT')
+            SFVT = PAVT = self.offset + math.floor(LJ_X * -100)  # Make positive
+            PFVT = SAVT = self.offset + math.ceil(LJ_X * 100)
 
-        elif ((LJ_Y > self.joystick_drift_compensation) and (LJ_X < (-1 * self.joystick_drift_compensation)) and (
-                RJ_X < self.joystick_drift_compensation)):  # 45 Port Strafe
+        elif ((math.fabs(LJ_Y) > self.joystick_drift_compensation) and (LJ_X < (-1 * self.joystick_drift_compensation))
+              and (math.fabs(RJ_X) < self.joystick_drift_compensation) and (quadrant_LJ == 2)):  # 45 Port Strafe
+            print('45 STRAFE PORT')
             PFVT = 0
             SAVT = 0
-            PAVT = SFVT = ((math.floor((LJ_Y * 100) + math.ceil(LJ_X * -100))) / 2)
+            PAVT = SFVT = math.fabs((math.floor(((math.fabs(LJ_Y) * 100) + math.fabs(LJ_X) * 100) / 2)))
 
-        elif ((LJ_Y > self.joystick_drift_compensation) and (LJ_X < self.joystick_drift_compensation) and (
-                RJ_X < self.joystick_drift_compensation)):  # 45 Starboard Strafe
+        elif ((math.fabs(LJ_Y) > self.joystick_drift_compensation) and (LJ_X > self.joystick_drift_compensation) and (
+                math.fabs(RJ_X) < self.joystick_drift_compensation) and (quadrant_LJ == 1)):  # 45 Starboard Strafe
+            print('45 STRAFE STARBOARD')
             PAVT = SFVT = 0
-            PFVT = SAVT = math.floor(((LJ_Y * 100) + (LJ_X * 100)) / 2)
+            PFVT = SAVT = math.fabs((math.floor(((math.fabs(LJ_Y) * 100) + math.fabs(LJ_X) * 100) / 2)))
 
-        elif ((LJ_Y < (-1 * self.joystick_drift_compensation)) and (
+        elif ((math.fabs(LJ_Y) > self.joystick_drift_compensation) and (
                 LJ_X < (-1 * self.joystick_drift_compensation)) and (
-                      RJ_X < self.joystick_drift_compensation)):  # 45 Inverted Port Strafe
+                      math.fabs(RJ_X) < self.joystick_drift_compensation) and (quadrant_LJ == 3)):  # 45 Inverted Port Strafe
+            print('45 INV STRAFE PORT')
             PFVT = SAVT = 0
-            PAVT = SFVT = math.floor(((LJ_Y * 100) + (LJ_X * 100)) / 2)
+            PAVT = SFVT = -1 * math.fabs((math.floor(((math.fabs(LJ_Y) * 100) + math.fabs(LJ_X) * 100) / 2)))
 
-        elif ((LJ_Y < (-1 * self.joystick_drift_compensation)) and (LJ_X > self.joystick_drift_compensation) and (
-                RJ_X < self.joystick_drift_compensation)):  # 45 Inverted Starboard Strafe
-            PFVT = SAVT = ((math.ceil(LJ_Y * -100) + math.floor(LJ_X * 100)) / 2)
+        elif ((math.fabs(LJ_Y) > self.joystick_drift_compensation) and (LJ_X > self.joystick_drift_compensation) and (
+                math.fabs(RJ_X) < self.joystick_drift_compensation) and (quadrant_LJ == 4)):  # 45 Inverted Starboard Strafe
+            print('45 INV STRAFE STARBOARD')
+            PFVT = SAVT = -1 * math.fabs((math.floor(((math.fabs(LJ_Y) * 100) + math.fabs(LJ_X) * 100) / 2)))
             PAVT = SFVT = 0
 
-        elif (math.fabs(RJ_X) > self.joystick_drift_compensation) and (RJ_X > 0):  # Turn in-place to starboard
-            if delta < 100:
-                SFVT = SAVT = self.offset + math.ceil(RJ_X * -1 * delta)  # Reverse on Starboard Y Thruster
-                PFVT = PAVT = self.offset + math.floor(RJ_X * delta)  # Forward on Port Y Thruster
-
-            else:
-                SYT = math.ceil(RJ_X * -100)  # FIXME
-                PYT = math.floor(RJ_X * 100)
+        elif (math.fabs(RJ_X) > self.joystick_drift_compensation) and (RJ_X > 0):  # Turn in-place to starboard\
+            print('IN PLACE STARBOARD TURN')
+            SFVT = self.offset + math.floor(RJ_X * -1 * delta)  # Reverse on Starboard V Thrusters
+            SAVT = SFVT
+            PFVT = self.offset + math.ceil(RJ_X * delta)  # Forward on Port V Thrusters
+            PAVT = PFVT
 
         elif (math.fabs(RJ_X) > self.joystick_drift_compensation) and (RJ_X < 0):  # Turn in-place to port
-            if delta < 100:
-                SFVT = self.offset + math.floor(RJ_X * delta)  # Forward on Starboard Y Thruster
-                PAFT = SFVT
-                PFVT = self.offset + math.ceil(RJ_X * -1 * delta)  # Reverse on Port Y Thruster
-                PAVT = PFVT
-            else:
-                SYT = math.floor(RJ_X * -100)
-                PYT = math.ceil(RJ_X * 100)
+            print('IN PLACE PORT TURN')
+            SFVT = self.offset + math.floor(RJ_X * -1 * delta)  # Forward on Starboard V Thrusters
+            SAVT = SFVT
+            PFVT = self.offset + math.ceil(RJ_X * delta)  # Reverse on Port V Thrusters
+            PAVT = PFVT
+
         else:  # No movement
+            print('NO MOVEMENT')
             SFVT = 0
             SAVT = 0
             PFVT = 0
@@ -241,8 +264,6 @@ class ControllerTranslator:
         SFZT = 0
         SAZT = 0
         PAZT = 0
-
-        print(f'z_abs: {z_abs} (MUST BE > COMP)')
 
         if (z_abs > self.z_drift_compensation) and (z_dir == 1):  # Ascend
             PFZT = SFZT = SAZT = PAZT = math.floor(100 * z_abs)
