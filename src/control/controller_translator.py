@@ -12,7 +12,10 @@ Port Aft Vectored Thruster,
 Starboard Forward Vectored Thruster,
 Starboard Aft Vectored Thruster]
 
+SOFTWARE:
 [PFZT, SFZT, SAZT, PAZT, PFVT, PAVT, SFVT, SAVT]
+HARDWARE:
+[PFZT, PFVT, PAZT, PAVT, SAZT, SAVT, SFZT, SFVT]
 Diagram:
                                      Bow/Front
       Port Forward Z Thurster PFZT ->  0===0 <- Starboard Forward Z Thurster SFZT
@@ -57,6 +60,16 @@ class ControllerTranslator:
         """
 
         # Z
+        L2 = inputs[0][2] / 1.5
+        R2 = inputs[0][5] / 1.5
+        # XY
+        LJ_X = inputs[0][0] / 1.5
+        LJ_Y = inputs[0][1] / 1.5
+        RJ_X = inputs[0][3] / 1.5
+
+        '''
+        WINDOWS ONLY TEMP FIXING FOR LINUX
+        # Z
         L2 = inputs[0][4]
         R2 = inputs[0][5]
         # XY
@@ -64,6 +77,7 @@ class ControllerTranslator:
         LJ_Y = inputs[0][1]
         RJ_X = inputs[0][2]
         RJ_Y = inputs[0][3]  # Left in for future funtionality -IAR 5/7/22
+        '''
 
         # Calculate Cartesian
 
@@ -100,9 +114,9 @@ class ControllerTranslator:
                 ((LJ_X > self.joystick_drift_compensation) or (LJ_Y > self.joystick_drift_compensation)):
             quadrant_LJ = 4
 
-        if self.debug:
-            print(f'DEBUG: L2: {L2} | R2: {R2} | RJ_X: {RJ_X} | LJ_X: {LJ_X} | LJ_Y: {LJ_Y} | Quadrant LJ: '
-                  f'{quadrant_LJ}')
+        #if self.debug:
+            #print(f'DEBUG: L2: {L2} | R2: {R2} | RJ_X: {RJ_X} | LJ_X: {LJ_X} | LJ_Y: {LJ_Y} | Quadrant LJ: '
+            #      f'{quadrant_LJ}')
 
         # Translate
 
@@ -221,7 +235,8 @@ class ControllerTranslator:
         elif (z_abs > self.z_drift_compensation) and (z_dir == -1):  # Descend
             PFZT = SFZT = SAZT = PAZT = math.ceil(-100 * z_abs)
 
-        return [PFZT, SFZT, SAZT, PAZT, PFVT, PAVT, SFVT, SAVT]
+        return [int(PFZT), int(SFZT), int(SAZT), int(PAZT),
+         int(PFVT), int(PAVT), int(SFVT), int(SAVT)]
 
 
 def _driver_test_code() -> None:

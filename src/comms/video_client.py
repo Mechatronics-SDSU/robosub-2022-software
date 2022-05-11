@@ -23,7 +23,7 @@ def SearchFile():
             shutil.rmtree(directoryPath)
             break
         z += 1
-    
+
     # Creates new Save folder for frames to be stored
     parent = os.getcwd()
     directory = 'vision'
@@ -35,7 +35,7 @@ def main() -> None:
     """
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect(('localhost', 1234))
+    client_socket.connect(('172.16.118.132', 1234))
     cam = cv2.VideoCapture(0)
     cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
     img_counter = 0
@@ -49,6 +49,7 @@ def main() -> None:
         cv2.imwrite(os.path.join(os.getcwd(), 'vision/') + str(i) + '.jpg', frame)
         i += 1
         result, frame = cv2.imencode('.jpg', frame, encode_param)
+        # frame = cv2.flip(frame, 0)
         data = pickle.dumps(frame, 0)
         size = len(data)
         print("{}: {}".format(img_counter, size))

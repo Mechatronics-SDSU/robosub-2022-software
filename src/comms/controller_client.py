@@ -9,7 +9,7 @@ import struct
 def pilot_proc() -> None:
     """Sends controller input to Pico's Control over TCP connection.
     """
-    hostname = 'localhost'
+    hostname = '192.168.3.1'
     port = 50004
     last_input = np.zeros(shape=(1, 1))
     started = False
@@ -39,7 +39,7 @@ def pilot_proc() -> None:
             try:
                 data = s.recv(1024)
             except (ConnectionAbortedError, ConnectionResetError) as e:
-                pilot_pipe_out.send(('gui', 'pilot', 'no_conn_socket'))
+                # pilot_pipe_out.send(('gui', 'pilot', 'no_conn_socket'))
                 print(f'Connection to server lost...')
                 server_conn = False
                 break
@@ -126,7 +126,10 @@ def run_client() -> None:
             print(f"PFZ: {result[0]} SFZ: {result[1]} SAZ: {result[2]} PAZ: {result[3]} PFV: {result[4]} "
                   f"PAV: {result[5]} SFV: {result[6]} SAV: {result[7]}")
         pg.event.pump()
+"""
+SOFTWARE: PFZ	SFZ	SAZ	PAZ	PFV	PAV	SFV	SAV
 
+"""
 if __name__ == '__main__':
     print('Starting Controller Client...')
     pilot_proc()
