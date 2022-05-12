@@ -1,8 +1,11 @@
-"""Blake's Maestro Driver code, with some formatting, cleanup, arguments.
+"""Thruster control code for the maestro.
+This is a port of Blake's 2020 Maestro code with minor changes from Ian for Pico, refacoted by Ian for Scion.
+This code manually talks to the Pololu maestro driver, giving it instructions for how to set Scion's ESCs.
 https://www.pololu.com/docs/0J40 link to maestro documentation
 """
 
-import serial
+import sys
+import serial  # pip3 install pyserial
 import struct
 import time
 
@@ -10,9 +13,7 @@ import time
 class MaestroDriver:
     """Controls the Maestro.
     """
-    def __init__(self, com_port='/dev/ttyACM0', baud_rate=115200,
-                 lower_pulse_bound=1100,
-                 upper_pulse_bound=1900,
+    def __init__(self, com_port: str, baud_rate=115200, lower_pulse_bound=1100, upper_pulse_bound=1900,
                  most_recent_thrusts=None):
         if most_recent_thrusts is None:
             most_recent_thrusts = [0, 0, 0, 0, 0, 0, 0, 0]
@@ -24,10 +25,9 @@ class MaestroDriver:
         self.usb = serial.Serial(com_port)
         self.most_recent_thrusts = most_recent_thrusts
 
-    def set_thrusts(self, thrusts=None):
+    def set_thrusts(self, thrusts=None) -> None:
         """Sets thrusters.
-        :param thrusts:
-        :return:
+        :param thrusts: Integer thruster values from -100 - 100.
         """
         if thrusts is None:
             thrusts = [0, 0, 0, 0, 0, 0, 0, 0]
@@ -58,68 +58,19 @@ class MaestroDriver:
             self.usb.write(message)
 
 
-if __name__ == "__main__":
-    maestro_driver = MaestroDriver(com_port="/dev/ttyACM0")
-    # arming sequence
+if __name__ == '__main__':
+    print('Starting maestro driver demo...')
+    device = ''
+    if len(sys.argv) > 1:  # Did we get a device?
+        device = sys.argv[1].replace(' ', '')
+    else:
+        print(f'Error: Expected argc > 1, number of args = {len(sys.argv)}. (Did you add the device\'s COM port?)')
+        print('Exiting maestro driver demo...')
+        sys.exit(1)
+    maestro_driver = MaestroDriver(com_port=device)
+    # Demo the driver if we're running this file
     while True:
         maestro_driver.set_thrusts([50, 50, 50, 50, 50, 50, 50, 50])
         time.sleep(2)
         maestro_driver.set_thrusts([0, 0, 0, 0, 0, 0, 0, 0])
         time.sleep(2)
-
-    # following code goes from 0 to full power for each thruster
-    # (0-100/1100-1900us) then gradually steps down
-    ''' 
-    for j in range(6):
-        thrusts = [0, 0, 0, 0, 0, 0]
-        i = 0
-        while i < 100:
-            thrusts[j] = i
-            maestro_driver.set_thrusts(thrusts)
-            i += 1
-            time.sleep(0.1)
-        while i > 0:
-            thrusts[j] = i
-            maestro_driver.set_thrusts(thrusts)
-            i -= 1
-            time.sleep(0.1)
-    '''
-    '''
-    print('Driving at +100')
-    maestro_driver.set_thrusts([0, 0, 100, 0, 0, 100])
-    time.sleep(1)
-    print('Driving at +75')
-    maestro_driver.set_thrusts([0, 0, 75, 0, 0, 75])
-    time.sleep(1)
-    print('Driving at +50')
-    maestro_driver.set_thrusts([0, 0, 50, 0, 0, 50])
-    time.sleep(1)
-    print('Driving at +25')
-    maestro_driver.set_thrusts([0, 0, 25, 0, 0, 25])
-    time.sleep(1)
-    print('Driving at 0')
-    maestro_driver.set_thrusts([0, 0, 0, 0, 0, 0])
-    time.sleep(1)
-    print('Driving at -25')
-    maestro_driver.set_thrusts([0, 0, -25, 0, 0, -25])
-    time.sleep(1)
-    print('Driving at -50')
-    maestro_driver.set_thrusts([0, 0, -50, 0, 0, -50])
-    time.sleep(1)
-    print('Driving at -75')
-    maestro_driver.set_thrusts([0, 0, -75, 0, 0, -75])
-    time.sleep(1)
-    print('Driving at -100')
-    maestro_driver.set_thrusts([0, 0, -100, 0, 0, -100])
-    time.sleep(1)
-    print('Driving at 0')
-    maestro_driver.set_thrusts([0, 0, 0, 0, 0, 0])
-    time.sleep(1)
-    print('Driving DOWN at 100')
-    maestro_driver.set_thrusts([100, 100, 0, 100, 100, 0])
-    time.sleep(1)
-    print('Driving UP at 100')
-    maestro_driver.set_thrusts([-100, -100, 0, -100, -100, 0])
-    time.sleep(1)
-    maestro_driver.set_thrusts([0, 0, 0, 0, 0, 0])
-    '''
