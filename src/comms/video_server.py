@@ -1,17 +1,18 @@
 """
-Server connects to Client and displays read frames in window.
-Meant to be run as the main file, not being imported. 
+Video Server connects to Video Client and displays read frames in window.
 """
+import sys
 import socket
 import cv2
 import pickle
 import struct
 
+
 def main() -> None:
     """Runs server code for our client to have a connection, server receives and display frames
     """
     HOST = ''
-    PORT = 1234
+    PORT = 50001
     
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     print('Socket created')
@@ -42,6 +43,8 @@ def main() -> None:
 
         frame = pickle.loads(frame_data, fix_imports=True, encoding="bytes")
         frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
+        frame = cv2.flip(frame, 0)
+        frame = cv2.flip(frame, 1)
         # Frames displayed
         cv2.imshow('frame', frame)
         if cv2.waitKey(1) == ord('q'):
@@ -49,4 +52,8 @@ def main() -> None:
 
 
 if __name__ == '__main__':
+    print('Starting Video Server...')
     main()
+else:
+    print('Error: Attempting to import Video Server, closing Video Server')
+    sys.exit(1)
