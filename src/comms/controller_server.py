@@ -1,13 +1,7 @@
-"""Implements a client for receiving pilot control input on the SUB.
-Pilot_Testing client accepts a socket connection and receives controller input from HOST.
-This is encapsulated in a Controller object for convenient method access with
-options for configurations.
-Developed and tested with Ian's Xbox One Controller but other configuations can
-be added at a later time.
-Controller Note:
-Because not all controllers are made with the same layouts for the right button pad,
-they are named N S E W in the class, as to represent a compass.
-This is to prevent confusion between different configurations and mappings.
+"""Implements a server for receiving pilot control input on Scion.
+This server accepts a socket connection and receives controller input from HOST.
+Developed and tested with Ian's Xbox One Controller but other configuations can be added at a later time.
+Testing note 5/7/22: This was successfully run on the team's xbox controllers for the 5/7/22 pool test.
 """
 
 from __future__ import print_function
@@ -21,21 +15,29 @@ import utils.maestro_driver as maestro_driver
 
 server_port = 50004
 
-def run_client() -> None:
-    """Client's driver code
+
+def run_server() -> None:
+    """Server's driver code, runs entirely within this function
     """
+    print('Starting Controller Server...')
     maestro = None  # Maestro object
-    dev = "/dev/ttyACM0"
-    if (os.name != 'nt') and (len(sys.argv) > 1):  # Windows check and see if we got a device
+    dev = None
+    if len(sys.argv) > 1:  # Did we get a device on program start?
         dev = sys.argv[1].replace(' ', '')
-    maestro = maestro_driver.MaestroDriver()
+    else:
+        print(f'Error: Expected argc > 1, number of args = {len(sys.argv)}. (Did you add the maestro device\'s COM '
+              f'port?)')
+        print('Exiting Controller Server...')
+        sys.exit(1)
+    maestro = maestro_driver.MaestroDriver(com_port=dev)
+    print('Maestro driver initialized.')
     started = True
     data = None
     payload_size = struct.calcsize('>8b')
     # Socket
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind(('', server_port))
+        s.bind(('', server_port))  # Bind to self, we're the ones hosting the server
         print(f'Started controller server listening on port {server_port}, now listening... ')
         s.listen()
         conn, address = s.accept()
@@ -60,6 +62,7 @@ def run_client() -> None:
 
 
 if __name__ == '__main__':
-    run_client()
+    run_server()
 else:
-    sys.exit()
+    print('Run server code as main!')
+    sys.exit(1)

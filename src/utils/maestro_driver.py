@@ -64,7 +64,8 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:  # Did we get a device?
         device = sys.argv[1].replace(' ', '')
     else:
-        print(f'Error: Expected argc > 1, number of args = {len(sys.argv)}. (Did you add the device\'s COM port?)')
+        print(f'Error: Expected argc > 1, number of args = {len(sys.argv)}. (Did you add the maestro device\'s COM '
+              f'port?)')
         print('Exiting maestro driver demo...')
         sys.exit(1)
     maestro_driver = MaestroDriver(com_port=device)
