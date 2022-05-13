@@ -17,7 +17,7 @@ def pilot_proc(argc: int, argv: list) -> None:
     port = None
     if argc > 2:  # Did we get a host?
         hostname = argv[1].replace(' ', '')
-        port = argv[2].replace(' ', '')
+        port = int(argv[2].replace(' ', ''))
     else:
         print(f'Error: Expected argc > 2, number of args = {argc}. (Did you add the server\'s IP address/port?)')
         print('Exiting Controller Client...')
