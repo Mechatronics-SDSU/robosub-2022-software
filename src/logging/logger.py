@@ -1,3 +1,8 @@
+"""Logging process
+Logs data to file with timestamp and renames already existing file.
+Uses input() to get data directly from the terminal but will be ported to listen on ROS topics.
+"""
+
 import logging
 import os
 import datetime
@@ -5,11 +10,13 @@ import platform
 import sys
 
 
-def existingLog():
+def existing_log() -> None:
+    """Existing log checks for an already existing log and renames it to last modification date.
+    """
     files = os.listdir()
-    max = len(files)
+    max_len = len(files)
     i = 0
-    while i < max:
+    while i < max_len:
         if files[i].startswith('last.log'):
             existinglogpath = os.path.join(os.getcwd(), files[i])
             if platform.system() == 'Windows':
@@ -26,12 +33,13 @@ def existingLog():
                     create = datetime.datetime.fromtimestamp(stat.st_mtime).strftime('%Y-%m-%d-%H-%M-%S')
                     os.rename('last.log', create)
                     break
-
-            break
         else:
             i += 1
 
-class logger():
+
+class logger:
+    """Logging wrapper for specifying what level the log is at
+    """
     def __init__(self, data):
         self.data = str(data)
 
@@ -54,8 +62,10 @@ class logger():
         logging.critical(self.log())
 
 
-def main():
-    logging.basicConfig(filename='last.log', level=logging.DEBUG,filemode='a',
+def main() -> None:
+    """Driver code for the logger class
+    """
+    logging.basicConfig(filename='last.log', level=logging.DEBUG, filemode='a',
                         format="%(levelname)s:[%(asctime)s]:%(message)s", datefmt='%H:%M:%S')
     data_logger = None
     while True:
@@ -85,8 +95,8 @@ def main():
 
 if __name__ == '__main__':
     print('Starting Log')
-    existingLog()
+    existing_log()
     main()
 else:
-    print('Erorr starting Log')
+    print('Erorr starting Log, don\'t import the logger!')
     sys.exit(1)
