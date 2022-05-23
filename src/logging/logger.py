@@ -98,5 +98,5 @@ if __name__ == '__main__':
     existing_log()
     main()
 else:
-    print('Erorr starting Log, don\'t import the logger!')
+    print('Error starting Log, don\'t import the logger!')
     sys.exit(1)
