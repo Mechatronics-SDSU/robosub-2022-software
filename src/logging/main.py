@@ -13,7 +13,7 @@ def existingLog():
         if files[i].startswith('last.log'):
             existinglogpath = os.path.join(os.getcwd(), files[i])
             if platform.system() == 'Windows':
-                creation = datetime.datetime.fromtimestamp((os.path.getmtime(existinglogpath))).strftime( '%Y-%m-%d-%H-%M-%S')
+                creation = datetime.datetime.fromtimestamp((os.path.getmtime(existinglogpath))).strftime('%Y-%m-%d-%H-%M-%S')
                 os.rename('last.log', creation)
                 break
             else:
@@ -56,21 +56,30 @@ class logger():
 
 def main():
     logging.basicConfig(filename='last.log', level=logging.DEBUG,filemode='a',
-                        format="<%(levelname)s>[%(asctime)s]<%(message)s>", datefmt='%H:%M:%S')
+                        format="%(levelname)s:[%(asctime)s]:%(message)s", datefmt='%H:%M:%S')
+    data_logger = None
     while True:
-        data = str(input())
-        data = logger(data)
-        if data.data.startswith('DEBUG'):
-            data.debug(data)
-        elif data.data.startswith('INFO'):
-            data.info(data)
-        elif data.data.startswith('ERROR'):
-            data.error(data)
-        elif data.data.startswith('WARNING'):
-            data.warning(data)
-        elif data.data.startswith('CRITICAL'):
-            data.critical(data)
-        elif data.data.startswith('quit'):
+        data = str(input())  # Change me for ROS
+        if data_logger is None:
+            data_logger = logger(data)
+        else:
+            data_logger.data = data
+        if data_logger.data.startswith('DEBUG'):
+            data_logger.data = data_logger.data[6:]
+            data_logger.debug(data)
+        elif data_logger.data.startswith('INFO'):
+            data_logger.data = data_logger.data[5:]
+            data_logger.info(data)
+        elif data_logger.data.startswith('ERROR'):
+            data_logger.data = data_logger.data[6:]
+            data_logger.error(data)
+        elif data_logger.data.startswith('WARNING'):
+            data_logger.data = data_logger.data[8:]
+            data_logger.warning(data)
+        elif data_logger.data.startswith('CRITICAL'):
+            data_logger.data = data_logger.data[9:]
+            data_logger.critical(data)
+        elif data_logger.data.startswith('quit'):
             break
 
 
