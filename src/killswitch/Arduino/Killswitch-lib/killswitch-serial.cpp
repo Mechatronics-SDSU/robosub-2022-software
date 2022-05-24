@@ -4,6 +4,7 @@
 Killswitch::Killswitch() {
 	_killswitch_state = 0;
 	_serial_in = "";
+	Serial.print("killswitch online")
 }
 
 void Killswitch::serialUpdate() {
