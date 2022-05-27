@@ -1,0 +1,39 @@
+Ubuntu fresh install instructions
+
+OS:
+sudo apt install openssh-server (install openssh server (VM only))
+sudo ufw allow ssh (enable ssh if not enabled (VM only))
+
+Power on Scion
+
+Scion config for sharing internet
+sudo sysctl -w net.ipvt.ip_forward=1
+ip a (find your physical ethernet device)
+sudo ip addr add 192.168.3.3 dev <your device name here from ip a>
+sudo ip route add 192.168.3.0/24 dev <your device name here from ip a>
+ping 192.168.3.1 (make sure Scion returns ping)
+
+Remote into Scion:
+ssh mechatronics@<scion's ip>
+cd ~/robosub-2022-software
+git checkout beta
+cd tools/scripts
+./demo
+
+GUI Setup:
+Open terminal
+sudo apt update
+sudo apt upgrade
+sudo apt install git python3-pip -y
+sudo apt install python3-tk python3-pil.imagetk -y
+pip3 install opencv-python google-api-python-client grpcio pygame
+
+cd ~/
+git clone https://github.com/Mechatronics-SDSU/robosub-2022-software.git
+((git will request your credentials to access the repository, provide your username and auth key))
+
+Running GUI each time:
+cd robosub-2022-software
+git checkout beta
+cd src/gui
+python3 gui.py
