@@ -102,6 +102,32 @@ class GuiWindow(tk.Frame):
         # Camera Grid
         self.cameras_cv.grid()
 
+    def update_sensors(self) -> None:
+        """Update sensor data in the tkinter window by reading the sensor thread.
+        Get data stored in sensor thread and calculate ETA since obtained.
+        """
+        pass
+
+    def update_cameras(self) -> None:
+        """Update camera frames in the tkinter window by reading the camera thread.
+        Newest frame in the camera thread is loaded into either pillow frame 1 or 2 depending on what frame counter we
+        are at. The new frame is checked with a modulus 2 to see which pillow frame to display in the window.
+        """
+        pass
+
+    def update_active_threads(self) -> None:
+        """Reads threads for all update functions, call relevant functions
+        """
+        pass
+
+    def update(self) -> None:
+        """Update dynamic elements in the GUI window, read elements from other threads.
+        Overridden from tkinter's window class
+        """
+        self.update_active_threads()
+
+        self.after(gui_update_ms, self.update)  # Run this function again after delay of gui_update_ms
+
 
 def init_gui(host_os: str) -> None:
     """Starts up GUI window and all related programs
@@ -120,8 +146,9 @@ def init_gui(host_os: str) -> None:
 
 if __name__ == '__main__':
     if os.name == 'nt':  # Windows
-        mp.set_start_method('spawn')
+        print('GUI not supported on Windows')
+        system.exit(1)
     else:  # Linux
         mp.set_start_method('fork')
-    print(f'{__name__} started on {os.name} at {os.getpid()}')  # Kept for testing
+    print(f'GUI started on {os.name} at {os.getpid()}')  # Kept for testing
     init_gui(host_os=os.name)
