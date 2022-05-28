@@ -1,3 +1,6 @@
+# Pycharm
+.idea/
+
 # ROS 
 */catkin_ws/.catkin_tools
 */catkin_ws/build
