@@ -32,12 +32,12 @@ def search_file() -> None:
     os.mkdir(Rpath)
 
 
-def main(host: str) -> None:
+def main(host: str, port: int, cap: int, write_frame: bool) -> None:
     """Runs the client code to connect to server and capture frames.
     """
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((host, 50001))
-    cam = cv2.VideoCapture(0)
+    client_socket.connect((host, port))
+    cam = cv2.VideoCapture(cap)
     cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
     img_counter = 0
 
@@ -46,7 +46,12 @@ def main(host: str) -> None:
     # Keep receiving frames and save to folder
     while True:
         ret, frame = cam.read()
-        cv2.imwrite(os.path.join(os.getcwd(), 'vision/') + str(i) + '.jpg', frame)
+        # Frame flip for scion
+        frame = cv2.flip(frame, 0)
+        frame = cv2.flip(frame, 1)
+        # Write to I/O
+        if write_frame:
+            cv2.imwrite(os.path.join(os.getcwd(), 'vision/') + str(i) + '.jpg', frame)
         i += 1
         result, frame = cv2.imencode('.jpg', frame, encode_param)
         data = pickle.dumps(frame, 0)
@@ -65,7 +70,6 @@ if __name__ == '__main__':
         print('Exiting Video Client...')
         sys.exit(1)
     search_file()
-    main(host=hostname)
+    main(host=hostname, port=50001, cap=0, write_frame=True)
 else:
-    print('Error: Attempting to import Video Client, closing Video Client')
-    sys.exit(1)
+    print('Scion Video Client imported.')

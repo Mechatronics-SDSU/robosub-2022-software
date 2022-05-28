@@ -6,20 +6,20 @@ import socket
 import cv2
 import pickle
 import struct
+import multiprocessing as mp
 
 
-def main() -> None:
+def main(host: str, port: int, ind: bool, write_pipe=None, context=None) -> None:
     """Runs server code for our client to have a connection, server receives and display frames
     """
-    HOST = ''
-    PORT = 50001
+    HOST = host
+    PORT = port
     
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    print('Socket created')
+    print(f'Video socket created on port {PORT}')
     s.bind((HOST, PORT))
-    print('Socket bind complete')
     s.listen(5)
-    print('Socket now listening')
+    print(f'Video socket bound, listening on port {PORT}')
     conn, addr = s.accept()
     data = b""
     payload_size = struct.calcsize(">L")
@@ -43,17 +43,17 @@ def main() -> None:
 
         frame = pickle.loads(frame_data, fix_imports=True, encoding="bytes")
         frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
-        frame = cv2.flip(frame, 0)
-        frame = cv2.flip(frame, 1)
         # Frames displayed
-        cv2.imshow('frame', frame)
-        if cv2.waitKey(1) == ord('q'):
-            break
+        if ind:  # Running on its own
+            cv2.imshow('frame', frame)
+            if cv2.waitKey(1) == ord('q'):
+                break
+        else:  # Running in GUI
+            write_pipe.send(frame)  # Send to GUI
 
 
 if __name__ == '__main__':
     print('Starting Video Server...')
-    main()
+    main('', 50001, ind=True)
 else:
-    print('Error: Attempting to import Video Server, closing Video Server')
-    sys.exit(1)
+    print('Scion Video Server imported.')
