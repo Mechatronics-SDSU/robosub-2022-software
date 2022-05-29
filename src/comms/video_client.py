@@ -8,6 +8,7 @@ import struct
 import pickle
 import os
 import shutil
+import threading
 
 
 def search_file() -> None:
@@ -30,6 +31,18 @@ def search_file() -> None:
     directory = 'vision'
     Rpath = os.path.join(parent, directory)
     os.mkdir(Rpath)
+
+
+class CamThead(threading.Thread):
+    def __init__(self, host: str, port_num: int, cap_num: int, write_frame: bool):
+        threading.Thread.__init__(self)
+        self.host = host
+        self.port = port_num
+        self.cap = cap_num
+        self.write_frame = write_frame
+
+    def run(self) -> None:
+        main(host=self.host, port=self.port, cap=self.cap, write_frame=self.write_frame)
 
 
 def main(host: str, port: int, cap: int, write_frame: bool) -> None:
@@ -62,16 +75,25 @@ def main(host: str, port: int, cap: int, write_frame: bool) -> None:
 
 if __name__ == '__main__':
     print('Starting Video Client...')
-    if len(sys.argv) > 2:  # Did we get a host/camera number?
+    if len(sys.argv) > 3:  # Did we get a host/camera number?
         hostname = sys.argv[1].replace(' ', '')
-        port = int(sys.argv[2].replace(' ', ''))
-        cap = int(sys.argv[3].replace(' ', ''))
-
+        _port = int(sys.argv[2].replace(' ', ''))
+        _cap = int(sys.argv[3].replace(' ', ''))
+        if len(sys.argv) > 5:
+            _port_2 = int(sys.argv[4].replace(' ', ''))
+            _cap_2 = int(sys.argv[5].replace(' ', ''))
+            search_file()
+            t1 = CamThead(host=hostname, port_num=_port, cap_num=_cap, write_frame=False)
+            t2 = CamThead(host=hostname, port_num=_port_2, cap_num=_cap_2, write_frame=False)
+            t1.start()
+            t2.start()
+        else:
+            search_file()
+            main(host=hostname, port=_port, cap=_cap, write_frame=False)
     else:
         print(f'Error: Expected argc > 2, number of args = {len(sys.argv)}. (Did you add the server\'s IP address?)')
         print('Exiting Video Client...')
         sys.exit(1)
-    search_file()
-    main(host=hostname, port=port, cap=cap, write_frame=False)
+
 else:
     print('Scion Video Client imported.')

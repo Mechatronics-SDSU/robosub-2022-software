@@ -124,12 +124,12 @@ class GuiWindow(tk.Frame):
         # Sub-grids
         # Button Grid
         self.buttons_cv.grid()
-        self.cam_0_button = Button(master=self.top_bar_fr, text='Start Cam 0', justify=LEFT, anchor='w',
+        self.cam_0_button = Button(master=self.buttons_cv, text='Start Cam 0', justify=LEFT, anchor='w',
                                    command=self.start_camera_0)
-        self.cam_1_button = Button(master=self.top_bar_fr, text='Start Cam 1', justify=LEFT, anchor='w',
+        self.cam_1_button = Button(master=self.buttons_cv, text='Start Cam 1', justify=LEFT, anchor='w',
                                    command=self.start_camera_1)
         self.cam_0_button.grid(row=0, column=0, sticky=W)
-        self.cam_1_button.grid(row=0, column=1, sticky=W)
+        self.cam_1_button.grid(row=1, column=0, sticky=W)
         # Camera Grid
         self.camera_0_cv.grid(row=0, column=0)
         self.camera_1_cv.grid(row=1, column=0)
