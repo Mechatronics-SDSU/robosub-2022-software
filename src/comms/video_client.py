@@ -63,13 +63,14 @@ def main(host: str, port: int, cap: int, write_frame: bool) -> None:
 
 if __name__ == '__main__':
     print('Starting Video Client...')
-    if len(sys.argv) > 1:  # Did we get a host?
+    if len(sys.argv) > 2:  # Did we get a host/camera number?
         hostname = sys.argv[1].replace(' ', '')
+        cap = int(sys.argv[2].replace(' ', ''))
     else:
         print(f'Error: Expected argc > 2, number of args = {len(sys.argv)}. (Did you add the server\'s IP address?)')
         print('Exiting Video Client...')
         sys.exit(1)
     search_file()
-    main(host=hostname, port=50001, cap=0, write_frame=True)
+    main(host=hostname, port=50001, cap=cap, write_frame=True)
 else:
     print('Scion Video Client imported.')
