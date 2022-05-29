@@ -53,6 +53,8 @@ class Depth:
                     i = 1
                     while resp[i] != '\n' or resp[i] != ord('\n'):
                         ret.append(resp[i])
+                    while len(ret) < 4:
+                        ret.append(b'\x00')
                     return ret
             except serial.SerialException as e:
                 print("Error: Serial communication error when attempting to get state, attempting to re-establish...")
