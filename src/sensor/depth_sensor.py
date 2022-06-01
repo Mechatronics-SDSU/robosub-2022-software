@@ -76,5 +76,6 @@ if __name__ == "__main__":
     DP = Depth()
     while True:
         print(f'Depth Sensor Test Reading: {DP.get_state()}')
+        time.sleep(0.01)
 else:
     print('Imported Depth Sensor module.')
