@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""ROS-connected AHRS API
-Currently hard coded for port 50003. May change in the future.
+"""ROS-connected Depth Listener API
+Currently hard coded for port 50005. May change in the future.
 """
 import rospy
 import socket
@@ -18,16 +18,16 @@ class DataWrapper:
             print(f'API SEES: {data.data}')
 
 
-def ahrs_listener() -> None:
+def depth_listener() -> None:
     # ROS
     dw = DataWrapper(debug=False)
     rospy.init_node('listener', anonymous=True)
-    rospy.Subscriber('ahrs_state', String, dw.callback)
+    rospy.Subscriber('depth_state', String, dw.callback)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind(('', 50003))
+        s.bind(('', 50005))
         s.listen()
-        print('AHRS API Listening...')
+        print('Depth API Listening...')
         conn, address = s.accept()
         # Main loop
         while True:
@@ -39,4 +39,4 @@ def ahrs_listener() -> None:
 
 
 if __name__ == '__main__':
-    ahrs_listener()
+    depth_listener()
