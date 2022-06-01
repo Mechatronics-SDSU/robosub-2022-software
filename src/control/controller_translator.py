@@ -135,8 +135,8 @@ class ControllerTranslator:
             else:
                 SFVT = math.floor((math.fabs(LJ_Y) * 100))
             PFVT = SFVT
-            PAVT = SFVT
-            SAVT = SFVT  # Going forward, both motors should be same values.
+            PAVT = -1 * SFVT
+            SAVT = -1 * SFVT  # Going forward, both motors should be same values.
 
         elif ((quadrant_LJ == 3) or (quadrant_LJ == 4)) and (math.fabs(LJ_Y) > self.joystick_drift_compensation) and (
                 math.fabs(LJ_X) <= self.joystick_drift_compensation * 4) and (
@@ -146,8 +146,8 @@ class ControllerTranslator:
             else:
                 SFVT = math.ceil((-1 * LJ_Y * 100))
             PFVT = SFVT
-            PAVT = SFVT
-            SAVT = SFVT  # going backward
+            PAVT = -1 * SFVT
+            SAVT = -1 * SFVT  # going backward
 
         elif ((quadrant_LJ == 1) or (quadrant_LJ == 2)) and (
                 RJ_X > self.joystick_drift_compensation):  # Turn to starboard
@@ -235,9 +235,9 @@ class ControllerTranslator:
         elif (z_abs > self.z_drift_compensation) and (z_dir == -1):  # Descend
             PFZT = SFZT = SAZT = PAZT = math.ceil(-100 * z_abs)
 
-        return [int(PFZT), int(SFZT), int(SAZT), int(PAZT),
-         int(PFVT), int(PAVT), int(SFVT), int(SAVT)]
-
+        #return [int(PFZT), int(SFZT), int(SAZT), int(PAZT),
+        # int(PFVT), int(PAVT), int(SFVT), int(SAVT)]
+        return [int(PFZT), int(PFVT), -1 * int(PAZT), int(PAVT), int(SAZT), int(SAVT), int(SFZT), int(SFVT)]
 
 def _driver_test_code() -> None:
     """Test code using controller inputs directly. Don't run in other modules!"""
