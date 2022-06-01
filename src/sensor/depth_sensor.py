@@ -48,16 +48,22 @@ class Depth:
             try:
                 self.device.write(b'g\n')  # g\n = get state
                 resp = self.device.readline()
+                print(f"resp: {resp}")
+                if "None" in str(resp):
+                    return 0.0
                 if resp[0] == ord('r'):
+                    return resp[1:-1]
+                    """
                     ret = []
                     i = 1
                     while resp[i] != '\n' or resp[i] != ord('\n'):
                         ret.append(resp[i])
                     return ret
+                    """
             except serial.SerialException as e:
                 print("Error: Serial communication error when attempting to get state, attempting to re-establish...")
-                self.com_test()
-                self.get_state()
+                # self.com_test()
+                # self.get_state()
 
     def close(self) -> None:
         """Close connection to the device properly.
