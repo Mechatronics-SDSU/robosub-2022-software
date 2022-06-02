@@ -128,6 +128,7 @@ class Killswitch:
             while True:
                 self.killswitch.write(b'g0\n')
                 response = self.killswitch.readline()
+                # print(f'RESPONSE RAW: {response}')
                 if response[0] == ord('r'):
                     return bool(response[1] - 48)
                     break
