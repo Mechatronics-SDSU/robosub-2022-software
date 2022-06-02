@@ -65,6 +65,7 @@ SCION_CAMERA_1_PORT = 50002
 SCION_CONTROL_PORT = 50004
 SCION_SENSOR_PORT = 50003
 SCION_LOGGING_PORT = 50005
+SCION_DEPTH_PORT = 50006
 
 
 class GuiWindow(tk.Frame):
@@ -253,20 +254,7 @@ def run_telemetry_client(scion_ip: str, server_port: int) -> None:
                     except (ConnectionAbortedError, ConnectionResetError):
                         telemetry_ctrl_shm.buf[0] = 1
                         break
-                    # Parse data into shm
-                    depth_shm.buf[0] = data[0]
-                    depth_shm.buf[1] = data[1]
-                    depth_shm.buf[2] = data[2]
-                    depth_shm.buf[3] = data[3]
-                    ahrs_shm.buf[0] = data[4]
-                    ahrs_shm.buf[1] = data[5]
-                    ahrs_shm.buf[2] = data[6]
-                    ahrs_shm.buf[3] = data[7]
-                    ahrs_shm.buf[4] = data[8]
-                    ahrs_shm.buf[5] = data[9]
-                    print(f'Depth: {depth_shm.buf[0]} {depth_shm.buf[1]} {depth_shm.buf[2]} {depth_shm.buf[3]}')
-                    print(f'AHRS: {ahrs_shm.buf[0]} {ahrs_shm.buf[1]} {ahrs_shm.buf[2]} {ahrs_shm.buf[3]} '
-                          f'{ahrs_shm.buf[4]} {ahrs_shm.buf[5]}')
+                    print(data)
 
 
 def run_video_client(wvc: mp.Pipe, server_port: int, start_context: mp.context, camera_num: int) -> None:
