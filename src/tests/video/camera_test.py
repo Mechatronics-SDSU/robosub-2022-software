@@ -12,6 +12,7 @@ def list_ports():
     print('Running...')
     while is_working:
         camera = cv2.VideoCapture(dev_port)
+        camera.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
         if not camera.isOpened():
             is_working = False
             print("Port %s is not working." %dev_port)
