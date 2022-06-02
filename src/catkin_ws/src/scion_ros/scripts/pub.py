@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Hello World publisher code
 """
@@ -11,7 +12,7 @@ def main() -> None:
     rospy.init_node('pub', anonymous=True)
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
-        message = f'Print test {rospy.get_time}'
+        message = f'Print test {rospy.get_time()}'
         rospy.loginfo(message)
         pub.publish(message)
         rate.sleep()
