@@ -41,25 +41,22 @@ class Depth:
             print(e)
             sys.exit(1)
 
-    def get_state(self) -> list:
+    def get_state(self) -> str:
         """Read the current state of the sensor. Returns as list.
         """
         if self.device is not None:
             try:
                 self.device.write(b'g\n')  # g\n = get state
                 resp = self.device.readline()
+                # print(f"resp: {resp}")
+                if "None" in str(resp):
+                    return str(0.0)
                 if resp[0] == ord('r'):
-                    ret = []
-                    i = 1
-                    while resp[i] != '\n' or resp[i] != ord('\n'):
-                        ret.append(resp[i])
-                    while len(ret) < 4:
-                        ret.append(b'\x00')
-                    return ret
+                    return str(resp[1:-1])
             except serial.SerialException as e:
                 print("Error: Serial communication error when attempting to get state, attempting to re-establish...")
-                self.com_test()
-                self.get_state()
+                # self.com_test()
+                # self.get_state()
 
     def close(self) -> None:
         """Close connection to the device properly.
@@ -78,5 +75,6 @@ if __name__ == "__main__":
     DP = Depth()
     while True:
         print(f'Depth Sensor Test Reading: {DP.get_state()}')
+        time.sleep(0.01)
 else:
     print('Imported Depth Sensor module.')

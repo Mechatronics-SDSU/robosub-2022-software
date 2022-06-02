@@ -4,7 +4,7 @@
 Depthsensor::Depthsensor() {
 	_depth_value = 0;
 	_serial_in = "";
-	Serial.print("Depth Sensor Online...")
+	Serial.print("Depth Sensor Online...");
 }
 
 void Depthsensor::serialUpdate() {
