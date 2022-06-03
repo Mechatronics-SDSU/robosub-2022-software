@@ -65,6 +65,7 @@ SCION_CAMERA_1_PORT = 50002
 SCION_CONTROL_PORT = 50004
 SCION_SENSOR_PORT = 50003
 SCION_LOGGING_PORT = 50005
+SCION_DEPTH_PORT = 50006
 
 
 class GuiWindow(tk.Frame):
@@ -110,8 +111,11 @@ class GuiWindow(tk.Frame):
         self.camera_1_shm = shm.SharedMemory('video_server_1_shm')
         self.camera_1_pipe = camera_1_pipe
         self.camera_1_frame_counter = 0
+
+        # Sensors/Telemetry
         self.sensors_fr = tk.Frame(master=self.tk_master, width=sensor_resolution[0], height=sensor_resolution[1],
                                    bg='yellow')
+        self.telemetry_ctrl_shm = shm.SharedMemory(name='telemetry_ctrl_shm')
         # Main grid
         self.top_bar_fr.grid(row=0, column=0, columnspan=3)
         self.buttons_fr.grid(row=1, column=0)
@@ -124,12 +128,15 @@ class GuiWindow(tk.Frame):
         # Sub-grids
         # Button Grid
         self.buttons_cv.grid()
-        self.cam_0_button = Button(master=self.buttons_cv, text='Start Cam 0', justify=LEFT, anchor='w',
+        self.cam_0_button = Button(master=self.top_bar_fr, text='Start Cam 0', justify=LEFT, anchor='w',
                                    command=self.start_camera_0)
-        self.cam_1_button = Button(master=self.buttons_cv, text='Start Cam 1', justify=LEFT, anchor='w',
+        self.cam_1_button = Button(master=self.top_bar_fr, text='Start Cam 1', justify=LEFT, anchor='w',
                                    command=self.start_camera_1)
+        self.tel_button = Button(master=self.top_bar_fr, text='Start Sensors', justify=LEFT, anchor='w',
+                                 command=self.start_telemetry)
         self.cam_0_button.grid(row=0, column=0, sticky=W)
-        self.cam_1_button.grid(row=1, column=0, sticky=W)
+        self.cam_1_button.grid(row=0, column=1, sticky=W)
+        self.tel_button.grid(row=0, column=2, sticky=W)
         # Camera Grid
         self.camera_0_cv.grid(row=0, column=0)
         self.camera_1_cv.grid(row=1, column=0)
@@ -141,6 +148,9 @@ class GuiWindow(tk.Frame):
 
     def start_camera_1(self) -> None:
         self.camera_1_shm.buf[0] = 1
+
+    def start_telemetry(self) -> None:
+        self.telemetry_ctrl_shm.buf[0] = 1
 
     def update_sensors(self) -> None:
         """Update sensor data in the tkinter window by reading the sensor thread.
@@ -196,6 +206,57 @@ class GuiWindow(tk.Frame):
         self.after(gui_update_ms, self.update)  # Run this function again after delay of gui_update_ms
 
 
+def run_telemetry_client(scion_ip: str, server_port: int) -> None:
+    """Run the telemetry client for receiving sensor data.
+    """
+    # Setup shared memory
+    try:
+        telemetry_ctrl_shm = shm.SharedMemory(create=True, size=1, name='telemetry_ctrl_shm')
+    except FileExistsError:
+        telemetry_ctrl_shm = shm.SharedMemory(name='telemetry_ctrl_shm')
+        telemetry_ctrl_shm.unlink()
+        telemetry_ctrl_shm = shm.SharedMemory(create=True, size=1, name='telemetry_ctrl_shm')
+    try:
+        depth_shm = shm.SharedMemory(create=True, size=4, name='depth_sensor_shm')
+    except FileExistsError:
+        depth_shm = shm.SharedMemory(name='depth_sensor_shm')
+        depth_shm.unlink()
+        depth_shm = shm.SharedMemory(create=True, size=4, name='depth_sensor_shm')
+    try:
+        ahrs_shm = shm.SharedMemory(create=True, size=6, name='ahrs_shm')
+    except FileExistsError:
+        ahrs_shm = shm.SharedMemory(name='ahrs_shm')
+        ahrs_shm.unlink()
+        ahrs_shm = shm.SharedMemory(create=True, size=6, name='ahrs_shm')
+
+    while True:
+        if telemetry_ctrl_shm.buf[0] == 0:  # Wait for telemetry to be enabled
+            time.sleep(0.5)
+        else:  # Establish a connection and put transmitted data into shared memory
+            print("Starting telemetry socket")
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                try:
+                    s.connect((scion_ip, server_port))
+                    telemetry_ctrl_shm.buf[0] = 2
+                except ConnectionRefusedError as e:
+                    print("Error with connecting to telemetry server.")
+                    print(e)
+                    telemetry_ctrl_shm.buf[0] = 0
+                while telemetry_ctrl_shm.buf[0] == 2:
+                    try:
+                        s.sendall(b'1')
+                    except (ConnectionAbortedError, ConnectionResetError):
+                        telemetry_ctrl_shm.buf[0] = 1
+                        break
+                    try:
+                        data = s.recv(4096)
+                    except (ConnectionAbortedError, ConnectionResetError):
+                        telemetry_ctrl_shm.buf[0] = 1
+                        break
+                    print(data)
+
+
 def run_video_client(wvc: mp.Pipe, server_port: int, start_context: mp.context, camera_num: int) -> None:
     """Run the imported video server from comms, passing the pipe as an argument
     """
@@ -230,9 +291,12 @@ def init_gui(host_context: mp.context) -> None:
                                                                         0))
     camera_1_proc = host_context.Process(target=run_video_client, args=(wvs_pipe_1, SCION_CAMERA_1_PORT, host_context,
                                                                         1))
-
     camera_0_proc.start()
     camera_1_proc.start()
+
+    # Start telemetry client
+    telemetry_proc = host_context.Process(target=run_telemetry_client, args=("192.168.3.1", SCION_SENSOR_PORT))
+    telemetry_proc.start()
 
     # Start GUI
     gui_window = tk.Tk()
