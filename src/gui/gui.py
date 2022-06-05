@@ -458,7 +458,7 @@ def run_pilot_client() -> None:
 
 
 def run_logging_client(out_pipe: mp.Pipe, _: str) -> None:
-    """Run the logging client, setting up a pipe to the GUI to receive strings.
+    """Run the log client, setting up a pipe to the GUI to receive strings.
     """
     pass
 
@@ -515,7 +515,7 @@ def init_gui(host_context: mp.context) -> None:
     pilot_proc = host_context.Process(target=run_pilot_client)
     pilot_proc.start()
 
-    # Start logging client
+    # Start log client
     # Set up UNIX Pipes for communication between processes. w = write end, r = read end
     wls_pipe_0, rls_pipe_0 = host_context.Pipe()  # Logging Process (write end) -> | -> GUI (read end)
     try:

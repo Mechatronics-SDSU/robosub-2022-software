@@ -21,7 +21,7 @@ class DataWrapper:
 def depth_listener() -> None:
     # ROS
     dw = DataWrapper(debug=False)
-    rospy.init_node('listener', anonymous=True)
+    rospy.init_node('depth_listener', anonymous=True)
     rospy.Subscriber('depth_state', String, dw.callback)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

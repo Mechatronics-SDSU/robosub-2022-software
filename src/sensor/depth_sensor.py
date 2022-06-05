@@ -13,7 +13,7 @@ class Depth:
     """Handles all functionality related to serial communication with the depth sensor.
     """
     def __init__(self) -> None:
-        self.device_name = ''
+        self.device_name = '/dev/ttyUSB0'
         self.device = None
         self.set_device()
         self.com_test()

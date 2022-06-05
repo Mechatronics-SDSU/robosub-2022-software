@@ -9,7 +9,7 @@ def scion_print(print_input: str):
     if ROS_MODULE_NAME not in sys.modules:
         print(f'{ROS_MODULE_NAME} Not imported.')
     else:
-        pub = rospy.Publisher('logging', String, queue_size=1)
+        pub = rospy.Publisher('log', String, queue_size=1)
         pub.publish(print_input)
 
 

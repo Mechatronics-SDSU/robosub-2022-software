@@ -25,7 +25,7 @@ import datetime
 class LoggerServer:
     """
     :param save_logs: Whether to save logs to disk.
-    :param level: Level at which to log information, using python's logging module.
+    :param level: Level at which to log information, using python's log module.
     :param use_timestamp: Whether to include timestamps on logs.
     """
     def __init__(self, save_logs=True,
@@ -47,8 +47,8 @@ class LoggerServer:
 
     def log(self, prio, subsystem, message):
         """Calls python's logger and enqueues the log in the log queue for sending to HOST.
-        :param prio: priority for logging.
-        :param subsystem: subsystem doing the logging.
+        :param prio: priority for log.
+        :param subsystem: subsystem doing the log.
         :param message: log message.
         """
         ts = ''
@@ -103,7 +103,7 @@ class LoggerClient:
     def get_prio(log):
         """Parses the level of the log.
         :param log: Log string to parse.
-        :return: level of log as defined in logging as a string.
+        :return: level of log as defined in log as a string.
         """
         if isinstance(log, str):
             found = ''
@@ -118,7 +118,7 @@ class LoggerClient:
                 counter += 1
 
     def dequeue(self):
-        """Dequeues the first message in the logging queue after converting it from bytes.
+        """Dequeues the first message in the log queue after converting it from bytes.
         :return The string logged.
         """
         if len(self.logging_queue) > 0:
