@@ -13,8 +13,7 @@ Logging                    |          |         |
 
 
 Latest verification test:
-3/26/22 on Linux - IAR
-3/26/22 on Windows - IAR
+6/4/22 on Linux - IAR
 """
 
 from __future__ import print_function
@@ -22,26 +21,28 @@ import multiprocessing as mp
 from multiprocessing import shared_memory as shm
 import os
 import sys as system
-import math
-from collections import deque
+# import math
+# from collections import deque
 import socket
-from datetime import datetime
+# from datetime import datetime
 import time
 from functools import partial
-import pickle
-import struct
+# import pickle
+# import struct
 
 import tkinter as tk
 from tkinter import *
+from tkinter import simpledialog
 
-import grpc
+# import grpc
 import pygame as pg
 from PIL import ImageTk
 from PIL import Image as PILImage
-import numpy as np
+# import numpy as np
 import cv2
 
 import comms.video_server as scion_vs
+import comms.controller_client as scion_cc
 
 # GUI constants
 edge_size = 2
@@ -55,11 +56,13 @@ thruster_status_resolution = (270, 240)
 logging_resolution = (640, 690)
 sensor_resolution = (320, 960)
 
-gui_update_ms = 10  # Update time for all GUI elements 
+gui_update_ms = 10  # Update time for all GUI elements
+sleep_thread_s = 0.25  # Time to check for new threads to be enabled
 color_term_green = (74, 246, 38)
 color_error_red = (255, 0, 3)
 
 # Network
+SCION_COMMAND_PORT = 50000
 SCION_CAMERA_0_PORT = 50001
 SCION_CAMERA_1_PORT = 50002
 SCION_CONTROL_PORT = 50004
@@ -72,7 +75,8 @@ class GuiWindow(tk.Frame):
     """GUI management class
     Contains methods related to GUI functionality; calls to other functions in this file.
     """
-    def __init__(self, master, camera_0_pipe: mp.Pipe, camera_1_pipe: mp.Pipe, host_context: mp.context):
+    def __init__(self, master, camera_0_pipe: mp.Pipe, camera_1_pipe: mp.Pipe, logging_pipe: mp.Pipe,
+                 host_context: mp.context):
         self.tk_master = master
         self.context = host_context
         self.resolution = gui_resolution
@@ -91,6 +95,18 @@ class GuiWindow(tk.Frame):
                                      height=thruster_status_resolution[1], bg='green')
         self.logging_fr = tk.Frame(master=self.tk_master, width=logging_resolution[0], height=logging_resolution[1],
                                    bg='grey')
+        # Ports
+        self.def_ports = (SCION_COMMAND_PORT, SCION_CAMERA_0_PORT, SCION_CAMERA_1_PORT, SCION_SENSOR_PORT, SCION_CONTROL_PORT,
+                          SCION_LOGGING_PORT)
+        self.current_ports = [SCION_COMMAND_PORT, SCION_CAMERA_0_PORT, SCION_CAMERA_1_PORT, SCION_SENSOR_PORT, SCION_CONTROL_PORT,
+                              SCION_LOGGING_PORT]
+        self.cmd_port = self.current_ports[0]
+        self.camera_0_port = self.current_ports[1]
+        self.camera_1_port = self.current_ports[2]
+        self.telemetry_port = self.current_ports[3]
+        self.pilot_port = self.current_ports[4]
+        self.logging_port = self.current_ports[5]
+
         # Cameras
         self.cameras_fr = tk.Frame(master=self.tk_master, width=camera_resolution[0], height=camera_resolution[1] * 2,
                                    bg='orange')
@@ -116,6 +132,20 @@ class GuiWindow(tk.Frame):
         self.sensors_fr = tk.Frame(master=self.tk_master, width=sensor_resolution[0], height=sensor_resolution[1],
                                    bg='yellow')
         self.telemetry_ctrl_shm = shm.SharedMemory(name='telemetry_ctrl_shm')
+
+        # Pilot
+        self.pilot_ctrl_shm = shm.SharedMemory(name='pilot_ctrl_shm')
+
+        # Logging
+        self.logging_pipe = logging_pipe
+        self.logging_ctrl_shm = shm.SharedMemory(name='logging_ctrl_shm')
+
+        self.camera_0_enable = tk.BooleanVar(value=False)
+        self.camera_1_enable = tk.BooleanVar(value=False)
+        self.telemetry_enable = tk.BooleanVar(value=False)
+        self.pilot_enable = tk.BooleanVar(value=False)
+        self.logging_enable = tk.BooleanVar(value=False)
+
         # Main grid
         self.top_bar_fr.grid(row=0, column=0, columnspan=3)
         self.buttons_fr.grid(row=1, column=0)
@@ -128,20 +158,161 @@ class GuiWindow(tk.Frame):
         # Sub-grids
         # Button Grid
         self.buttons_cv.grid()
+        self.config_button = Button(master=self.top_bar_fr, text='Set Config', justify=LEFT, anchor='w',
+                                    command=self.set_config_menu)
+        self.conn_button = Button(master=self.top_bar_fr, text='Connect', justify=LEFT, anchor='w',
+                                  command=self.socket_menu)
         self.cam_0_button = Button(master=self.top_bar_fr, text='Start Cam 0', justify=LEFT, anchor='w',
                                    command=self.start_camera_0)
         self.cam_1_button = Button(master=self.top_bar_fr, text='Start Cam 1', justify=LEFT, anchor='w',
                                    command=self.start_camera_1)
         self.tel_button = Button(master=self.top_bar_fr, text='Start Sensors', justify=LEFT, anchor='w',
                                  command=self.start_telemetry)
-        self.cam_0_button.grid(row=0, column=0, sticky=W)
-        self.cam_1_button.grid(row=0, column=1, sticky=W)
-        self.tel_button.grid(row=0, column=2, sticky=W)
+        self.config_button.grid(row=0, column=0, sticky=W)
+        self.conn_button.grid(row=0, column=1, sticky=W)
+        self.cam_0_button.grid(row=0, column=2, sticky=W)
+        self.cam_1_button.grid(row=0, column=3, sticky=W)
+        self.tel_button.grid(row=0, column=4, sticky=W)
         # Camera Grid
         self.camera_0_cv.grid(row=0, column=0)
         self.camera_1_cv.grid(row=1, column=0)
 
         self.update()
+
+    def val_set(self, old: any, new: any) -> None:
+        """tkinter doesn't like calling old.set() within command= arguments, so it's done here
+        """
+        old.set(new)
+        self.update_host_display()
+
+    def set_config_menu(self) -> None:
+        """Set the config menu for what to enable, then send command packet to Scion.
+        """
+        # Build labels for boxes
+        top = tk.Toplevel(self.master)  # Put this window on top
+        config_lb = tk.Label(top, text='Set Configuration', pady=10, justify='left', anchor='nw')
+        config_lb.grid(column=0, row=0, sticky=W, columnspan=2)
+        port_cam_0_lb = tk.Label(top, text='Cam 0')
+        port_cam_0_diag = tk.Label(top)
+        port_cam_1_lb = tk.Label(top, text='Cam 1')
+        port_cam_1_diag = tk.Label(top)
+        port_tel_lb = tk.Label(top, text='Sensors')
+        port_tel_diag = tk.Label(top)
+        port_pilot_lb = tk.Label(top, text='Pilot')
+        port_pilot_diag = tk.Label(top)
+        port_logging_lb = tk.Label(top, text='Logging')
+        port_logging_diag = tk.Label(top)
+        # Grid everything
+        port_cam_0_lb.grid(column=0, row=1, sticky=W)
+        port_cam_0_diag.grid(column=1, row=1, sticky=W, columnspan=2)
+        port_cam_1_lb.grid(column=0, row=2, sticky=W)
+        port_cam_1_diag.grid(column=1, row=2, sticky=W, columnspan=2)
+        port_tel_lb.grid(column=0, row=3, sticky=W)
+        port_tel_diag.grid(column=1, row=3, sticky=W, columnspan=2)
+        port_pilot_lb.grid(column=0, row=4, sticky=W)
+        port_pilot_diag.grid(column=1, row=4, sticky=W, columnspan=2)
+        port_logging_lb.grid(column=0, row=5, sticky=W)
+        port_logging_diag.grid(column=1, row=5, sticky=W, columnspan=2)
+        # Config options
+        port_cam_0_text = tk.Label(master=port_cam_0_diag, text=str(self.camera_0_port))
+        port_cam_1_text = tk.Label(master=port_cam_1_diag, text=str(self.camera_1_port))
+        port_tel_text = tk.Label(master=port_tel_diag, text=str(self.telemetry_port))
+        port_pilot_text = tk.Label(master=port_pilot_diag, text=str(self.pilot_port))
+        port_logging_text = tk.Label(master=port_logging_diag, text=str(self.logging_port))
+        # Buttons for config options
+        port_cam_0_btn = tk.Button(master=port_cam_0_diag, text='Set Port',
+                                   command=partial(self.port_text_box, 'Camera 0', 1, self.camera_0_port, top,
+                                                   port_cam_0_text))
+        port_cam_1_btn = tk.Button(master=port_cam_1_diag, text='Set Port',
+                                   command=partial(self.port_text_box, 'Camera 1', 2, self.camera_1_port, top,
+                                                   port_cam_1_text))
+        port_tel_btn = tk.Button(master=port_tel_diag, text='Set Port',
+                                 command=partial(self.port_text_box, 'Telemetry', 1, self.telemetry_port, top,
+                                                 port_tel_text))
+        port_pilot_btn = tk.Button(master=port_pilot_diag, text='Set Port',
+                                   command=partial(self.port_text_box, 'Pilot', 1, self.pilot_port, top,
+                                                   port_pilot_text))
+        port_log_btn = tk.Button(master=port_logging_diag, text='Set Port',
+                                 command=partial(self.port_text_box, 'Logging', 1, self.logging_port, top,
+                                                 port_logging_text))
+        port_cam_0_text.grid(column=0, row=0, sticky=W)
+        port_cam_0_btn.grid(column=1, row=0, sticky=W)
+        port_cam_1_text.grid(column=0, row=1, sticky=W)
+        port_cam_1_btn.grid(column=1, row=1, sticky=W)
+        port_tel_text.grid(column=0, row=2, sticky=W)
+        port_tel_btn.grid(column=1, row=2, sticky=W)
+        port_pilot_text.grid(column=0, row=3, sticky=W)
+        port_pilot_btn.grid(column=1, row=3, sticky=W)
+        port_logging_text.grid(column=0, row=4, sticky=W)
+        port_log_btn.grid(column=1, row=4, sticky=W)
+
+    def port_text_box(self, port_name: str, def_port: int, current_port: int, parent_window: any, label: any) -> None:
+        """Generate a text box for setting port; validates input is a valid port.
+        """
+        prompt = simpledialog.askstring('Input', f'Set the {port_name} port here: (Currently {current_port})',
+                                        parent=parent_window)
+        if isinstance(prompt, str):  # None returned if window is not exited properly
+            try:
+                new_port = int(prompt)
+            except ValueError:
+                new_port = self.def_ports[def_port]
+            self.current_ports[def_port] = new_port
+            # Update ports
+            self.camera_0_port = self.current_ports[1]
+            self.camera_1_port = self.current_ports[2]
+            self.telemetry_port = self.current_ports[3]
+            self.pilot_port = self.current_ports[4]
+            self.logging_port = self.current_ports[5]
+
+    def socket_menu(self) -> None:
+        """Create a new dialog box to configure elements of communication with Scion.
+        """
+        # Build labels for boxes
+        top = tk.Toplevel(self.master)  # Put this window on top
+        config_lb = tk.Label(top, text='Enable Sockets', pady=10, justify='left', anchor='nw')
+        config_lb.grid(column=0, row=0, sticky=W, columnspan=2)
+        cam_0_lb = tk.Label(top, text='Video 0:')  # Cameras
+        cam_0_diag = tk.Label(top)
+        cam_1_lb = tk.Label(top, text='Video 1:')
+        cam_1_diag = tk.Label(top)
+        tel_lb = tk.Label(top, text='Sensors:')  # Telemetry
+        tel_diag = tk.Label(top)
+        pilot_lb = tk.Label(top, text='Pilot Control:')  # Pilot
+        pilot_diag = tk.Label(top)
+        log_lb = tk.Label(top, text='Logging:')  # Logging
+        log_diag = tk.Label(top)
+        # Grid everything
+        cam_0_lb.grid(column=0, row=1, sticky=W)
+        cam_0_diag.grid(column=1, row=1, sticky=W, columnspan=2)
+        cam_1_lb.grid(column=0, row=2, sticky=W)
+        cam_1_diag.grid(column=1, row=2, sticky=W, columnspan=2)
+        tel_lb.grid(column=0, row=3, sticky=W)
+        tel_diag.grid(column=1, row=3, sticky=W, columnspan=2)
+        pilot_lb.grid(column=0, row=4, sticky=W)
+        pilot_diag.grid(column=1, row=4, sticky=W, columnspan=2)
+        log_lb.grid(column=0, row=5, sticky=W)
+        log_diag.grid(column=1, row=5, sticky=W, columnspan=2)
+        # Radio Buttons, handle grid in the button creation function
+        Radiobutton(cam_0_diag, text='Enable', variable=self.camera_0_enable, value=1,
+                    command=partial(self.val_set, self.camera_0_enable, True)).grid(column=0, row=0)
+        Radiobutton(cam_0_diag, text='Disable', variable=self.camera_0_enable, value=0,
+                    command=partial(self.val_set, self.camera_0_enable, False)).grid(column=1, row=0)
+        Radiobutton(cam_1_diag, text='Enable', variable=self.camera_1_enable, value=1,
+                    command=partial(self.val_set, self.camera_1_enable, True)).grid(column=0, row=0)
+        Radiobutton(cam_1_diag, text='Disable', variable=self.camera_1_enable, value=0,
+                    command=partial(self.val_set, self.camera_1_enable, False)).grid(column=1, row=0)
+        Radiobutton(tel_diag, text='Enable', variable=self.telemetry_enable, value=1,
+                    command=partial(self.val_set, self.telemetry_enable, True)).grid(column=0, row=0)
+        Radiobutton(tel_diag, text='Disable', variable=self.telemetry_enable, value=0,
+                    command=partial(self.val_set, self.telemetry_enable, False)).grid(column=1, row=0)
+        Radiobutton(pilot_diag, text='Enable', variable=self.pilot_enable, value=1,
+                    command=partial(self.val_set, self.pilot_enable, True)).grid(column=0, row=0)
+        Radiobutton(pilot_diag, text='Disable', variable=self.pilot_enable, value=0,
+                    command=partial(self.val_set, self.pilot_enable, False)).grid(column=1, row=0)
+        Radiobutton(log_diag, text='Enable', variable=self.logging_enable, value=1,
+                    command=partial(self.val_set, self.logging_enable, True)).grid(column=0, row=0)
+        Radiobutton(log_diag, text='Disable', variable=self.logging_enable, value=0,
+                    command=partial(self.val_set, self.logging_enable, False)).grid(column=1, row=0)
 
     def start_camera_0(self) -> None:
         self.camera_0_shm.buf[0] = 1
@@ -151,6 +322,9 @@ class GuiWindow(tk.Frame):
 
     def start_telemetry(self) -> None:
         self.telemetry_ctrl_shm.buf[0] = 1
+
+    def start_logging(self) -> None:
+        self.logging_ctrl_shm.buf[0] = 1
 
     def update_sensors(self) -> None:
         """Update sensor data in the tkinter window by reading the sensor thread.
@@ -197,6 +371,13 @@ class GuiWindow(tk.Frame):
                     self.camera_1_img_1 = ImageTk.PhotoImage(PILImage.fromarray(image_1))
                     self.camera_1_cv.itemconfig(self.video_window_img_cv_1, image=self.camera_1_img_1)
 
+    def update_host_display(self) -> None:
+        self.camera_0_shm.buf[0] = int(self.camera_0_enable.get() is True)
+        self.camera_1_shm.buf[0] = int(self.camera_1_enable.get() is True)
+        self.telemetry_ctrl_shm.buf[0] = int(self.telemetry_enable.get() is True)
+        self.pilot_ctrl_shm.buf[0] = int(self.pilot_enable.get() is True)
+        self.pilot_ctrl_shm.buf[1] = self.current_ports[4] - 50000
+
     def update(self) -> None:
         """Update dynamic elements in the GUI window, read elements from other threads.
         Overridden from tkinter's window class
@@ -206,16 +387,17 @@ class GuiWindow(tk.Frame):
         self.after(gui_update_ms, self.update)  # Run this function again after delay of gui_update_ms
 
 
+def run_video_client(wvc: mp.Pipe, server_port: int, start_context: mp.context, camera_num: int) -> None:
+    """Run the imported video server from comms, passing the pipe as an argument
+    """
+    scion_vs.main(host='', port=server_port, ind=False, write_pipe=wvc, context=start_context, camera_num=camera_num)
+
+
 def run_telemetry_client(scion_ip: str, server_port: int) -> None:
     """Run the telemetry client for receiving sensor data.
     """
     # Setup shared memory
-    try:
-        telemetry_ctrl_shm = shm.SharedMemory(create=True, size=1, name='telemetry_ctrl_shm')
-    except FileExistsError:
-        telemetry_ctrl_shm = shm.SharedMemory(name='telemetry_ctrl_shm')
-        telemetry_ctrl_shm.unlink()
-        telemetry_ctrl_shm = shm.SharedMemory(create=True, size=1, name='telemetry_ctrl_shm')
+    telemetry_ctrl_shm = shm.SharedMemory(name='telemetry_ctrl_shm')
     try:
         depth_shm = shm.SharedMemory(create=True, size=4, name='depth_sensor_shm')
     except FileExistsError:
@@ -231,7 +413,7 @@ def run_telemetry_client(scion_ip: str, server_port: int) -> None:
 
     while True:
         if telemetry_ctrl_shm.buf[0] == 0:  # Wait for telemetry to be enabled
-            time.sleep(0.5)
+            time.sleep(sleep_thread_s)
         else:  # Establish a connection and put transmitted data into shared memory
             print("Starting telemetry socket")
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -257,17 +439,34 @@ def run_telemetry_client(scion_ip: str, server_port: int) -> None:
                     print(data)
 
 
-def run_video_client(wvc: mp.Pipe, server_port: int, start_context: mp.context, camera_num: int) -> None:
-    """Run the imported video server from comms, passing the pipe as an argument
+def run_pilot_client() -> None:
+    """Run the pilot client for controlling scion remotely.
     """
-    scion_vs.main(host='', port=server_port, ind=False, write_pipe=wvc, context=start_context, camera_num=camera_num)
+    # Setup shm
+    pilot_shm = shm.SharedMemory(name='pilot_ctrl_shm')
+    # Loop waiting for enable
+    while True:
+        if pilot_shm.buf[0] == 0:  # Wait for pilot to be enabled
+            time.sleep(sleep_thread_s)
+        else:  # Validate controller exists before starting up client
+            pg.joystick.init()
+            if pg.joystick.get_count() > 0:  # Start client
+                scion_cc.pilot_proc(argc=3, argv=['', '192.168.3.1', pilot_shm.buf[1] + 50000])
+            else:
+                print('ERROR: Attempted to start pilot without joystick')
+                pilot_shm.buf[0] = 0
+
+
+def run_logging_client(out_pipe: mp.Pipe, _: str) -> None:
+    """Run the logging client, setting up a pipe to the GUI to receive strings.
+    """
+    pass
 
 
 def init_gui(host_context: mp.context) -> None:
     """Starts up GUI window and all related programs
     """
-    # Set up UNIX Pipes for communication between processes
-    # w = write end, r = read end
+    # Set up UNIX Pipes for communication between processes. w = write end, r = read end
     wvs_pipe_0, rvs_pipe_0 = host_context.Pipe()  # Camera 0 (write end) -> | -> GUI (read end)
     wvs_pipe_1, rvs_pipe_1 = host_context.Pipe()  # Camera 1 (write end) -> | -> GUI (read end)
 
@@ -295,13 +494,44 @@ def init_gui(host_context: mp.context) -> None:
     camera_1_proc.start()
 
     # Start telemetry client
+    try:
+        telemetry_ctrl_shm = shm.SharedMemory(create=True, size=1, name='telemetry_ctrl_shm')
+    except FileExistsError:
+        telemetry_ctrl_shm = shm.SharedMemory(name='telemetry_ctrl_shm')
+        telemetry_ctrl_shm.unlink()
+        telemetry_ctrl_shm = shm.SharedMemory(create=True, size=1, name='telemetry_ctrl_shm')
     telemetry_proc = host_context.Process(target=run_telemetry_client, args=("192.168.3.1", SCION_SENSOR_PORT))
     telemetry_proc.start()
+
+    # Start pilot client
+    try:
+        pilot_shm = shm.SharedMemory(create=True, size=2, name='pilot_ctrl_shm')
+    except FileExistsError:
+        pilot_shm = shm.SharedMemory(name='pilot_ctrl_shm')
+        pilot_shm.unlink()
+        pilot_shm = shm.SharedMemory(create=True, size=2, name='pilot_ctrl_shm')
+    pilot_shm.buf[0] = 0
+    pilot_shm.buf[1] = SCION_CONTROL_PORT - 50000
+    pilot_proc = host_context.Process(target=run_pilot_client)
+    pilot_proc.start()
+
+    # Start logging client
+    # Set up UNIX Pipes for communication between processes. w = write end, r = read end
+    wls_pipe_0, rls_pipe_0 = host_context.Pipe()  # Logging Process (write end) -> | -> GUI (read end)
+    try:
+        logging_shm = shm.SharedMemory(create=True, size=1, name='logging_ctrl_shm')
+    except FileExistsError:
+        logging_shm = shm.SharedMemory(name='logging_ctrl_shm')
+        logging_shm.unlink()
+        logging_shm = shm.SharedMemory(create=True, size=1, name='logging_ctrl_shm')
+
+    logging_proc = host_context.Process(target=run_logging_client, args=(wls_pipe_0, ''))
+    logging_proc.start()
 
     # Start GUI
     gui_window = tk.Tk()
     gui_window.geometry(str(gui_resolution[0]) + "x" + str(gui_resolution[1]))
-    gui_application = GuiWindow(gui_window, camera_0_pipe=rvs_pipe_0, camera_1_pipe=rvs_pipe_1,
+    gui_application = GuiWindow(gui_window, camera_0_pipe=rvs_pipe_0, camera_1_pipe=rvs_pipe_1, logging_pipe=rls_pipe_0,
                                 host_context=host_context)
     gui_window.mainloop()
 
