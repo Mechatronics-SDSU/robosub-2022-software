@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """ROS-connected Depth Listener API
-Currently hard coded for port 50005. May change in the future.
+Currently hard coded for port 50006. May change in the future.
 """
 import rospy
 import socket
@@ -21,11 +21,11 @@ class DataWrapper:
 def depth_listener() -> None:
     # ROS
     dw = DataWrapper(debug=False)
-    rospy.init_node('listener', anonymous=True)
+    rospy.init_node('depth_listener', anonymous=True)
     rospy.Subscriber('depth_state', String, dw.callback)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind(('', 50005))
+        s.bind(('', 50006))
         s.listen()
         print('Depth API Listening...')
         conn, address = s.accept()

@@ -46,19 +46,19 @@ class logger:
     def log(self):
         return self.data
 
-    def debug(self, data):
+    def debug(self):
         logging.debug(self.log())
 
-    def info(self, data):
+    def info(self):
         logging.info(self.log())
 
-    def error(self, data):
+    def error(self):
         logging.error(self.log())
 
-    def warning(self, data):
+    def warning(self):
         logging.warning(self.log())
 
-    def critical(self, data):
+    def critical(self):
         logging.critical(self.log())
 
 
@@ -76,19 +76,19 @@ def main() -> None:
             data_logger.data = data
         if data_logger.data.startswith('DEBUG'):
             data_logger.data = data_logger.data[6:]
-            data_logger.debug(data)
+            data_logger.debug()
         elif data_logger.data.startswith('INFO'):
             data_logger.data = data_logger.data[5:]
-            data_logger.info(data)
+            data_logger.info()
         elif data_logger.data.startswith('ERROR'):
             data_logger.data = data_logger.data[6:]
-            data_logger.error(data)
+            data_logger.error()
         elif data_logger.data.startswith('WARNING'):
             data_logger.data = data_logger.data[8:]
-            data_logger.warning(data)
+            data_logger.warning()
         elif data_logger.data.startswith('CRITICAL'):
             data_logger.data = data_logger.data[9:]
-            data_logger.critical(data)
+            data_logger.critical()
         elif data_logger.data.startswith('quit'):
             break
 

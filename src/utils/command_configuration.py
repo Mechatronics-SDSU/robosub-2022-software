@@ -10,14 +10,14 @@ Subsystem socket codes: A python list of integers of all subsystems.
 Index of the list is the subsystem and the value at index is the mode it will be placed in.
 (Might make this an enum?)
 Index:
-0: LOGS (Intelligence high-level logging)
+0: LOGS (Intelligence high-level log)
 1: VIDEO (Inference video stream)
 2: TELEMETRY (Control sensor data)
 
 LOGS index[0]:
 0: Disable Logging Socket.
-1: Enable Logging Socket, logging everything.
-2: Enable Logging Socket, logging only important information.
+1: Enable Logging Socket, log everything.
+2: Enable Logging Socket, log only important information.
 
 VIDEO index[1]:
 0: Disable Video Socket.

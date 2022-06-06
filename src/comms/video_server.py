@@ -10,6 +10,8 @@ import time
 import multiprocessing as mp
 from multiprocessing import shared_memory as shm
 
+thread_sleep_s = 0.25
+
 
 def main(host: str, port: int, ind: bool, write_pipe=None, context=None, camera_num=0) -> None:
     """Runs server code for our client to have a connection, server receives and display frames
@@ -18,7 +20,7 @@ def main(host: str, port: int, ind: bool, write_pipe=None, context=None, camera_
     PORT = port
     shm_camera = shm.SharedMemory(name=f'video_server_{camera_num}_shm')
     while shm_camera.buf[0] == 0:  # Wait for GUI to signal ready
-        time.sleep(0.5)
+        time.sleep(thread_sleep_s)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     print(f'Video socket created on port {PORT}')
     s.bind((HOST, PORT))

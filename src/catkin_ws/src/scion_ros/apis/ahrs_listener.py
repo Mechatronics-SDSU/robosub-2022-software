@@ -21,7 +21,7 @@ class DataWrapper:
 def ahrs_listener() -> None:
     # ROS
     dw = DataWrapper(debug=False)
-    rospy.init_node('listener', anonymous=True)
+    rospy.init_node('ahrs_listener', anonymous=True)
     rospy.Subscriber('ahrs_state', String, dw.callback)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
