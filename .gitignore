@@ -2,6 +2,13 @@
 __pycache__/
 *.py[cod]
 
+# C
+*.d
+*.o
+*.obj
+*.so
+*.out
+
 # Pycharm
 .idea/
 

@@ -40,7 +40,7 @@ char *sensorSubsystem[] = {
 	"python3", "sensor_sys.py", NULL
 };
 char *thrusterSubsystem[] = {
-	"python3", "thruster_sys.py", NULL
+	"python3", "comms/controller_server.py", NULL
 };
 char *weaponsSubsystem[] = {
 	"python3", "weapons_sys.py", NULL
