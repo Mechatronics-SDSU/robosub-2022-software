@@ -3,7 +3,7 @@
 """
 import rospy
 import sys
-from std_msgs.msg import String
+from std_msgs.msg import Float64
 
 import sensor.depth_sensor as scion_ds
 
@@ -12,12 +12,12 @@ DEPTH_FETCH_HERTZ = 10
 
 def depth_driver() -> None:
     depth = scion_ds.Depth()
-    pub = rospy.Publisher('depth_state', String, queue_size=10)
-    rospy.init_node('pub', anonymous=True)
+    pub = rospy.Publisher('depth_state', Float64, queue_size=10)
+    rospy.init_node('depth_driver', anonymous=True)
     rate = rospy.Rate(DEPTH_FETCH_HERTZ)
     while True:
         ds = depth.get_state()
-        print(f'SENSOR DRIVER SEES: {ds}')
+        # print(f'SENSOR DRIVER SEES: {ds}')
         pub.publish(ds)
         rate.sleep()
 

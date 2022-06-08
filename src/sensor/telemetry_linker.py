@@ -4,7 +4,6 @@
 import copy
 import struct
 import pickle
-import socket
 from multiprocessing import shared_memory as shm
 
 
@@ -36,10 +35,11 @@ telemetry_data = [
 class TelemetryLinker:
     """Instantiates shared memory related to loading, saving, sending, receiving telemetry data.
     """
-    def __init__(self):
+    def __init__(self, use_shm=True):
         self.data = copy.deepcopy(telemetry_data)
-        self.shm_objects = []
-        self.setup()
+        if use_shm:
+            self.shm_objects = []
+            self.setup()
 
     def setup(self):
         """Set up all shared memory
@@ -88,22 +88,22 @@ class TelemetryLinker:
             ba.append(self.shm_objects[shm_val].buf[i])
         return struct.unpack('d', ba)[0]
 
-    def pack_shm(self) -> any:
+    def pack_data(self) -> any:
         """Load all data the class has into a pickle, set integer after comparing to default values.
         """
         return pickle.dumps(self.data)
 
-    def unpack_shm(self, loading_pickle: bytes) -> any:
+    def unpack_data(self, loading_pickle: bytes) -> None:
         """Unpack a pickle with all data, load into shm
         """
         data = pickle.loads(loading_pickle)
-        print(data)
         for i in range(len(data)):
             self.load_data(i, data[i])
 
 
 def telemetry_server():
     """Start a socket server for GUI to access for telemetry data.
+    Testing only!
     """
     tel = TelemetryLinker()
 
