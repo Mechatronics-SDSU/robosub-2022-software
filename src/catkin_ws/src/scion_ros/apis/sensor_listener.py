@@ -3,7 +3,7 @@
 """
 
 import rospy
-from std_msgs.msg import String
+from std_msgs.msg import String, Float64
 import socket
 
 import utils.scion_utils as scion_ut
@@ -24,7 +24,7 @@ def sensor_listener():
     rospy.init_node('sensor_listener', anonymous=True)
     # Listen to all sensors
     rospy.Subscriber('ahrs_state', String, dw_ahrs.callback)
-    rospy.Subscriber('depth_state', String, dw_depth.callback)
+    rospy.Subscriber('depth_state', Float64, dw_depth.callback)
     # Add more sensors here as they get added to ROS and update the telemetry linker
     # Frontend access
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
