@@ -9,6 +9,10 @@ else
   source ./start/append_path.sh
 fi
 # Run test for devices in /dev
+. start/enumerate.sh
 # Change mod on devices
+python3 start/dev_change.py
 # Run roscore
+roscore &
 # Start masterprocess
+./start/masterprocess -a
