@@ -41,7 +41,7 @@ class Depth:
             print(e)
             sys.exit(1)
 
-    def get_state(self) -> str:
+    def get_state(self) -> float:
         """Read the current state of the sensor. Returns as list.
         """
         if self.device is not None:
@@ -50,9 +50,9 @@ class Depth:
                 resp = self.device.readline()
                 # print(f"resp: {resp}")
                 if "None" in str(resp):
-                    return str(0.0)
+                    return 0.0
                 if resp[0] == ord('r'):
-                    return str(resp[1:-1])
+                    return float(resp[1:-1])
             except serial.SerialException as e:
                 print("Error: Serial communication error when attempting to get state, attempting to re-establish...")
                 # self.com_test()

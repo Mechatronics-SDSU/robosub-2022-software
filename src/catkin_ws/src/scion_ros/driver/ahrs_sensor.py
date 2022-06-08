@@ -21,8 +21,8 @@ def ahrs_driver(ahrs_name: str) -> None:
     while True:
         yaw = ahrs.get_true_heading()
         pitch, roll = ahrs.get_pitch_roll()
-        print(f'DRIVER SENDING: Pitch: {pitch}, Roll: {roll}, Yaw: {yaw}')
-        pub.publish(f'Pitch: {pitch}, Roll: {roll}, Yaw: {yaw}')
+        print(f'DRIVER SENDING: P|{pitch}R|{roll}Y|{yaw}')
+        pub.publish(f'P|{pitch}R|{roll}Y|{yaw}')
         rate.sleep()
 
 
