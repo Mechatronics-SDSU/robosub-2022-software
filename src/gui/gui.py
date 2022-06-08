@@ -68,13 +68,13 @@ color_term_green = (74, 246, 38)
 color_error_red = (255, 0, 3)
 
 # Network
+SCION_DEFAULT_IPV4 = '192.168.3.1'
 SCION_COMMAND_PORT = 50000
 SCION_CAMERA_0_PORT = 50001
 SCION_CAMERA_1_PORT = 50002
 SCION_CONTROL_PORT = 50004
 SCION_SENSOR_PORT = 50003
 SCION_LOGGING_PORT = 50005
-SCION_DEPTH_PORT = 50006
 
 
 class GuiWindow(tk.Frame):
@@ -102,10 +102,10 @@ class GuiWindow(tk.Frame):
         self.logging_fr = tk.Frame(master=self.tk_master, width=logging_resolution[0], height=logging_resolution[1],
                                    bg='grey')
         # Ports
-        self.def_ports = (SCION_COMMAND_PORT, SCION_CAMERA_0_PORT, SCION_CAMERA_1_PORT, SCION_SENSOR_PORT, SCION_CONTROL_PORT,
-                          SCION_LOGGING_PORT)
-        self.current_ports = [SCION_COMMAND_PORT, SCION_CAMERA_0_PORT, SCION_CAMERA_1_PORT, SCION_SENSOR_PORT, SCION_CONTROL_PORT,
-                              SCION_LOGGING_PORT]
+        self.def_ports = (SCION_COMMAND_PORT, SCION_CAMERA_0_PORT, SCION_CAMERA_1_PORT, SCION_SENSOR_PORT,
+                          SCION_CONTROL_PORT, SCION_LOGGING_PORT)
+        self.current_ports = [SCION_COMMAND_PORT, SCION_CAMERA_0_PORT, SCION_CAMERA_1_PORT, SCION_SENSOR_PORT,
+                              SCION_CONTROL_PORT, SCION_LOGGING_PORT]
         self.cmd_port = self.current_ports[0]
         self.camera_0_port = self.current_ports[1]
         self.camera_1_port = self.current_ports[2]
@@ -258,7 +258,7 @@ class GuiWindow(tk.Frame):
         """
         prompt = simpledialog.askstring('Input', f'Set the {port_name} port here: (Currently {current_port})',
                                         parent=parent_window)
-        if isinstance(prompt, str):  # None returned if window is not exited properly
+        if isinstance(prompt, str):  # None returned if window does not exit properly
             try:
                 new_port = int(prompt)
             except ValueError:
@@ -338,6 +338,9 @@ class GuiWindow(tk.Frame):
         """
         if self.telemetry_ctrl_shm.buf[0] == 2:  # Telemetry has data
             self.telemetry_linker.load_all()  # Get data stored in sensor shm and load it into linker
+            # Text elements for displaying data
+            # Load text into an opencv frame
+            # Convert to be tkinter compatible
             print(self.telemetry_linker.data)  # Temporary until we can verify
 
     def update_cameras(self) -> None:
@@ -395,6 +398,12 @@ class GuiWindow(tk.Frame):
         self.after(gui_update_ms, self.update)  # Run this function again after delay of gui_update_ms
 
 
+def run_cnc_server() -> None:
+    """Run the command and control server for setting Scion's configuration before starting.
+    """
+    pass
+
+
 def run_video_client(wvc: mp.Pipe, server_port: int, start_context: mp.context, camera_num: int) -> None:
     """Run the imported video server from comms, passing the pipe as an argument
     """
@@ -450,7 +459,7 @@ def run_pilot_client() -> None:
         else:  # Validate controller exists before starting up client
             pg.joystick.init()
             if pg.joystick.get_count() > 0:  # Start client
-                scion_cc.pilot_proc(argc=3, argv=['', '192.168.3.1', pilot_shm.buf[1] + 50000])
+                scion_cc.pilot_proc(argc=3, argv=['', '192.168.3.1', pilot_shm.buf[1] + SCION_COMMAND_PORT])
             else:
                 print('ERROR: Attempted to start pilot without joystick')
                 pilot_shm.buf[0] = 0
@@ -499,7 +508,7 @@ def init_gui(host_context: mp.context) -> None:
         telemetry_ctrl_shm = shm.SharedMemory(name='telemetry_ctrl_shm')
         telemetry_ctrl_shm.unlink()
         telemetry_ctrl_shm = shm.SharedMemory(create=True, size=1, name='telemetry_ctrl_shm')
-    telemetry_proc = host_context.Process(target=run_telemetry_client, args=("192.168.3.1", SCION_SENSOR_PORT))
+    telemetry_proc = host_context.Process(target=run_telemetry_client, args=(SCION_DEFAULT_IPV4, SCION_SENSOR_PORT))
     telemetry_proc.start()
 
     # Start pilot client
@@ -510,7 +519,7 @@ def init_gui(host_context: mp.context) -> None:
         pilot_shm.unlink()
         pilot_shm = shm.SharedMemory(create=True, size=2, name='pilot_ctrl_shm')
     pilot_shm.buf[0] = 0
-    pilot_shm.buf[1] = SCION_CONTROL_PORT - 50000
+    pilot_shm.buf[1] = SCION_CONTROL_PORT - SCION_COMMAND_PORT
     pilot_proc = host_context.Process(target=run_pilot_client)
     pilot_proc.start()
 
