@@ -12,7 +12,11 @@ fi
 . start/enumerate.sh
 # Change mod on devices
 python3 start/dev_change.py
-# Run roscore
+# ROS
 roscore &
+cd catkin_ws
+catkin_make
+source devel/setup.bash
+cd ..
 # Start masterprocess
 ./start/masterprocess -a

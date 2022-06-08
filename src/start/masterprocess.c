@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
 		s = 0;
 	/*If a was set, change s to be everything*/
 	if (argstruct.setaarg)
-		s = 511; /*Every other arg added together*/
+		s = 60; /*Every other arg added together*/
 	if (s < 1) { /*Don't fork, integer failed to correctly parse*/
 		printf("Error: -s argument  less than 1.\n");
 		exit(EXIT_FAILURE);

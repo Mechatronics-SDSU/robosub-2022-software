@@ -34,13 +34,19 @@ char *loggingSubsystem[] = {
 	"python3", "logging_sys.py", NULL
 };
 char *visionSubsystem[] = {
-	"python3", "vision_sys.py", NULL
+	"python3", "comms/video_client.py", NULL
 };
-char *sensorSubsystem[] = {
-	"python3", "sensor_sys.py", NULL
+char *ahrsSensor[] = {
+    "rosrun", "scion_ros", "ahrs_sensor.py", NULL
+};
+char *depthSensor[] = {
+    "rosrun", "scion_ros", "depth_sensor.py", NULL
+};
+char *sensorAPI[] = {
+    "rosrun", "scion_ros", "sensor_listener.py", NULL
 };
 char *thrusterSubsystem[] = {
-	"python3", "comms/controller_server.py", NULL
+	"python3", "comms/controller_server.py", "/dev/ttyACM0", NULL
 };
 char *weaponsSubsystem[] = {
 	"python3", "weapons_sys.py", NULL
@@ -63,16 +69,15 @@ char *detectionSubsystem[] = {
 * Indexed by power of 2 in regard to the arguent chart.
 */
 char **programStartup[] = {
-	lsCommand,
-	loggingSubsystem,
-	visionSubsystem,
-	sensorSubsystem,
-	thrusterSubsystem,
-	weaponsSubsystem,
-	heuristicsSubsystem,
-	sensorAggSubsystem,
-	trackingSubsystem,
-	detectionSubsystem
+	loggingSubsystem, /* 1 */
+	visionSubsystem, /* 2 */
+	sensorAPI, /* 4 */
+	ahrsSensor, /* 8 */
+	depthSensor, /* 16 */
+	thrusterSubsystem, /* 32 */
+	sensorAggSubsystem, /* 64 */
+	trackingSubsystem, /* 128 */
+	detectionSubsystem /* 256 */
 };
 
 int helpcommand();
