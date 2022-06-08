@@ -93,11 +93,10 @@ class TelemetryLinker:
         """
         return pickle.dumps(self.data)
 
-    def unpack_data(self, loading_pickle: bytes) -> any:
+    def unpack_data(self, loading_pickle: bytes) -> None:
         """Unpack a pickle with all data, load into shm
         """
         data = pickle.loads(loading_pickle)
-        print(data)
         for i in range(len(data)):
             self.load_data(i, data[i])
 

@@ -1,5 +1,10 @@
 """
 Scion's GUI Application (name is pending)
+This is mostly a port of Pico's GUI with some changes:
+0. Well thought out algorithm and design decisons
+1. Using a sensible way of sharing memory (multiprocessing.SharedMemory )that isn't using UNIX pipes.
+2. Support for 2 cameras instead of 1
+3. Support for far more flexible APIs
 
 Layout:
 (Not to scale)
@@ -43,6 +48,7 @@ import cv2
 
 import comms.video_server as scion_vs
 import comms.controller_client as scion_cc
+import sensor.telemetry_linker as scion_tl
 
 # GUI constants
 edge_size = 2
@@ -132,6 +138,7 @@ class GuiWindow(tk.Frame):
         self.sensors_fr = tk.Frame(master=self.tk_master, width=sensor_resolution[0], height=sensor_resolution[1],
                                    bg='yellow')
         self.telemetry_ctrl_shm = shm.SharedMemory(name='telemetry_ctrl_shm')
+        self.telemetry_linker = scion_tl.TelemetryLinker(use_shm=True)
 
         # Pilot
         self.pilot_ctrl_shm = shm.SharedMemory(name='pilot_ctrl_shm')
@@ -327,10 +334,11 @@ class GuiWindow(tk.Frame):
         self.logging_ctrl_shm.buf[0] = 1
 
     def update_sensors(self) -> None:
-        """Update sensor data in the tkinter window by reading the sensor thread.
-        Get data stored in sensor thread and calculate ETA since obtained.
+        """Update sensor data in the tkinter window by reading what was last sent on the sensor thread.
         """
-        pass
+        if self.telemetry_ctrl_shm.buf[0] == 2:  # Telemetry has data
+            self.telemetry_linker.load_all()  # Get data stored in sensor shm and load it into linker
+            print(self.telemetry_linker.data)  # Temporary until we can verify
 
     def update_cameras(self) -> None:
         """Update camera frames in the tkinter window by reading the camera process.
@@ -383,7 +391,7 @@ class GuiWindow(tk.Frame):
         Overridden from tkinter's window class
         """
         self.update_cameras()
-
+        self.update_sensors()
         self.after(gui_update_ms, self.update)  # Run this function again after delay of gui_update_ms
 
 
@@ -398,18 +406,8 @@ def run_telemetry_client(scion_ip: str, server_port: int) -> None:
     """
     # Setup shared memory
     telemetry_ctrl_shm = shm.SharedMemory(name='telemetry_ctrl_shm')
-    try:
-        depth_shm = shm.SharedMemory(create=True, size=4, name='depth_sensor_shm')
-    except FileExistsError:
-        depth_shm = shm.SharedMemory(name='depth_sensor_shm')
-        depth_shm.unlink()
-        depth_shm = shm.SharedMemory(create=True, size=4, name='depth_sensor_shm')
-    try:
-        ahrs_shm = shm.SharedMemory(create=True, size=6, name='ahrs_shm')
-    except FileExistsError:
-        ahrs_shm = shm.SharedMemory(name='ahrs_shm')
-        ahrs_shm.unlink()
-        ahrs_shm = shm.SharedMemory(create=True, size=6, name='ahrs_shm')
+    # Setup telemetry linker
+    linker = scion_tl.TelemetryLinker(use_shm=True)
 
     while True:
         if telemetry_ctrl_shm.buf[0] == 0:  # Wait for telemetry to be enabled
@@ -436,7 +434,8 @@ def run_telemetry_client(scion_ip: str, server_port: int) -> None:
                     except (ConnectionAbortedError, ConnectionResetError):
                         telemetry_ctrl_shm.buf[0] = 1
                         break
-                    print(data)
+                    # Parse into telemetry linker
+                    linker.unpack_data(loading_pickle=data)
 
 
 def run_pilot_client() -> None:
