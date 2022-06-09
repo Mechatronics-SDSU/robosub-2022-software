@@ -19,4 +19,4 @@ catkin_make
 source devel/setup.bash
 cd ..
 # Start masterprocess
-./start/masterprocess -a
+# ./start/masterprocess -a

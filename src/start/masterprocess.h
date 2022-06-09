@@ -15,6 +15,11 @@ typedef struct {
 	char *sptr;
 }argdef;
 
+/* Holds strings for device names */
+typedef struct {
+	char[256] devname;
+}extdev;
+
 
 /* Help command printout */
 char *helparguments[] = {
@@ -34,19 +39,19 @@ char *loggingSubsystem[] = {
 	"python3", "logging_sys.py", NULL
 };
 char *visionSubsystem[] = {
-	"python3", "comms/video_client.py", NULL
+	"python3", "comms/video_client.py", NULL /*devname*/
 };
 char *ahrsSensor[] = {
-    "rosrun", "scion_ros", "ahrs_sensor.py", NULL
+    "rosrun", "scion_ros", "ahrs_sensor.py", NULL /*devname*/
 };
 char *depthSensor[] = {
-    "rosrun", "scion_ros", "depth_sensor.py", NULL
+    "rosrun", "scion_ros", "depth_sensor.py", NULL /*devname*/
 };
 char *sensorAPI[] = {
-    "rosrun", "scion_ros", "sensor_listener.py", NULL
+    "rosrun", "scion_ros", "sensor_listener.py", NULL /*devname*/
 };
 char *thrusterSubsystem[] = {
-	"python3", "comms/controller_server.py", "/dev/ttyACM0", NULL
+	"python3", "comms/controller_server.py", "/dev/ttyACM0", NULL  /*devname*/
 };
 char *weaponsSubsystem[] = {
 	"python3", "weapons_sys.py", NULL
