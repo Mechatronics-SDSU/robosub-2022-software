@@ -9,49 +9,69 @@
 /* Struct for holding information about program's arguments */
 typedef struct {
 	int setaarg;
+	int setdarg;
 	int setharg;
 	int setiarg;
 	int setsarg;
 	char *sptr;
 }argdef;
 
-/* Holds strings for device names */
-typedef struct {
-	char[256] devname;
-}extdev;
-
-
 /* Help command printout */
 char *helparguments[] = {
 	"Scion Master Process",
 	"Arguments:",
-	" -a : [a]ll, Starts up all programs + utilities",
-	" -h : [h]elp, Prints this screen",
-	" -i : [i]/o, Disables activation of CAN + Network",
-	" -s <number>: [s]tart, Start programs based on program integer."
+	" -a : [a]ll, Starts up all programs + utilities.",
+	" -d : [d]ebug, Show full output",
+	" -h : [h]elp, Prints this screen.",
+	" -i : ap[i], Do not start ROS APIs, only essential programs. (competition mode)",
+	" -s <number>: [s]tart, Start program(s) based on program integer."
 };
 
-/* All commands are defined here in comma separated string consts for execvp */
+/*Fixed strings for devstrs in known_device_names.cfg*/
+char *devstrs[] = {
+	"Killswitch",
+	"AHRS",
+	"Depth",
+	"Maestro",
+	"Leak"
+};
+
+int cpydev[sizeof(devstrs)/sizeof(devstrs[0])]; /*Booleans for if something was loaded*/
+char devs[sizeof(devstrs)/sizeof(devstrs[0])][255]; /*sorted output*/
+char devbuf[sizeof(devstrs)/sizeof(devstrs[0])][255]; /*unmatched device names ex. /dev/ttyUSB1*/
+char devnamebuf[sizeof(devstrs)/sizeof(devstrs[0])][255]; /*unmatched current devstrs*/
+
+/* All commands are defined here in comma separated string consts for execvp 
+Commands with 2 NULL pointers will have string pointers set for device names.*/
+char *noop[] = {
+	NULL
+};
 char *lsCommand[] = {
 	"ls", ".", NULL
+};
+char *killSwitch[] = {
+	"python3", "killswitch/killswitch-aio.py", NULL, NULL /*devs[0]*/
+};
+char *leakDetection[] = {
+	"python3", "sensor/leak_detection.py", NULL, NULL /*devs[4]*/
 };
 char *loggingSubsystem[] = {
 	"python3", "logging_sys.py", NULL
 };
 char *visionSubsystem[] = {
-	"python3", "comms/video_client.py", NULL /*devname*/
+	"python3", "comms/video_client.py", NULL
 };
 char *ahrsSensor[] = {
-    "rosrun", "scion_ros", "ahrs_sensor.py", NULL /*devname*/
+    "rosrun", "scion_ros", "ahrs_sensor.py", NULL, NULL /*devs[1]*/
 };
 char *depthSensor[] = {
-    "rosrun", "scion_ros", "depth_sensor.py", NULL /*devname*/
+    "rosrun", "scion_ros", "depth_sensor.py", NULL, NULL /*devs[2]*/
 };
 char *sensorAPI[] = {
-    "rosrun", "scion_ros", "sensor_listener.py", NULL /*devname*/
+    "rosrun", "scion_ros", "sensor_listener.py", NULL
 };
 char *thrusterSubsystem[] = {
-	"python3", "comms/controller_server.py", "/dev/ttyACM0", NULL  /*devname*/
+	"python3", "comms/controller_server.py", NULL, NULL  /*devs[3]*/
 };
 char *weaponsSubsystem[] = {
 	"python3", "weapons_sys.py", NULL
@@ -69,20 +89,40 @@ char *detectionSubsystem[] = {
 	"python3", "detection_sys.py", NULL
 };
 
+/*List of programs to change nullptrs for to device names.*/
+char **syswdev[] = {
+	killSwitch,
+	ahrsSensor,
+	depthSensor,
+	thrusterSubsystem,
+	leakDetection
+};
+
+/*Index location where the nullptrs are to change in syswdev.*/
+int syswdevloc[] = {
+	2, /*killswitch*/
+	3,
+	3,
+	3,
+	2
+};
+
 /**
 * List of programs to start up, with all default arguments.
 * Indexed by power of 2 in regard to the arguent chart.
 */
 char **programStartup[] = {
-	loggingSubsystem, /* 1 */
-	visionSubsystem, /* 2 */
-	sensorAPI, /* 4 */
-	ahrsSensor, /* 8 */
-	depthSensor, /* 16 */
-	thrusterSubsystem, /* 32 */
-	sensorAggSubsystem, /* 64 */
-	trackingSubsystem, /* 128 */
-	detectionSubsystem /* 256 */
+	noop, /*Remains at start*/
+	loggingSubsystem, /*1*/
+	visionSubsystem, /*2*/
+	sensorAPI, /*4*/
+	ahrsSensor, /*8*/
+	depthSensor, /*16*/
+	thrusterSubsystem, /*32*/
+	sensorAggSubsystem, /*64*/
+	trackingSubsystem, /*128*/
+	detectionSubsystem, /*256*/
+	lsCommand /*512*/
 };
 
 int helpcommand();
