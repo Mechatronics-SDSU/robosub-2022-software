@@ -5,9 +5,11 @@
  * Contributers:
  * Ian Reichard
  */
+#define _DEFAULT_SOURCE
 #include "masterprocess.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <math.h>
@@ -33,7 +35,7 @@ void loaddevs(int setdarg) {
 	int buflen = 255;
 	char strbuf[buflen];
 	/*Open config with devs*/
-	FILE *fd = fopen("known_devices.cfg", "r");
+	FILE *fd = fopen("current_devices.cfg", "r");
 	if (fd == NULL)
 		exit(EXIT_FAILURE);
 	/*Read entire dev file into strings*/
@@ -43,7 +45,7 @@ void loaddevs(int setdarg) {
 		i++;
 	}
 	/*Open config with dev names*/
-	FILE *fd1 = fopen("known_device_names.cfg", "r");
+	FILE *fd1 = fopen("current_device_names.cfg", "r");
 	if (fd1 == NULL)
 		exit(EXIT_FAILURE);
 	/*Read entire dev name file into strings*/
@@ -123,22 +125,14 @@ int argparse(int argc, char *argv[], argdef *argstructptr) {
 					argstructptr->setsarg = 1;
 					argstructptr->sptr = *(argv + i + 1);
 					break;
+				case 'w': /*Start Watchdog*/
+					argstructptr->setwarg = 1;
+					break;
 				default:;
 			}
 		}
 	}
 	return 0; /*Successful parsing*/
-}
-
-/*Temporary testing function for program arguments.*/
-void testprog() {
-	int i;
-	for (i = 0;; i++) {
-		if (killSwitch[i] == NULL)
-			break;
-		printf("%s\n", killSwitch[i]);
-	}
-	exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char *argv[]) {
@@ -153,6 +147,8 @@ int main(int argc, char *argv[]) {
 	argstruct.setharg = 0;
 	argstruct.setiarg = 0;
 	argstruct.setsarg = 0;
+	argstruct.setwarg = 0;
+	FILE *wdfp;
 	argdef *argstructptr = &argstruct;
 	if (argc > 1)
 		argResult = argparse(argc, argv, argstructptr);
@@ -165,15 +161,21 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	if (argstruct.setdarg)
-		printf("%s a[%d] d[%d] h[%d] i[%d] s[%d]\n", "Arguments seen:",
+		printf("%s a[%d] d[%d] h[%d] i[%d] s[%d] w[%d]\n", "Arguments seen:",
 		 argstruct.setaarg, argstruct.setdarg, argstruct.setharg, 
-		 argstruct.setiarg, argstruct.setsarg);
+		 argstruct.setiarg, argstruct.setsarg, argstruct.setwarg);
 	/*Test to see if help argument was issued first, if it was ignore all others*/
 	if (argstruct.setharg)
 		helpcommand();
-	/*Test to see if we only start without API*/
-	if (argstruct.setiarg)
-		loaddevs(argstruct.setdarg);
+	/*Start watchdog program, if applicable*/
+	if (argstruct.setwarg) {
+
+		wdfp = popen(wdprog, "w");
+		if (wdfp == NULL) /*Validate process started*/
+			exit(EXIT_FAILURE);
+	}
+	/*Load devices from *.cfg into memory*/
+	loaddevs(argstruct.setdarg);
 	/*Successful parsing indicates sptr was set, convert to int*/
 	if (NULL != argstruct.sptr)
 		s = atoi(argstruct.sptr);
@@ -182,6 +184,9 @@ int main(int argc, char *argv[]) {
 	/*If a was set, change s to be everything*/
 	if (argstruct.setaarg)
 		s = 60; /*Every other arg added together*/
+	/*Test to see if we only start without API*/
+	if (argstruct.setiarg)
+		s = 512; /*Every arg for full autonomous without APIs*/
 	if (s < 1) { /*Don't fork, integer failed to correctly parse*/
 		printf("Error: -s argument  less than 1.\n");
 		exit(EXIT_FAILURE);
@@ -207,6 +212,18 @@ int main(int argc, char *argv[]) {
 				execprogram(i);
 				exit(EXIT_SUCCESS);
 			}
+		}
+	}
+	/*Wait on watchdog*/
+	if (argstruct.setwarg) {
+		char buf[255];
+		while (1) {
+			fputs(buf, wdfp);
+			buf[254] = '\0'; /*Safely null terminate buffer*/
+			printf("masterprocess sees: ");
+			printf("%s\n", buf);
+			fflush(wdfp);
+			sleep(1);
 		}
 	}
 	/*Additional functionality to be added here. For now waits for last child pid*/

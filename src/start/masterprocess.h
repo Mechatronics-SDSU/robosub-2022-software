@@ -13,6 +13,7 @@ typedef struct {
 	int setharg;
 	int setiarg;
 	int setsarg;
+	int setwarg;
 	char *sptr;
 }argdef;
 
@@ -24,7 +25,8 @@ char *helparguments[] = {
 	" -d : [d]ebug, Show full output",
 	" -h : [h]elp, Prints this screen.",
 	" -i : ap[i], Do not start ROS APIs, only essential programs. (competition mode)",
-	" -s <number>: [s]tart, Start program(s) based on program integer."
+	" -s <number>: [s]tart, Start program(s) based on program integer.",
+	" -w : [w]atchdog, Start watchdog program."
 };
 
 /*Fixed strings for devstrs in known_device_names.cfg*/
@@ -40,6 +42,9 @@ int cpydev[sizeof(devstrs)/sizeof(devstrs[0])]; /*Booleans for if something was 
 char devs[sizeof(devstrs)/sizeof(devstrs[0])][255]; /*sorted output*/
 char devbuf[sizeof(devstrs)/sizeof(devstrs[0])][255]; /*unmatched device names ex. /dev/ttyUSB1*/
 char devnamebuf[sizeof(devstrs)/sizeof(devstrs[0])][255]; /*unmatched current devstrs*/
+
+/* Watchdog program string*/
+char *wdprog = "python3 start/watchdog.py";
 
 /* All commands are defined here in comma separated string consts for execvp 
 Commands with 2 NULL pointers will have string pointers set for device names.*/
