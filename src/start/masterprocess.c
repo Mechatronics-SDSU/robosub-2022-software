@@ -197,10 +197,23 @@ int main(int argc, char *argv[]) {
 	}
 	if (argstruct.setdarg)
 		printf("Calculated sarg=[%d]\n", s);
+	/*Wait on watchdog for cnc server or switch program to set config*/
+	if (argstruct.setcarg) {
+		char buf[255];
+		while (1) {
+			/*Read pipe*/
+			/*Test for inputs to run correct programs*/
+			/*Set s argument to start up relevant programs*/
+			/*Clear input*/
+			fflush(wdfp);
+			sleep(1);
+		}
+	}
 	/*Go through everything in s argument*/
 	int numPrograms = sizeof(programStartup)/sizeof(programStartup[0]);
 	/*Commented out myPid line until we need it later*/
 	/* pid_t myPid = getpid();*/
+	
 	pid_t childPid;
 	for (i = numPrograms-1; i > 0; i--) {
 		/*Bitwise AND with the powers of 2 in s argument*/
@@ -218,18 +231,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	}
-	/*Wait on watchdog*/
-	if (argstruct.setwarg) {
-		char buf[255];
-		while (1) {
-			fputs(buf, wdfp);
-			buf[254] = '\0'; /*Safely null terminate buffer*/
-			printf("masterprocess sees: ");
-			printf("%s\n", buf);
-			fflush(wdfp);
-			sleep(1);
-		}
-	}
+	
 	/*Additional functionality to be added here. For now waits for last child pid*/
 	wait(&childPid);
 	exit(EXIT_SUCCESS);
