@@ -9,6 +9,7 @@
 /* Struct for holding information about program's arguments */
 typedef struct {
 	int setaarg;
+	int setcarg;
 	int setdarg;
 	int setharg;
 	int setiarg;
@@ -22,9 +23,10 @@ char *helparguments[] = {
 	"Scion Master Process",
 	"Arguments:",
 	" -a : [a]ll, Starts up all programs + utilities.",
+	" -c : [c]ommand and control, Start and wait on cnc server/autobutton."
 	" -d : [d]ebug, Show full output",
 	" -h : [h]elp, Prints this screen.",
-	" -i : ap[i], Do not start ROS APIs, only essential programs. (competition mode)",
+	" -i : ap[i], Do not start ROS APIs, only auto programs. note: -c -w -s <auto number>.",
 	" -s <number>: [s]tart, Start program(s) based on program integer.",
 	" -w : [w]atchdog, Start watchdog program."
 };

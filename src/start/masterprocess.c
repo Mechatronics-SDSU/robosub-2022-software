@@ -112,6 +112,9 @@ int argparse(int argc, char *argv[], argdef *argstructptr) {
 				case 'a':  /*Everything*/
 					argstructptr->setaarg = 1;
 					break;
+				case 'c':
+					argstructptr->setcarg = 1;
+					break;
 				case 'd': /*Show output*/
 					argstructptr->setdarg = 1;
 					break;
@@ -143,6 +146,7 @@ int main(int argc, char *argv[]) {
 	argdef argstruct;
 	argstruct.sptr = NULL;
 	argstruct.setaarg = 0;
+	argstruct.setcarg = 0;
 	argstruct.setdarg = 0;
 	argstruct.setharg = 0;
 	argstruct.setiarg = 0;
@@ -169,7 +173,7 @@ int main(int argc, char *argv[]) {
 		helpcommand();
 	/*Start watchdog program, if applicable*/
 	if (argstruct.setwarg) {
-
+		/*Establish a pipe*/
 		wdfp = popen(wdprog, "w");
 		if (wdfp == NULL) /*Validate process started*/
 			exit(EXIT_FAILURE);
