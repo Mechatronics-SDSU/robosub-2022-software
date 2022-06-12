@@ -137,6 +137,16 @@ class GuiWindow(tk.Frame):
         # Sensors/Telemetry
         self.sensors_fr = tk.Frame(master=self.tk_master, width=sensor_resolution[0], height=sensor_resolution[1],
                                    bg='yellow')
+        self.telemetry_canvas_0 = tk.Canvas(master=self.sensors_fr, width=sensor_resolution[0],
+                                            height=sensor_resolution[1], bd=0, bg='green')
+        self.telemetry_canvas_0_img = ImageTk.PhotoImage(PILImage.open('img/sensor_base_22.png'))
+        self.telemetry_canvas_1_img = ImageTk.PhotoImage(PILImage.open('img/sensor_base_22.png'))
+        self.telemetry_frame_counter = 0
+        self.telemetry_canvas_0_config = self.telemetry_canvas_0.create_image((1, 1),
+                                                                              anchor=tk.NW,
+                                                                              image=self.telemetry_canvas_0_img)
+        self.sensors_cv = tk.Canvas(master=self.master, width=sensor_resolution[0], height=sensor_resolution[1],
+                                    bg='black')
         self.telemetry_ctrl_shm = shm.SharedMemory(name='telemetry_ctrl_shm')
         self.telemetry_linker = scion_tl.TelemetryLinker(use_shm=True)
 
@@ -183,6 +193,8 @@ class GuiWindow(tk.Frame):
         # Camera Grid
         self.camera_0_cv.grid(row=0, column=0)
         self.camera_1_cv.grid(row=1, column=0)
+        # Sensors
+        self.telemetry_canvas_0.grid()
 
         self.update()
 
@@ -339,9 +351,33 @@ class GuiWindow(tk.Frame):
         if self.telemetry_ctrl_shm.buf[0] == 2:  # Telemetry has data
             self.telemetry_linker.load_all()  # Get data stored in sensor shm and load it into linker
             # Text elements for displaying data
+            sensor_frame = cv2.imread('img/sensor_base_22.png')
             # Load text into an opencv frame
+            cv2.putText(img=sensor_frame, text='Pitch:', org=(8, 25), fontFace=cv2.FONT_HERSHEY_PLAIN,
+                        fontScale=1.2, color=color_term_green, thickness=1)
+            cv2.putText(img=sensor_frame, text=f'{round(self.telemetry_linker.data[0], 3)}', org=(150, 25),
+                        fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1.2, color=color_term_green, thickness=1)
+            cv2.putText(img=sensor_frame, text='Roll:', org=(8, 50), fontFace=cv2.FONT_HERSHEY_PLAIN,
+                        fontScale=1.2, color=color_term_green, thickness=1)
+            cv2.putText(img=sensor_frame, text=f'{round(self.telemetry_linker.data[1], 3)}', org=(150, 50),
+                        fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1.2, color=color_term_green, thickness=1)
+            cv2.putText(img=sensor_frame, text='Yaw:', org=(8, 75), fontFace=cv2.FONT_HERSHEY_PLAIN,
+                        fontScale=1.2, color=color_term_green, thickness=1)
+            cv2.putText(img=sensor_frame, text=f'{round(self.telemetry_linker.data[2], 3)}', org=(150, 75),
+                        fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1.2, color=color_term_green, thickness=1)
+            cv2.putText(img=sensor_frame, text='Depth:', org=(8, 100), fontFace=cv2.FONT_HERSHEY_PLAIN,
+                        fontScale=1.2, color=color_term_green, thickness=1)
+            cv2.putText(img=sensor_frame, text=f'{round(self.telemetry_linker.data[3], 3)}', org=(150, 100),
+                        fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1.2, color=color_term_green, thickness=1)
             # Convert to be tkinter compatible
-            print(self.telemetry_linker.data)  # Temporary until we can verify
+            self.telemetry_frame_counter += 1
+            if self.telemetry_frame_counter % 2 == 1:
+                self.telemetry_canvas_1_img = ImageTk.PhotoImage(PILImage.fromarray(sensor_frame))
+                self.telemetry_canvas_0.itemconfig(self.telemetry_canvas_0_config, image=self.telemetry_canvas_1_img)
+            else:
+                self.telemetry_canvas_0_img = ImageTk.PhotoImage(PILImage.fromarray(sensor_frame))
+                self.telemetry_canvas_0.itemconfig(self.telemetry_canvas_0_config, image=self.telemetry_canvas_1_img)
+            # print(self.telemetry_linker.data)  # Temporary until we can verify
 
     def update_cameras(self) -> None:
         """Update camera frames in the tkinter window by reading the camera process.

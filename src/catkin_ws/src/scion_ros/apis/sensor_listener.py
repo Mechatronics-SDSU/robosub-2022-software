@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.8
 """Reads all sensor data on ROS using the telemetry linker and connects to a telemetry client.
 """
 
@@ -41,7 +41,7 @@ def sensor_listener():
                 linker.data[0] = dw_ahrs.pitch
                 linker.data[1] = dw_ahrs.roll
                 linker.data[2] = dw_ahrs.yaw
-                linker.data[3] = dw_depth.depth
+                linker.data[3] = float(dw_depth.depth)
                 # Pickle and send
                 data = linker.pack_data()
                 conn.sendall(data)

@@ -68,6 +68,9 @@ char *loggingSubsystem[] = {
 char *visionSubsystem[] = {
 	"python3", "comms/video_client.py", NULL
 };
+char *sensorApi[] = {
+	"rosrun", "scion_ros", "sensor_listener.py", NULL
+};
 char *ahrsSensor[] = {
     "rosrun", "scion_ros", "ahrs_sensor.py", NULL, NULL /*devs[1]*/
 };
@@ -120,9 +123,9 @@ int syswdevloc[] = {
 */
 char **programStartup[] = {
 	noop, /*Remains at start*/
-	loggingSubsystem, /*1*/
-	visionSubsystem, /*2*/
-	sensorAPI, /*4*/
+	killSwitch, /*1*/
+	leakDetection, /*2*/
+	sensorApi, /*4*/
 	ahrsSensor, /*8*/
 	depthSensor, /*16*/
 	thrusterSubsystem, /*32*/
