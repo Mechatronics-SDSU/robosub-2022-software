@@ -9,6 +9,14 @@ else
   source ./start/append_path.sh
 fi
 # Run test for devices in /dev
+. start/enumerate.sh
 # Change mod on devices
-# Run roscore
+python3 start/dev_change.py
+# ROS
+roscore &
+cd catkin_ws
+catkin_make
+source devel/setup.bash
+cd ..
 # Start masterprocess
+# ./start/masterprocess -a

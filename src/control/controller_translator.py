@@ -237,7 +237,7 @@ class ControllerTranslator:
 
         #return [int(PFZT), int(SFZT), int(SAZT), int(PAZT),
         # int(PFVT), int(PAVT), int(SFVT), int(SAVT)]
-        return [int(PFZT), int(PFVT), -1 * int(PAZT), int(PAVT), int(SAZT), int(SAVT), int(SFZT), int(SFVT)]
+        return [int(PFZT), int(PFVT), int(PAZT), int(PAVT), int(SAZT), int(SAVT), int(SFZT), int(SFVT)]
 
 def _driver_test_code() -> None:
     """Test code using controller inputs directly. Don't run in other modules!"""
