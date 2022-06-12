@@ -187,10 +187,10 @@ int main(int argc, char *argv[]) {
 		s = 0;
 	/*If a was set, change s to be everything*/
 	if (argstruct.setaarg)
-		s = 60; /*Every other arg added together*/
+		s = 31; /*Every other arg added together*/
 	/*Test to see if we only start without API*/
 	if (argstruct.setiarg)
-		s = 512; /*Every arg for full autonomous without APIs*/
+		s = 27; /*Every arg for full autonomous without APIs*/
 	if (s < 1) { /*Don't fork, integer failed to correctly parse*/
 		printf("Error: -s argument  less than 1.\n");
 		exit(EXIT_FAILURE);
