@@ -22,12 +22,12 @@ typedef struct {
 char *helparguments[] = {
 	"Scion Master Process",
 	"Arguments:",
-	" -a : [a]ll, Starts up all programs + utilities.",
+	" -a : [a]ll, Starts up everything. note: -c -w -s <all>",
+	" -i : ap[i], Start everything except ROS APIs. note: -c -w -s <autonomous>.",
 	" -c : [c]ommand and control, Start and wait on cnc server/autobutton."
 	" -d : [d]ebug, Show full output",
 	" -h : [h]elp, Prints this screen.",
-	" -i : ap[i], Do not start ROS APIs, only auto programs. note: -c -w -s <auto number>.",
-	" -s <number>: [s]tart, Start program(s) based on program integer.",
+	" -s <number>: [s]tart, Manually start program(s) based on program integer.",
 	" -w : [w]atchdog, Start watchdog program."
 };
 
