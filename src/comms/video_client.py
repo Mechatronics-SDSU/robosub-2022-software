@@ -64,7 +64,7 @@ def main(host: str, port: int, cap: int, write_frame: bool) -> None:
             frame = cv2.flip(frame, 1)
             # Write to I/O
             if write_frame:
-                cv2.imwrite(os.path.join(os.getcwd(), 'vision/') + str(i) + '.jpg', frame)
+                cv2.imwrite(os.path.join(os.getcwd(), 'vision/') + str(img_counter) + '.jpg', frame)
             result, frame = cv2.imencode('.jpg', frame, encode_param)
             data = pickle.dumps(frame, 0)
             size = len(data)
