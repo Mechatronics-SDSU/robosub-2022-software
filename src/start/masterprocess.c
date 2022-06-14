@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <math.h>
@@ -35,7 +36,7 @@ void loaddevs(int setdarg) {
 	int buflen = 255;
 	char strbuf[buflen];
 	/*Open config with devs*/
-	FILE *fd = fopen("current_devices.cfg", "r");
+	FILE *fd = fopen("start/known_devices.cfg", "r");
 	if (fd == NULL)
 		exit(EXIT_FAILURE);
 	/*Read entire dev file into strings*/
@@ -45,7 +46,7 @@ void loaddevs(int setdarg) {
 		i++;
 	}
 	/*Open config with dev names*/
-	FILE *fd1 = fopen("current_device_names.cfg", "r");
+	FILE *fd1 = fopen("start/known_device_names.cfg", "r");
 	if (fd1 == NULL)
 		exit(EXIT_FAILURE);
 	/*Read entire dev name file into strings*/
@@ -154,6 +155,16 @@ int main(int argc, char *argv[]) {
 	argstruct.setwarg = 0;
 	FILE *wdfp;
 	argdef *argstructptr = &argstruct;
+	/*Manual pipe allocation for watchdog*/
+	int pipes[2];
+	if (argstruct.setdarg)
+		printf("Manually allocated pipe.\n");
+	if (-1 == pipe(pipes)) { /*Pipe messed up*/
+		if (argstruct.setdarg) {
+			printf("Pipe creation failure\n");
+			exit(EXIT_FAILURE);
+		}
+	}
 	if (argc > 1)
 		argResult = argparse(argc, argv, argstructptr);
 	else { /*Need arguments to specify what master process does*/
@@ -165,18 +176,37 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	if (argstruct.setdarg)
-		printf("%s a[%d] d[%d] h[%d] i[%d] s[%d] w[%d]\n", "Arguments seen:",
-		 argstruct.setaarg, argstruct.setdarg, argstruct.setharg, 
+		printf("%s a[%d] c[%d] d[%d] h[%d] i[%d] s[%d] w[%d]\n", "Arguments seen:",
+		 argstruct.setaarg, argstruct.setcarg, argstruct.setdarg, argstruct.setharg, 
 		 argstruct.setiarg, argstruct.setsarg, argstruct.setwarg);
 	/*Test to see if help argument was issued first, if it was ignore all others*/
 	if (argstruct.setharg)
 		helpcommand();
-	/*Start watchdog program, if applicable*/
+	/*Start watchdog program with some OS magic*/
 	if (argstruct.setwarg) {
-		/*Establish a pipe*/
-		wdfp = popen(wdprog, "w");
-		if (wdfp == NULL) /*Validate process started*/
-			exit(EXIT_FAILURE);
+		/*Establish a pipe and manually redirect stdout*/
+		pid_t myPid, childPid;
+		fflush(NULL);
+		if (-1 == (childPid = fork())) { /*Fork messed up*/
+			if (argstruct.setdarg) {
+				printf("Fork failure\n");
+				exit(EXIT_FAILURE);
+			}
+		} else if (0 == childPid) { /*Successful fork to child*/
+			if (argstruct.setdarg)
+				printf("Forked to child.\n");
+			close(STDIN_FILENO); /*Prevent reading from stdin*/
+			fflush(NULL);
+			/*Redirect output*/
+			if (-1 == dup2(pipes[1], STDOUT_FILENO)) {
+				if (argstruct.setdarg)
+					printf("dup2 failure.\n");
+				exit(EXIT_FAILURE);
+			}
+			/*Exec watchdog*/
+			execvp(wdprog[0], wdprog);
+			exit(EXIT_SUCCESS);
+		}
 	}
 	/*Load devices from *.cfg into memory*/
 	loaddevs(argstruct.setdarg);
@@ -199,7 +229,7 @@ int main(int argc, char *argv[]) {
 		printf("Calculated sarg=[%d]\n", s);
 	/*Wait on watchdog for cnc server or switch program to set config*/
 	if (argstruct.setcarg) {
-		char buf[255];
+		char cbuf[255];
 		while (1) {
 			/*Read pipe*/
 			/*Test for inputs to run correct programs*/
@@ -213,8 +243,8 @@ int main(int argc, char *argv[]) {
 	int numPrograms = sizeof(programStartup)/sizeof(programStartup[0]);
 	/*Commented out myPid line until we need it later*/
 	/* pid_t myPid = getpid();*/
-	
 	pid_t childPid;
+
 	for (i = numPrograms-1; i > 0; i--) {
 		/*Bitwise AND with the powers of 2 in s argument*/
 		if (s & (int)pow(2, i-1)) {
@@ -231,7 +261,15 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	}
-	
+	if (argstruct.setwarg) {
+		char wbuf[255];
+		while (1) {
+			sleep(1);
+			read(pipes[0], wbuf, 255);
+			if (argstruct.setwarg)
+				printf("Masterprocess sees: %s\n", wbuf);
+		}
+	}
 	/*Additional functionality to be added here. For now waits for last child pid*/
 	wait(&childPid);
 	exit(EXIT_SUCCESS);

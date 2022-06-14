@@ -10,13 +10,17 @@ else
 fi
 # Run test for devices in /dev
 . start/enumerate.sh
-# Change mod on devices
+# Change mod on devices so we can write to it
 python3 start/dev_change.py
 # ROS
-roscore &
 cd catkin_ws
-catkin_make
+# Test if catkin has built
+CATKIN_BUILT=$(ls | grep devel | wc -l)
+if [[ $CATKIN_BUILT == 0 ]]; then
+  catkin_make
+fi
 source devel/setup.bash
 cd ..
+roscore &
 # Start masterprocess
 # ./start/masterprocess -a
