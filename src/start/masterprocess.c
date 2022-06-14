@@ -229,7 +229,7 @@ int main(int argc, char *argv[]) {
 		printf("Calculated sarg=[%d]\n", s);
 	/*Wait on watchdog for cnc server or switch program to set config*/
 	if (argstruct.setcarg) {
-		/*char buf[255];*/
+		char cbuf[255];
 		while (1) {
 			/*Read pipe*/
 			/*Test for inputs to run correct programs*/
@@ -263,9 +263,12 @@ int main(int argc, char *argv[]) {
 	}
 	if (argstruct.setwarg) {
 		char wbuf[255];
-		sleep(1);
-		read(pipes[0], wbuf, 255);
-		printf("Masterprocess sees: %s\n", wbuf);
+		while (1) {
+			sleep(1);
+			read(pipes[0], wbuf, 255);
+			if (argstruct.setwarg)
+				printf("Masterprocess sees: %s\n", wbuf);
+		}
 	}
 	/*Additional functionality to be added here. For now waits for last child pid*/
 	wait(&childPid);
