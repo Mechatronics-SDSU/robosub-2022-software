@@ -46,7 +46,10 @@ char devbuf[sizeof(devstrs)/sizeof(devstrs[0])][255]; /*unmatched device names e
 char devnamebuf[sizeof(devstrs)/sizeof(devstrs[0])][255]; /*unmatched current devstrs*/
 
 /* Watchdog program string*/
-char *wdprog = "python3 start/watchdog.py";
+char *wdprog[] =  {
+	"python3", 
+	"start/watchdog.py"
+};
 
 /* All commands are defined here in comma separated string consts for execvp 
 Commands with 2 NULL pointers will have string pointers set for device names.*/
