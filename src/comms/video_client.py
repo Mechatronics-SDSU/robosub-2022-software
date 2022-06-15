@@ -54,7 +54,6 @@ def main(host: str, port: int, cap: int, write_frame: bool) -> None:
     cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
     img_counter = 0
     encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
-    i = 0
     # Keep receiving frames and save to folder
     while True:
         ret, frame = cam.read()
