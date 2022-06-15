@@ -15,6 +15,8 @@ def write_maestro():
     f_1 = open('start/current_device_names.cfg', 'a')
     f.write(f'ttyACM{outnum[0]}\n')
     f_1.write('Maestro\n')
+    f.close()
+    f_1.close()
 
 
 if __name__ == '__main__':
