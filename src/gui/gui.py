@@ -49,6 +49,7 @@ import cv2
 import comms.video_server as scion_vs
 import comms.controller_client as scion_cc
 import sensor.telemetry_linker as scion_tl
+import utils.scion_utils as scion_ut
 
 # GUI constants
 edge_size = 2
@@ -139,8 +140,8 @@ class GuiWindow(tk.Frame):
                                    bg='yellow')
         self.telemetry_canvas_0 = tk.Canvas(master=self.sensors_fr, width=sensor_resolution[0],
                                             height=sensor_resolution[1], bd=0, bg='green')
-        self.telemetry_canvas_0_img = ImageTk.PhotoImage(PILImage.open('img/sensor_base_22.png'))
-        self.telemetry_canvas_1_img = ImageTk.PhotoImage(PILImage.open('img/sensor_base_22.png'))
+        self.telemetry_canvas_0_img = ImageTk.PhotoImage(PILImage.open('img/sensor_22.png'))
+        self.telemetry_canvas_1_img = ImageTk.PhotoImage(PILImage.open('img/sensor_22.png'))
         self.telemetry_frame_counter = 0
         self.telemetry_canvas_0_config = self.telemetry_canvas_0.create_image((1, 1),
                                                                               anchor=tk.NW,
@@ -346,27 +347,19 @@ class GuiWindow(tk.Frame):
         self.logging_ctrl_shm.buf[0] = 1
 
     def update_sensors(self) -> None:
-        """Update sensor data in the tkinter window by reading what was last sent on the sensor thread.
+        """Update data in the tkinter window by reading what was last sent on the sensor thread.
         """
         if self.telemetry_ctrl_shm.buf[0] == 2:  # Telemetry has data
             self.telemetry_linker.load_all()  # Get data stored in sensor shm and load it into linker
             # Text elements for displaying data
-            sensor_frame = cv2.imread('img/sensor_base_22.png')
+            sensor_frame = cv2.imread('img/sensor_22.png')
             # Load text into an opencv frame
-            cv2.putText(img=sensor_frame, text='Pitch:', org=(8, 25), fontFace=cv2.FONT_HERSHEY_PLAIN,
-                        fontScale=1.2, color=color_term_green, thickness=1)
             cv2.putText(img=sensor_frame, text=f'{round(self.telemetry_linker.data[0], 3)}', org=(150, 25),
                         fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1.2, color=color_term_green, thickness=1)
-            cv2.putText(img=sensor_frame, text='Roll:', org=(8, 50), fontFace=cv2.FONT_HERSHEY_PLAIN,
-                        fontScale=1.2, color=color_term_green, thickness=1)
             cv2.putText(img=sensor_frame, text=f'{round(self.telemetry_linker.data[1], 3)}', org=(150, 50),
                         fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1.2, color=color_term_green, thickness=1)
-            cv2.putText(img=sensor_frame, text='Yaw:', org=(8, 75), fontFace=cv2.FONT_HERSHEY_PLAIN,
-                        fontScale=1.2, color=color_term_green, thickness=1)
             cv2.putText(img=sensor_frame, text=f'{round(self.telemetry_linker.data[2], 3)}', org=(150, 75),
                         fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1.2, color=color_term_green, thickness=1)
-            cv2.putText(img=sensor_frame, text='Depth:', org=(8, 100), fontFace=cv2.FONT_HERSHEY_PLAIN,
-                        fontScale=1.2, color=color_term_green, thickness=1)
             cv2.putText(img=sensor_frame, text=f'{round(self.telemetry_linker.data[3], 3)}', org=(150, 100),
                         fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1.2, color=color_term_green, thickness=1)
             # Convert to be tkinter compatible

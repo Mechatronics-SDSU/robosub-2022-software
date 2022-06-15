@@ -1,3 +1,4 @@
+#!/usr/bin/env python3.8
 """Monitors programs to verify runtime by checking values in shared memory.
 Tell masterprocess which ones have failed.
 """
