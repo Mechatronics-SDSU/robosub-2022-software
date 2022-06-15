@@ -65,11 +65,12 @@ def main(host: str, port: int, cap: int, write_frame: bool) -> None:
             if write_frame:
                 cv2.imwrite(os.path.join(os.getcwd(), 'vision/') + str(img_counter) + '.jpg', frame)
             result, frame = cv2.imencode('.jpg', frame, encode_param)
-            data = pickle.dumps(frame, 0)
-            size = len(data)
-            print("{}: {}".format(img_counter, size))
-            client_socket.sendall(struct.pack(">L", size) + data)
-            img_counter += 1
+            if result:
+                data = pickle.dumps(frame, 0)
+                size = len(data)
+                print("{}: {}".format(img_counter, size))
+                client_socket.sendall(struct.pack(">L", size) + data)
+                img_counter += 1
 
 
 if __name__ == '__main__':

@@ -46,7 +46,7 @@ def load_cameras() -> list:
     """Attempt to test the video cameras using opencv's builtins.
     """
     functional_ports = []
-    dev_max = 500
+    dev_max = 199
     dev = 0
     while dev < dev_max:
         cam = cv2.VideoCapture(dev)
@@ -75,16 +75,17 @@ def video_server(port: int, cap: int, write_frame: bool) -> None:
         conn, addr = server_sock.accept()
         while True:
             _, frame = cam.read()
-            frame = cv2.flip(frame, 0)  # Scion frame flip
-            frame = cv2.flip(frame, 1)
-            # Write to I/O
-            if write_frame:
-                cv2.imwrite(os.path.join(os.getcwd(), 'vision/') + str(img_counter) + '.jpg', frame)
-            result, frame = cv2.imencode('.jpg', frame, encode_param)
-            data = pickle.dumps(frame, 0)
-            size = len(data)
-            conn.sendall(struct.pack(">L", size) + data)
-            img_counter += 1
+            if _:
+                frame = cv2.flip(frame, 0)  # Scion frame flip
+                frame = cv2.flip(frame, 1)
+                # Write to I/O
+                if write_frame:
+                    cv2.imwrite(os.path.join(os.getcwd(), 'vision/') + str(img_counter) + '.jpg', frame)
+                result, frame = cv2.imencode('.jpg', frame, encode_param)
+                data = pickle.dumps(frame, 0)
+                size = len(data)
+                conn.sendall(struct.pack(">L", size) + data)
+                img_counter += 1
 
 
 def start_video_servers(cameras: list) -> None:

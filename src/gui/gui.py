@@ -46,7 +46,7 @@ from PIL import Image as PILImage
 # import numpy as np
 import cv2
 
-import comms.video_server as scion_vs
+import comms.camera_gui as scion_cam
 import comms.controller_client as scion_cc
 import sensor.telemetry_linker as scion_tl
 import utils.scion_utils as scion_ut
@@ -436,7 +436,12 @@ def run_cnc_server() -> None:
 def run_video_client(wvc: mp.Pipe, server_port: int, start_context: mp.context, camera_num: int) -> None:
     """Run the imported video server from comms, passing the pipe as an argument
     """
-    scion_vs.main(host='', port=server_port, ind=False, write_pipe=wvc, context=start_context, camera_num=camera_num)
+    camera_0_shm = shm.SharedMemory(name='video_server_0_shm')
+    while True:
+        if camera_0_shm.buf[0] == 1:
+            camera_0_shm.buf[0] = 2
+            scion_cam.run_camera_client(server_ip='192.168.3.1', port=50001, write_pipe=wvc,
+                                        camera_num=camera_num)
 
 
 def run_telemetry_client(scion_ip: str, server_port: int) -> None:
