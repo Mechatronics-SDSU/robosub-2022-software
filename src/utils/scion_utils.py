@@ -3,6 +3,7 @@ import sys
 import sensor.telemetry_linker as scion_tl
 
 ROS_MODULE_NAME = 'rospy'
+RIGHT_WIN_CONF = [25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400]
 
 
 class DataWrapper:

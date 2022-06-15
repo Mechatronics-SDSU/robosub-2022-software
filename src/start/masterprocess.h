@@ -63,9 +63,6 @@ char *killSwitch[] = {
 char *leakDetection[] = {
 	"python3", "sensor/leak_detection.py", NULL, NULL /*devs[4]*/
 };
-char *loggingSubsystem[] = {
-	"python3", "logging_sys.py", NULL
-};
 char *visionSubsystem[] = {
 	"python3", "comms/video_client.py", NULL
 };
@@ -78,26 +75,8 @@ char *ahrsSensor[] = {
 char *depthSensor[] = {
     "rosrun", "scion_ros", "depth_sensor.py", NULL, NULL /*devs[2]*/
 };
-char *sensorAPI[] = {
-    "rosrun", "scion_ros", "sensor_listener.py", NULL
-};
 char *thrusterSubsystem[] = {
 	"python3", "comms/controller_server.py", NULL, NULL  /*devs[3]*/
-};
-char *weaponsSubsystem[] = {
-	"python3", "weapons_sys.py", NULL
-};
-char *heuristicsSubsystem[] = {
-	"python3", "heuristics_sys.py", NULL
-};
-char *sensorAggSubsystem[] = {
-	"python3", "sensor_agg_sys.py", NULL
-};
-char *trackingSubsystem[] = {
-	"python3", "tracking_sys.py", NULL
-};
-char *detectionSubsystem[] = {
-	"python3", "detection_sys.py", NULL
 };
 
 /*List of programs to change nullptrs for to device names.*/
@@ -112,10 +91,10 @@ char **syswdev[] = {
 /*Index location where the nullptrs are to change in syswdev.*/
 int syswdevloc[] = {
 	2, /*killswitch*/
-	3,
-	3,
-	3,
-	2
+	3, /*ahrs*/
+	3, /*depth*/
+	2, /*maestro*/
+	2 /*leak detection*/
 };
 
 /**
@@ -130,10 +109,7 @@ char **programStartup[] = {
 	ahrsSensor, /*8*/
 	depthSensor, /*16*/
 	thrusterSubsystem, /*32*/
-	sensorAggSubsystem, /*64*/
-	trackingSubsystem, /*128*/
-	detectionSubsystem, /*256*/
-	lsCommand /*512*/
+	lsCommand /*64*/
 };
 
 int helpcommand();
