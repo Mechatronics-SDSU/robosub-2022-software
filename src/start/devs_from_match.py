@@ -48,7 +48,7 @@ def match_from_port() -> None:
                     parsed_test_str = parse_tty(test)
                     if parsed_test_str not in written_devs:
                         written_devs.append(parsed_test_str)
-                        f.write(f'{parsed_test_str}\n')
+                        f.write(f'/dev/{parsed_test_str}\n')
 
 
 if __name__ == '__main__':

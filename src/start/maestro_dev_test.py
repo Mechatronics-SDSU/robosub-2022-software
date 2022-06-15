@@ -13,7 +13,7 @@ def write_maestro():
     # Write location of maestro to file
     f = open('start/current_devices.cfg', 'a')
     f_1 = open('start/current_device_names.cfg', 'a')
-    f.write(f'ttyACM{outnum[0]}\n')
+    f.write(f'/dev/ttyACM{outnum[0]}\n')
     f_1.write('Maestro\n')
     f.close()
     f_1.close()

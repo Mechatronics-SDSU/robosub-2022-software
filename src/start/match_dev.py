@@ -42,7 +42,7 @@ def match_devices() -> None:
                 found_dev = parse_loc(test.string)
                 if found_dev not in written_devs:
                     written_devs.append(found_dev)
-                    f.write(found_dev)
+                    f.write(f'{found_dev}')
                     f_1.write(f'{dev[1]}\n')
     f.close()
 

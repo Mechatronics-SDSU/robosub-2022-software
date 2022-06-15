@@ -36,7 +36,7 @@ void loaddevs(int setdarg) {
 	int buflen = 255;
 	char strbuf[buflen];
 	/*Open config with devs*/
-	FILE *fd = fopen("start/known_devices.cfg", "r");
+	FILE *fd = fopen("start/current_devices.cfg", "r");
 	if (fd == NULL)
 		exit(EXIT_FAILURE);
 	/*Read entire dev file into strings*/
@@ -46,7 +46,7 @@ void loaddevs(int setdarg) {
 		i++;
 	}
 	/*Open config with dev names*/
-	FILE *fd1 = fopen("start/known_device_names.cfg", "r");
+	FILE *fd1 = fopen("start/current_device_names.cfg", "r");
 	if (fd1 == NULL)
 		exit(EXIT_FAILURE);
 	/*Read entire dev name file into strings*/
@@ -70,7 +70,7 @@ void loaddevs(int setdarg) {
 	
 	for (i = 0; i < sizeof(syswdev)/sizeof(syswdev[0]); i++) {
 		if (cpydev[i] == 1) {
-			*(syswdev[i] + syswdevloc[i]) = *(devs + i);
+			(syswdev[i])[syswdevloc[i]] = *(devs + i);
 		}
 	}
 	if (setdarg) {
@@ -244,7 +244,7 @@ int main(int argc, char *argv[]) {
 	/*Commented out myPid line until we need it later*/
 	/* pid_t myPid = getpid();*/
 	pid_t childPid;
-
+	printf("maestro subsys[2]  = %s\n", *(thrusterSubsystem + 2));
 	for (i = numPrograms-1; i > 0; i--) {
 		/*Bitwise AND with the powers of 2 in s argument*/
 		if (s & (int)pow(2, i-1)) {
@@ -254,8 +254,8 @@ int main(int argc, char *argv[]) {
 			if (0 == childPid) {
 				/*Begin child*/
 				if (argstruct.setdarg)
-					printf("PID: %d | Starting up program: [%s %s]\n", 
-					getpid(), *(*(programStartup + i)), *(*(programStartup + i)+1));
+					printf("PID: %d | Starting up program: [%s %s %s]\n", 
+					getpid(), *(*(programStartup + i)), *(*(programStartup + i)+1), *(*(programStartup + i)+2));
 				execprogram(i);
 				exit(EXIT_SUCCESS);
 			}
