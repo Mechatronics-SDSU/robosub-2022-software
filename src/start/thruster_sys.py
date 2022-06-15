@@ -1,1 +1,0 @@
-print('Thruster System')
