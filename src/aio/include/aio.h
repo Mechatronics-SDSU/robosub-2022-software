@@ -21,7 +21,7 @@
 #define AUTO_MASK           0x10
 #define AUTO_OFF            0x10
 #define AUTO_ON             0x11
-#define AUTO_GET            0x0F
+#define AUTO_GET            0x1F
 
 #define BAT_MASK            0x20
 #define BAT_STABLE          0x20
