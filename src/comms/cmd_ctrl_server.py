@@ -1,6 +1,5 @@
 """Command and control server.
-Sets configuration of Scion remotely via gui connection, read into masterprocess via
-input pipe redirection.
+Sets configuration of Scion remotely via gui connection, read into masterprocess via input pipe redirection.
 """
 
 import sys
