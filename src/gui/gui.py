@@ -25,6 +25,7 @@ from __future__ import print_function
 import multiprocessing as mp
 from multiprocessing import shared_memory as shm
 import os
+from os.path import exists
 import sys as system
 # import math
 # from collections import deque
@@ -39,13 +40,13 @@ import tkinter as tk
 from tkinter import *
 from tkinter import simpledialog
 
-# import grpc
 import pygame as pg
 from PIL import ImageTk
 from PIL import Image as PILImage
 # import numpy as np
 import cv2
 
+import gen_default_text as scion_gdt
 import comms.camera_gui as scion_cam
 import comms.controller_client as scion_cc
 import sensor.telemetry_linker as scion_tl
@@ -136,6 +137,9 @@ class GuiWindow(tk.Frame):
         self.camera_1_frame_counter = 0
 
         # Sensors/Telemetry
+        sensor_exists = exists('img/sensor_22.png')
+        if not sensor_exists:  # Generate new sensor image based on config in default text gen
+            scion_gdt.generate_sensor_comms_window()
         self.sensors_fr = tk.Frame(master=self.tk_master, width=sensor_resolution[0], height=sensor_resolution[1],
                                    bg='yellow')
         self.telemetry_canvas_0 = tk.Canvas(master=self.sensors_fr, width=sensor_resolution[0],
