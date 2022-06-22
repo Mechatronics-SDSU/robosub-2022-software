@@ -37,8 +37,11 @@ void loaddevs(int setdarg) {
 	char strbuf[buflen];
 	/*Open config with devs*/
 	FILE *fd = fopen("start/current_devices.cfg", "r");
-	if (fd == NULL)
+	if (fd == NULL) {
+		if (setdarg)
+			printf("ERROR: current_devices.cfg does not exist.\n");
 		exit(EXIT_FAILURE);
+	}
 	/*Read entire dev file into strings*/
 	while (fgets(strbuf, buflen, fd)) {
 		strbuf[strcspn(strbuf, "\n")] = 0;
@@ -47,8 +50,11 @@ void loaddevs(int setdarg) {
 	}
 	/*Open config with dev names*/
 	FILE *fd1 = fopen("start/current_device_names.cfg", "r");
-	if (fd1 == NULL)
+	if (fd1 == NULL) {
+		if (setdarg)
+			printf("ERROR: current_device_names.cfg does not exist.\n");
 		exit(EXIT_FAILURE);
+	}
 	/*Read entire dev name file into strings*/
 	i = 0;
 	while(fgets(strbuf, buflen, fd1)) {
@@ -153,7 +159,6 @@ int main(int argc, char *argv[]) {
 	argstruct.setiarg = 0;
 	argstruct.setsarg = 0;
 	argstruct.setwarg = 0;
-	FILE *wdfp;
 	argdef *argstructptr = &argstruct;
 	/*Manual pipe allocation for watchdog*/
 	int pipes[2];
@@ -227,18 +232,53 @@ int main(int argc, char *argv[]) {
 	}
 	if (argstruct.setdarg)
 		printf("Calculated sarg=[%d]\n", s);
+
 	/*Wait on watchdog for cnc server or switch program to set config*/
 	if (argstruct.setcarg) {
+		/*Manual pipe allocation*/
+		int cncpipes[2];
+		if (-1 == pipe(cncpipes)) { /*Pipe messed up*/
+			if (argstruct.setdarg) {
+				printf("cnc pipe creation failure\n");
+				exit(EXIT_FAILURE);
+			}
+		}
+		pid_t myPid2, childPid2;
+		fflush(NULL);
+		if (-1 == (childPid2 = fork())) { /*Fork messed up*/
+			if (argstruct.setdarg) {
+				printf("Fork to cnc failure\n");
+				exit(EXIT_FAILURE);
+			}
+		} else if (0 == childPid2) { /*Successful fork to child*/
+			if (argstruct.setdarg)
+				printf("Forked to cnc child.\n");
+			close(STDIN_FILENO); /*Prevent child reading from stdin*/
+			fflush(NULL);
+			/*Redirect output*/
+			if (-1 == dup2(cncpipes[1], STDOUT_FILENO)) {
+				if (argstruct.setdarg)
+					printf("dup2 failure.\n");
+				exit(EXIT_FAILURE);
+			}
+			/*Exec watchdog*/
+			execvp(cncprog[0], cncprog);
+		}
+		/*Parent program*/
 		char cbuf[255];
+		cbuf[0] = '\0';
 		while (1) {
-			/*Read pipe*/
+			/*Read pipe for input from child*/
+			read(cncpipes[0], cbuf, 255);
 			/*Test for inputs to run correct programs*/
+			if (argstruct.setdarg)
+				printf("Masterprocess sees: %s\n", cbuf);
+			break;
 			/*Set s argument to start up relevant programs*/
-			/*Clear input*/
-			fflush(wdfp);
-			sleep(1);
+
 		}
 	}
+
 	/*Go through everything in s argument*/
 	int numPrograms = sizeof(programStartup)/sizeof(programStartup[0]);
 	/*Commented out myPid line until we need it later*/
@@ -266,7 +306,7 @@ int main(int argc, char *argv[]) {
 		while (1) {
 			sleep(1);
 			read(pipes[0], wbuf, 255);
-			if (argstruct.setwarg)
+			if (argstruct.setdarg)
 				printf("Masterprocess sees: %s\n", wbuf);
 		}
 	}
