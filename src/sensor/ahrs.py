@@ -89,7 +89,7 @@ class SpartonAHRSDataPackets:
             true_heading = struct.pack('H', (true_heading[0] << 8) | (true_heading[1]))
             true_heading = struct.unpack('h', true_heading)[0]*(360.0/4096.0)
             return true_heading
-        return [None]
+        return None
 
     def get_pitch_roll(self):
         """
@@ -159,8 +159,9 @@ def main(com_port: str) -> None:
     while True:
         yaw = ahrs.get_true_heading()
         pitch, roll = ahrs.get_pitch_roll()
-        print(f'Pitch: {pitch}, Roll: {roll}, Yaw: {yaw}')
-        time.sleep(0.5)
+        if yaw is not None:
+            print(f'Pitch: {pitch}, Roll: {roll}, Yaw: {yaw}')
+        time.sleep(0.1)
 
 
 if __name__ == "__main__":

@@ -444,6 +444,7 @@ def run_video_client(wvc: mp.Pipe, server_port: int, start_context: mp.context, 
     while True:
         if camera_0_shm.buf[0] == 1:
             camera_0_shm.buf[0] = 2
+            print('Running camera client.')
             scion_cam.run_camera_client(server_ip='192.168.3.1', port=50001, write_pipe=wvc,
                                         camera_num=camera_num)
 
