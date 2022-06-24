@@ -47,6 +47,7 @@
 #include <switch.h>
 #include <serial.h>
 #include <leak.h>
+#include <Servo.h>
 #include "aio.h"
 
 const uint16_t button_sensitivity = 75; // adjust for how sensitive the button is
@@ -66,6 +67,9 @@ Switch *kill_ptr = &kill_switch;
 Switch *auto_ptr = &auto_switch;
 
 Leak leak;
+
+Servo arm;
+Servo torpedo_2;
 
 void colorWipe(uint32_t color, int wait)
 {
@@ -224,7 +228,6 @@ void serial_check()
 
     else if ((serial_buf & LEAK_MASK) == LEAK_MASK)
     {
-      digitalWrite(LED_BUILTIN, HIGH);
       if (serial_buf == LEAK_GET)
       {
 
@@ -241,7 +244,20 @@ void serial_check()
 
     else if ((serial_buf & TORPEDO_MASK) == TORPEDO_MASK)
     {
-      // Torpedo related task
+      // Torpedo related tasks
+
+      if (serial_buf == ARM_CLOSE)
+      {
+
+        if (leak.getState() == HIGH)
+        {
+          serial_send('o', LEAK_TRUE);
+        }
+        else if (leak.getState() == LOW)
+        {
+          serial_send('o', LEAK_FALSE);
+        }
+      }
     }
 
     else if ((serial_buf & ARM_MASK) == ARM_MASK)
@@ -271,16 +287,22 @@ void setup()
   pinMode(MOSFET_PIN, OUTPUT);
   pinMode(LEAK_PIN, INPUT);
 
-  // strip.begin();            // INITIALIZE NeoPixel strip object (REQUIRED)
-  // strip.show();             // Turn OFF all pixels ASAP, Send the updated pixel colors to the hardware.
-  // strip.setBrightness(100); // Set BRIGHTNESS to about 1/5 (max = 255)
-  // rainbow(0);               // Flowing rainbow cycle along the whole strip for boot animation
-
-  // attachInterrupt(digitalPinToInterrupt(BAT_1_PIN), battery_1_undervoltage, HIGH);
-  // attachInterrupt(digitalPinToInterrupt(BAT_2_PIN), battery_2_undervoltage, HIGH);
+  attachInterrupt(digitalPinToInterrupt(BAT_1_PIN), battery_1_undervoltage, HIGH);
+  attachInterrupt(digitalPinToInterrupt(BAT_2_PIN), battery_2_undervoltage, HIGH);
   // attachInterrupt(digitalPinToInterrupt(LEAK_PIN), leak_detection, CHANGE);
 
+  arm.attach(ARM_PIN,1400,1600);
+  torpedo_2.attach(TORPEDO_2_PIN);
+
+  strip.begin();            // INITIALIZE NeoPixel strip object (REQUIRED)
+  strip.show();             // Turn OFF all pixels ASAP, Send the updated pixel colors to the hardware.
+  strip.setBrightness(100); // Set BRIGHTNESS to about 1/5 (max = 255)
+  rainbow(0);               // Flowing rainbow cycle along the whole strip for boot animation
+
   Serial.begin(115200);
+
+  arm.writeMicroseconds(1450);
+  torpedo_2.writeMicroseconds(1000);
 }
 
 void loop()
@@ -304,10 +326,10 @@ void loop()
   {
     serial_send('i', LEAK_TRUE);
     leak.setState(HIGH);
-    // kill_switch.setState(HIGH);
-    // switch_update(kill_ptr, 'i');
-    // auto_switch.setState(LOW);
-    // switch_update(auto_ptr, 'i');
+    kill_switch.setState(HIGH);
+    switch_update(kill_ptr, 'i');
+    auto_switch.setState(LOW);
+    switch_update(auto_ptr, 'i');
     colorWipe(strip.Color(0, 0, 255), 0); // turn LED strip Blue
   }
 
