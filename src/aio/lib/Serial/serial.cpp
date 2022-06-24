@@ -1,17 +1,20 @@
 #include "serial.h"
 
-static String serial_in = "";
+String serial_in = "";
 
 uint8_t serial_listen() {
-    if(Serial.available() > 0) {
+    while(Serial.available() > 0) {
         
         char rec = Serial.read();
         serial_in += rec;
         if(rec == '\n') {        
             if(serial_in[0] == 'i') {
-				return serial_in[1];
+                char msg = serial_in[1];
+                serial_in = "";
+				return msg;
 	        }
 	        serial_in = "";
+            
         }
     }
 

@@ -8,7 +8,7 @@
     Battery Monitor          |          0x2M - 0 Both Battery Sable,
                              |                 1 Battery #1 Voltage Unstable,
                              |                 2 Battery #2 Voltage Unstable,
-                             |                 F Get 
+                             |                 F Get
     Kill Mode Button         |          0x3M - 0 Disable, 1 Enable, F Get
     Leak Detection           |          0x4M - 0 No Leak, 1 Leak, F Get
     LED Strip                |           n/a
@@ -30,7 +30,7 @@
           0xN_ - Type of sensor making interrupt message
           0x_M - Message value attached to sensor
         '\n' - newline byte representing newline and end of packet
-    
+
     Output Packet - A packet sent by either device as a response to the most
                     recent interrupt packet
     ----------------------------------------------------------------------
@@ -48,8 +48,8 @@
 #include <serial.h>
 #include <leak.h>
 #include "aio.h"
-              
-const uint16_t button_sensitivity = 75;     // adjust for how sensitive the button is
+
+const uint16_t button_sensitivity = 75; // adjust for how sensitive the button is
 
 unsigned long time_now = 0;
 const unsigned long debounce_delay = 200;
@@ -67,29 +67,34 @@ Switch *auto_ptr = &auto_switch;
 
 Leak leak;
 
-void colorWipe(uint32_t color, int wait) {
+void colorWipe(uint32_t color, int wait)
+{
   // Fill strip pixels one after another with a color. Strip is NOT cleared first
   // anything there will be covered pixel by pixel. Pass in color
   // as a single 'packed' 32-bit value, which you can get by calling
   // strip.Color(red, green, blue) as shown in the loop() function above),
   // and a delay time (in milliseconds) between pixels
 
-  for(uint32_t i=0; i < strip.numPixels(); i++) { 
-    strip.setPixelColor(i, color);     //  Set pixel's color (in RAM)
-    strip.show();                      //  Update strip to match
+  for (uint32_t i = 0; i < strip.numPixels(); i++)
+  {
+    strip.setPixelColor(i, color); //  Set pixel's color (in RAM)
+    strip.show();                  //  Update strip to match
 
-    time_now = millis();               // Gather current time
-    while(millis() < time_now + wait); // Delay for wait milliseconds
+    time_now = millis(); // Gather current time
+    while (millis() < time_now + wait)
+      ; // Delay for wait milliseconds
   }
 }
 
-void rainbow(int wait) {
+void rainbow(int wait)
+{
   // Hue of first pixel runs 5 complete loops through the color wheel.
   // Color wheel has a range of 65536 but it's OK if we roll over, so
   // just count from 0 to 5*65536. Adding 256 to firstPixelHue each time
   // means we'll make 5*65536/256 = 1280 passes through this loop:
 
-  for(long firstPixelHue = 0; firstPixelHue < 5*65536; firstPixelHue += 256) {
+  for (long firstPixelHue = 0; firstPixelHue < 5 * 65536; firstPixelHue += 256)
+  {
     // strip.rainbow() can take a single argument (first pixel hue) or
     // optionally a few extras: number of rainbow repetitions (default 1),
     // saturation and value (brightness) (both 0-255, similar to the
@@ -99,196 +104,232 @@ void rainbow(int wait) {
     strip.rainbow(firstPixelHue);
     // Above line is equivalent to: strip.rainbow(firstPixelHue, 1, 255, 255, true);
 
-    strip.show();                      // Update strip with new contents
+    strip.show(); // Update strip with new contents
 
-    time_now = millis();               // Gather current time
-    while(millis() < time_now + wait); // Delay for wait milliseconds
+    time_now = millis(); // Gather current time
+    while (millis() < time_now + wait)
+      ; // Delay for wait milliseconds
   }
 }
 
-void switch_update(Switch *switch_type, uint8_t type){       
+void switch_update(Switch *switch_type, uint8_t type)
+{
   /* Checks if flag is set by switch, performs task associated with switch, clears flag
-  */                                 
-  if ((millis() - switch_type->_last_debounce_time) > debounce_delay){
-    if (switch_type->getState() == HIGH && switch_type->_pin_num == AUTO_PIN){
-      colorWipe(strip.Color(255,0,255),0);            // turn LED strip Pink
-      serial_send(type,AUTO_ON);                       // Serial print AI mode enable
+   */
+  if ((millis() - switch_type->_last_debounce_time) > debounce_delay)
+  {
+    if (switch_type->getState() == HIGH && switch_type->_pin_num == AUTO_PIN)
+    {
+      colorWipe(strip.Color(255, 0, 255), 0); // turn LED strip Pink
+      serial_send(type, AUTO_ON);             // Serial print AI mode enable
     }
-    else if(switch_type->getState() == HIGH && switch_type->_pin_num == KILL_PIN){
-      digitalWrite(LED_BUILTIN, HIGH);                // turn builtin LED on
-      digitalWrite(MOSFET_PIN, HIGH);                 // turn Relay on
-      colorWipe(strip.Color(0,255,0), 0);             // turn LED strip Green
-      serial_send(type,KILL_OFF);                      // Serial print KILL mode disable
-    }
-    
-    else if (switch_type->getState() == LOW && switch_type->_pin_num == KILL_PIN){
-      digitalWrite(LED_BUILTIN, LOW);                 // turn builtin LED off
-      digitalWrite(MOSFET_PIN, LOW);                  // turn Relay off
-      colorWipe(strip.Color(255,0,0), 0);             // turn LED strip Red
-      serial_send(type,KILL_ON);                      // Serial print KILL mode enable
+    else if (switch_type->getState() == HIGH && switch_type->_pin_num == KILL_PIN)
+    {
+      digitalWrite(LED_BUILTIN, HIGH);      // turn builtin LED on
+      digitalWrite(MOSFET_PIN, HIGH);       // turn Relay on
+      colorWipe(strip.Color(0, 255, 0), 0); // turn LED strip Green
+      serial_send(type, KILL_OFF);          // Serial print KILL mode disable
     }
 
-    else if (switch_type->getState() == LOW && switch_type->_pin_num == AUTO_PIN){
-      colorWipe(strip.Color(255,0,0), 0);             // turn LED strip Red
-      serial_send(type,AUTO_OFF);                     // Serial print KILL mode enable
+    else if (switch_type->getState() == LOW && switch_type->_pin_num == KILL_PIN)
+    {
+      digitalWrite(LED_BUILTIN, LOW);       // turn builtin LED off
+      digitalWrite(MOSFET_PIN, LOW);        // turn Relay off
+      colorWipe(strip.Color(255, 0, 0), 0); // turn LED strip Red
+      serial_send(type, KILL_ON);           // Serial print KILL mode enable
+    }
+
+    else if (switch_type->getState() == LOW && switch_type->_pin_num == AUTO_PIN)
+    {
+      colorWipe(strip.Color(255, 0, 0), 0); // turn LED strip Red
+      serial_send(type, AUTO_OFF);          // Serial print KILL mode enable
     }
   }
 }
 
-void serial_check() {
+void serial_check()
+{
   /* Checks if there are any new incoming packets from the serial line
-  */
+   */
 
   uint8_t serial_buf = serial_listen();
-  if(serial_buf != 0xFF) {
+
+  if (serial_buf != 0xFF)
+  {
     // Perform task related to request
 
-    if((serial_buf & ARM_MASK) == ARM_MASK){
-      // Arm related tasks
-    }
-
-    else if((serial_buf & AUTO_MASK) == AUTO_MASK){
+    if ((serial_buf & AUTO_MASK) == AUTO_MASK)
+    {
       // Auto related tasks
-      if(serial_buf == AUTO_OFF) {
+      if (serial_buf == AUTO_OFF)
+      {
         auto_switch.setState(LOW);
-        switch_update(auto_ptr,'o');
+        switch_update(auto_ptr, 'o');
       }
-      else if(serial_buf == AUTO_ON) {
+      else if (serial_buf == AUTO_ON)
+      {
         auto_switch.setState(HIGH);
-        switch_update(auto_ptr,'o');
+        switch_update(auto_ptr, 'o');
       }
-      else if(serial_buf == AUTO_GET) {
-        if(auto_switch.getState() == HIGH) {
+      else if (serial_buf == AUTO_GET)
+      {
+        if (auto_switch.getState() == HIGH)
+        {
           serial_send('o', AUTO_ON);
         }
-        else if(kill_switch.getState() == LOW) {
+        else if (kill_switch.getState() == LOW)
+        {
           serial_send('o', AUTO_OFF);
         }
       }
     }
 
-    else if((serial_buf & BAT_MASK) == BAT_MASK) {
+    else if ((serial_buf & BAT_MASK) == BAT_MASK)
+    {
       // Battery related tasks
-      if(serial_buf == BAT_GET) {
-        if(digitalRead(BAT_1_PIN) == LOW && digitalRead(BAT_2_PIN) == LOW) {
+      if (serial_buf == BAT_GET)
+      {
+        if (digitalRead(BAT_1_PIN) == LOW && digitalRead(BAT_2_PIN) == LOW)
+        {
           serial_send('o', BAT_STABLE);
         }
       }
     }
 
-    else if((serial_buf & KILL_MASK) == KILL_MASK) {
+    else if ((serial_buf & KILL_MASK) == KILL_MASK)
+    {
       // Kill related tasks
-      if(serial_buf == KILL_OFF) {
+      if (serial_buf == KILL_OFF)
+      {
         kill_switch.setState(LOW);
-        switch_update(kill_ptr,'o');
+        switch_update(kill_ptr, 'o');
       }
-      else if(serial_buf == KILL_ON) {
+      else if (serial_buf == KILL_ON)
+      {
         kill_switch.setState(HIGH);
-        switch_update(kill_ptr,'o');
+        switch_update(kill_ptr, 'o');
       }
-      else if(serial_buf == KILL_GET) {
-        if(kill_switch.getState() == HIGH) {
+      else if (serial_buf == KILL_GET)
+      {
+        if (kill_switch.getState() == HIGH)
+        {
           serial_send('o', KILL_ON);
         }
-        else if(kill_switch.getState() == LOW) {
+        else if (kill_switch.getState() == LOW)
+        {
           serial_send('o', KILL_OFF);
         }
       }
     }
 
-    else if((serial_buf & LEAK_MASK) == LEAK_MASK) {
-      if(serial_buf == LEAK_GET) {
-        if(leak.getState() == HIGH) {
+    else if ((serial_buf & LEAK_MASK) == LEAK_MASK)
+    {
+      digitalWrite(LED_BUILTIN, HIGH);
+      if (serial_buf == LEAK_GET)
+      {
+
+        if (leak.getState() == HIGH)
+        {
           serial_send('o', LEAK_TRUE);
         }
-        else if(leak.getState() == LOW) {
+        else if (leak.getState() == LOW)
+        {
           serial_send('o', LEAK_FALSE);
         }
       }
     }
 
-    else if((serial_buf & TORPEDO_MASK) == TORPEDO_MASK) {
+    else if ((serial_buf & TORPEDO_MASK) == TORPEDO_MASK)
+    {
       // Torpedo related task
+    }
+
+    else if ((serial_buf & ARM_MASK) == ARM_MASK)
+    {
+      // Arm related tasks
     }
   }
 }
 
-
-void battery_1_undervoltage() {
+void battery_1_undervoltage()
+{
   // Interrupt Service Routine for toggling battery 1 state flag
 
   battery_1_flag = HIGH;
 }
 
-void battery_2_undervoltage() {
+void battery_2_undervoltage()
+{
   // Interrupt Service Routine for toggling battery 2 state flag
 
   battery_2_flag = HIGH;
 }
 
-void setup() {
-  pinMode(LED_BUILTIN, OUTPUT);                   
+void setup()
+{
+  pinMode(LED_BUILTIN, OUTPUT);
   pinMode(MOSFET_PIN, OUTPUT);
-  pinMode(LEAK_PIN, INPUT);                 
-  
-  strip.begin();            // INITIALIZE NeoPixel strip object (REQUIRED)
-  strip.show();             // Turn OFF all pixels ASAP, Send the updated pixel colors to the hardware.
-  strip.setBrightness(100); // Set BRIGHTNESS to about 1/5 (max = 255)
-  rainbow(0);               // Flowing rainbow cycle along the whole strip for boot animation
+  pinMode(LEAK_PIN, INPUT);
 
-  attachInterrupt(digitalPinToInterrupt(BAT_1_PIN), battery_1_undervoltage, HIGH);
-  attachInterrupt(digitalPinToInterrupt(BAT_2_PIN), battery_2_undervoltage, HIGH);
+  // strip.begin();            // INITIALIZE NeoPixel strip object (REQUIRED)
+  // strip.show();             // Turn OFF all pixels ASAP, Send the updated pixel colors to the hardware.
+  // strip.setBrightness(100); // Set BRIGHTNESS to about 1/5 (max = 255)
+  // rainbow(0);               // Flowing rainbow cycle along the whole strip for boot animation
+
+  // attachInterrupt(digitalPinToInterrupt(BAT_1_PIN), battery_1_undervoltage, HIGH);
+  // attachInterrupt(digitalPinToInterrupt(BAT_2_PIN), battery_2_undervoltage, HIGH);
   // attachInterrupt(digitalPinToInterrupt(LEAK_PIN), leak_detection, CHANGE);
-  
+
   Serial.begin(115200);
 }
 
-void loop() {
+void loop()
+{
   // Serial Request Block
   serial_check();
 
   // TODO: Ask about kill and auto switch interplay, IF AUTO HIGH, THEN KILL IS ON, DOES AUTO BECOME LOW?
   // Killswitch Block
-  if(kill_switch.readSwitch()) {
-    switch_update(kill_ptr, 'i'); 
-  }   
-      
-  // Autoswitch Block
-  if(auto_switch.readSwitch()) {
-    switch_update(auto_ptr, 'i');
-  }       
+  // if(kill_switch.readSwitch()) {
+  //   switch_update(kill_ptr, 'i');
+  // }
+
+  // // Autoswitch Block
+  // if(auto_switch.readSwitch()) {
+  //   switch_update(auto_ptr, 'i');
+  // }
 
   // Lead Detection Block
-  if(digitalRead(LEAK_PIN) == HIGH) {
-    serial_send('i',LEAK_TRUE);
+  if (digitalRead(LEAK_PIN) == HIGH)
+  {
+    serial_send('i', LEAK_TRUE);
     leak.setState(HIGH);
-    kill_switch.setState(HIGH);
-    switch_update(kill_ptr, 'i');
-    auto_switch.setState(LOW);
-    switch_update(auto_ptr, 'i');
-    colorWipe(strip.Color(0,0,255), 0);             // turn LED strip Blue
+    // kill_switch.setState(HIGH);
+    // switch_update(kill_ptr, 'i');
+    // auto_switch.setState(LOW);
+    // switch_update(auto_ptr, 'i');
+    colorWipe(strip.Color(0, 0, 255), 0); // turn LED strip Blue
   }
 
   // Battery Block
-  if(battery_1_flag) {
-    serial_send('i', BAT_WARN_1);
-    kill_switch.setState(HIGH);
-    switch_update(kill_ptr, 'i');
-    auto_switch.setState(LOW);
-    switch_update(auto_ptr, 'i');
-    battery_1_flag = LOW;
-  }
-  if(battery_2_flag) {
-    serial_send('i', BAT_WARN_2);
-    kill_switch.setState(HIGH);
-    switch_update(kill_ptr, 'i');
-    auto_switch.setState(LOW);
-    switch_update(auto_ptr, 'i');
-    battery_2_flag = LOW;
-  }
+  // if(battery_1_flag) {
+  //   serial_send('i', BAT_WARN_1);
+  //   kill_switch.setState(HIGH);
+  //   switch_update(kill_ptr, 'i');
+  //   auto_switch.setState(LOW);
+  //   switch_update(auto_ptr, 'i');
+  //   battery_1_flag = LOW;
+  // }
+  // if(battery_2_flag) {
+  //   serial_send('i', BAT_WARN_2);
+  //   kill_switch.setState(HIGH);
+  //   switch_update(kill_ptr, 'i');
+  //   auto_switch.setState(LOW);
+  //   switch_update(auto_ptr, 'i');
+  //   battery_2_flag = LOW;
+  // }
 
   // Torpedo Block
 
   // Arm Block
-
 }

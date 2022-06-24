@@ -17,10 +17,7 @@
 
 /////////////////// PACKETS //////////////////
 
-#define ARM_MASK            0x00
-#define ARM_OPEN            0x00
-#define ARM_CLOSE           0x01
-#define ARM_GET             0x0F
+
 
 #define AUTO_MASK           0x10
 #define AUTO_OFF            0x10
@@ -51,5 +48,10 @@
 #define TORPEDO_FIRE_2      0x86
 #define TORPEDO_FIRE_BOTH   0x87
 #define TORPEDO_GET         0x8F 
+
+#define ARM_MASK            0xA0
+#define ARM_OPEN            0xA0
+#define ARM_CLOSE           0xA1
+#define ARM_GET             0xAF
 
 #endif

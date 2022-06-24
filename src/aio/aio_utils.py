@@ -69,12 +69,12 @@ nmask_dict_indicies = {
 }
 # Lookup table for ROS conversion
 ros_conversion_table = {
-    'r': 0,  # arm
     'a': 1,  # autonomous button
     'b': 2,  # battery
     'k': 3,  # killswitch
     'l': 4,  # leak
     't': 8,  # torpedo
+    'r': 10,  # arm
 }
 
 NMASKS = [scion_ut.AIO_ARM_NMASK, scion_ut.AIO_AUTO_NMASK, scion_ut.AIO_BAT_NMASK, scion_ut.AIO_KILL_NMASK,
