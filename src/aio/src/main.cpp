@@ -53,7 +53,6 @@
 const uint16_t button_sensitivity = 75; // adjust for how sensitive the button is
 
 unsigned long time_now = 0;
-const unsigned long debounce_delay = 200;
 
 bool battery_1_flag = LOW;
 bool battery_2_flag = LOW;
@@ -120,34 +119,31 @@ void switch_update(Switch *switch_type, uint8_t type)
 {
   /* Checks if flag is set by switch, performs task associated with switch, clears flag
    */
-  if ((millis() - switch_type->_last_debounce_time) > debounce_delay)
+  if (switch_type->getState() == HIGH && switch_type->_pin_num == AUTO_PIN)
   {
-    if (switch_type->getState() == HIGH && switch_type->_pin_num == AUTO_PIN)
-    {
-      colorWipe(strip.Color(255, 0, 255), 0); // turn LED strip Pink
-      serial_send(type, AUTO_ON);             // Serial print AI mode enable
-    }
-    else if (switch_type->getState() == HIGH && switch_type->_pin_num == KILL_PIN)
-    {
-      digitalWrite(LED_BUILTIN, HIGH);      // turn builtin LED on
-      digitalWrite(MOSFET_PIN, HIGH);       // turn Relay on
-      colorWipe(strip.Color(0, 255, 0), 0); // turn LED strip Green
-      serial_send(type, KILL_OFF);          // Serial print KILL mode disable
-    }
+    colorWipe(strip.Color(255, 0, 255), 0); // turn LED strip Pink
+    serial_send(type, AUTO_ON);             // Serial print AI mode enable
+  }
+  else if (switch_type->getState() == HIGH && switch_type->_pin_num == KILL_PIN)
+  {
+    digitalWrite(LED_BUILTIN, HIGH);      // turn builtin LED on
+    digitalWrite(MOSFET_PIN, HIGH);       // turn Relay on
+    colorWipe(strip.Color(0, 255, 0), 0); // turn LED strip Green
+    serial_send(type, KILL_OFF);          // Serial print KILL mode disable
+  }
 
-    else if (switch_type->getState() == LOW && switch_type->_pin_num == KILL_PIN)
-    {
-      digitalWrite(LED_BUILTIN, LOW);       // turn builtin LED off
-      digitalWrite(MOSFET_PIN, LOW);        // turn Relay off
-      colorWipe(strip.Color(255, 0, 0), 0); // turn LED strip Red
-      serial_send(type, KILL_ON);           // Serial print KILL mode enable
-    }
+  else if (switch_type->getState() == LOW && switch_type->_pin_num == KILL_PIN)
+  {
+    digitalWrite(LED_BUILTIN, LOW);       // turn builtin LED off
+    digitalWrite(MOSFET_PIN, LOW);        // turn Relay off
+    colorWipe(strip.Color(255, 0, 0), 0); // turn LED strip Red
+    serial_send(type, KILL_ON);           // Serial print KILL mode enable
+  }
 
-    else if (switch_type->getState() == LOW && switch_type->_pin_num == AUTO_PIN)
-    {
-      colorWipe(strip.Color(255, 0, 0), 0); // turn LED strip Red
-      serial_send(type, AUTO_OFF);          // Serial print KILL mode enable
-    }
+  else if (switch_type->getState() == LOW && switch_type->_pin_num == AUTO_PIN)
+  {
+    colorWipe(strip.Color(255, 0, 0), 0); // turn LED strip Red
+    serial_send(type, AUTO_OFF);          // Serial print KILL mode enable
   }
 }
 
@@ -162,7 +158,7 @@ void serial_check()
   {
     // Perform task related to request
 
-    if ((serial_buf & AUTO_MASK) == AUTO_MASK)
+    if (!((serial_buf & 0xF0) ^ AUTO_MASK))
     {
       // Auto related tasks
       if (serial_buf == AUTO_OFF)
@@ -188,7 +184,7 @@ void serial_check()
       }
     }
 
-    else if ((serial_buf & BAT_MASK) == BAT_MASK)
+    else if (!((serial_buf & 0xF0) ^ BAT_MASK))
     {
       // Battery related tasks
       if (serial_buf == BAT_GET)
@@ -197,10 +193,22 @@ void serial_check()
         {
           serial_send('o', BAT_STABLE);
         }
+        else if (digitalRead(BAT_1_PIN) == HIGH && digitalRead(BAT_2_PIN) == LOW)
+        {
+          serial_send('o', BAT_WARN_1);
+        }
+        else if (digitalRead(BAT_1_PIN) == LOW && digitalRead(BAT_2_PIN) == HIGH)
+        {
+          serial_send('o', BAT_WARN_2);
+        }
+        else if (digitalRead(BAT_1_PIN) == HIGH && digitalRead(BAT_2_PIN) == HIGH)
+        {
+          serial_send('o', BAT_WARN_BOTH);
+        }
       }
     }
 
-    else if ((serial_buf & KILL_MASK) == KILL_MASK)
+    else if (!((serial_buf & 0xF0) ^ KILL_MASK))
     {
       // Kill related tasks
       if (serial_buf == KILL_OFF)
@@ -226,11 +234,10 @@ void serial_check()
       }
     }
 
-    else if ((serial_buf & LEAK_MASK) == LEAK_MASK)
+    else if (!((serial_buf & 0xF0) ^ LEAK_MASK))
     {
       if (serial_buf == LEAK_GET)
       {
-
         if (leak.getState() == HIGH)
         {
           serial_send('o', LEAK_TRUE);
@@ -242,27 +249,22 @@ void serial_check()
       }
     }
 
-    else if ((serial_buf & TORPEDO_MASK) == TORPEDO_MASK)
+    else if (!((serial_buf & 0xF0) ^ TORPEDO_MASK))
     {
       // Torpedo related tasks
-
-      if (serial_buf == ARM_CLOSE)
+      if (serial_buf == TORPEDO_GET)
       {
-
-        if (leak.getState() == HIGH)
-        {
-          serial_send('o', LEAK_TRUE);
-        }
-        else if (leak.getState() == LOW)
-        {
-          serial_send('o', LEAK_FALSE);
-        }
+        ;
       }
     }
 
-    else if ((serial_buf & ARM_MASK) == ARM_MASK)
+    else if (!((serial_buf & 0xF0) ^ ARM_MASK))
     {
       // Arm related tasks
+      if (serial_buf == ARM_GET)
+      {
+        ;
+      }
     }
   }
 }
@@ -291,18 +293,18 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(BAT_2_PIN), battery_2_undervoltage, HIGH);
   // attachInterrupt(digitalPinToInterrupt(LEAK_PIN), leak_detection, CHANGE);
 
-  arm.attach(ARM_PIN,1400,1600);
-  torpedo_2.attach(TORPEDO_2_PIN);
+  // arm.attach(ARM_PIN, 1400, 1600);
+  // torpedo_2.attach(TORPEDO_2_PIN);
 
   strip.begin();            // INITIALIZE NeoPixel strip object (REQUIRED)
   strip.show();             // Turn OFF all pixels ASAP, Send the updated pixel colors to the hardware.
   strip.setBrightness(100); // Set BRIGHTNESS to about 1/5 (max = 255)
   rainbow(0);               // Flowing rainbow cycle along the whole strip for boot animation
 
-  Serial.begin(115200);
+  Serial.begin(9600);
 
-  arm.writeMicroseconds(1450);
-  torpedo_2.writeMicroseconds(1000);
+  // arm.writeMicroseconds(1450);
+  // torpedo_2.writeMicroseconds(1400);
 }
 
 void loop()
@@ -310,16 +312,17 @@ void loop()
   // Serial Request Block
   serial_check();
 
-  // TODO: Ask about kill and auto switch interplay, IF AUTO HIGH, THEN KILL IS ON, DOES AUTO BECOME LOW?
   // Killswitch Block
-  // if(kill_switch.readSwitch()) {
-  //   switch_update(kill_ptr, 'i');
-  // }
+  if (kill_switch.readSwitch())
+  {
+    switch_update(kill_ptr, 'i');
+  }
 
   // // Autoswitch Block
-  // if(auto_switch.readSwitch()) {
-  //   switch_update(auto_ptr, 'i');
-  // }
+  if (auto_switch.readSwitch())
+  {
+    switch_update(auto_ptr, 'i');
+  }
 
   // Lead Detection Block
   if (digitalRead(LEAK_PIN) == HIGH)
@@ -327,29 +330,33 @@ void loop()
     serial_send('i', LEAK_TRUE);
     leak.setState(HIGH);
     kill_switch.setState(HIGH);
-    switch_update(kill_ptr, 'i');
+    // switch_update(kill_ptr, 'i');
     auto_switch.setState(LOW);
-    switch_update(auto_ptr, 'i');
+    // switch_update(auto_ptr, 'i');
     colorWipe(strip.Color(0, 0, 255), 0); // turn LED strip Blue
   }
 
   // Battery Block
-  // if(battery_1_flag) {
-  //   serial_send('i', BAT_WARN_1);
-  //   kill_switch.setState(HIGH);
-  //   switch_update(kill_ptr, 'i');
-  //   auto_switch.setState(LOW);
-  //   switch_update(auto_ptr, 'i');
-  //   battery_1_flag = LOW;
-  // }
-  // if(battery_2_flag) {
-  //   serial_send('i', BAT_WARN_2);
-  //   kill_switch.setState(HIGH);
-  //   switch_update(kill_ptr, 'i');
-  //   auto_switch.setState(LOW);
-  //   switch_update(auto_ptr, 'i');
-  //   battery_2_flag = LOW;
-  // }
+  if (battery_1_flag)
+  {
+    serial_send('i', BAT_WARN_1);
+    // kill_switch.setState(HIGH);
+    // switch_update(kill_ptr, 'i');
+    // auto_switch.setState(LOW);
+    // switch_update(auto_ptr, 'i');
+    battery_1_flag = LOW;
+    colorWipe(strip.Color(255, 255, 0), 0);
+  }
+  if (battery_2_flag)
+  {
+    serial_send('i', BAT_WARN_2);
+    // kill_switch.setState(HIGH);
+    // switch_update(kill_ptr, 'i');
+    // auto_switch.setState(LOW);
+    // switch_update(auto_ptr, 'i');
+    battery_2_flag = LOW;
+    colorWipe(strip.Color(255, 255, 0), 0);
+  }
 
   // Torpedo Block
 

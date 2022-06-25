@@ -18,8 +18,6 @@
 
 /////////////////// PACKETS //////////////////
 
-
-
 #define AUTO_MASK           0x10
 #define AUTO_OFF            0x10
 #define AUTO_ON             0x11
@@ -29,6 +27,7 @@
 #define BAT_STABLE          0x20
 #define BAT_WARN_1          0x21
 #define BAT_WARN_2          0x22
+#define BAT_WARN_BOTH       0x23
 #define BAT_GET             0x2F
 
 #define KILL_MASK           0x30
