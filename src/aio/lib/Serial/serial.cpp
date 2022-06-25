@@ -22,7 +22,7 @@ uint8_t serial_listen() {
 void serial_send(uint8_t type, uint8_t message) {
     if(Serial.availableForWrite()) {
         Serial.print(type);
-        Serial.print(message,HEX);
+        Serial.print(message);
         Serial.print('\n');
     }
 }
