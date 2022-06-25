@@ -60,13 +60,14 @@ OUT_HEADER_BYTE = bytes(ord('o'))
 
 # Lookup table for N byte conversion to array
 nmask_dict_indicies = {
-    0: 0,
+    10: 0,
     1: 1,
     2: 2,
     3: 3,
     4: 4,
     8: 5
 }
+
 # Lookup table for ROS conversion
 ros_conversion_table = {
     'a': 1,  # autonomous button
