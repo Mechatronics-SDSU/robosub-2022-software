@@ -87,7 +87,7 @@ GET_REQ = [scion_ut.AIO_ARM_GET, scion_ut.AIO_AUTO_GET, scion_ut.AIO_BAT_GET, sc
 class AIOWrapper:
     def __init__(self, device_name: str):
         self.dev_name = device_name
-        self.dev = serial.Serial(self.dev_name, 115200)
+        self.dev = serial.Serial(self.dev_name, 9600)
         self.last_line = ''
 
     def send_input_packet(self, nmask: int, value: int) -> None:
