@@ -2,11 +2,11 @@
 Firmware and Python driver for communication with AIO PCB
 
 Contents
-* [What is AIO?](https://github.com/SDSU_Mechatronics/robosub-2022-software/tree/aio-dev/src/aio#What-is-AIO?)
-* [Sensor Suite](https://github.com/SDSU_Mechatronics/robosub-2022-software/tree/aio-dev/src/aio#Sensor-Suite)
-* [Packet Frame](https://github.com/SDSU_Mechatronics/robosub-2022-software/tree/aio-dev/src/aio#Packet-Frame)
-* [Usage](https://github.com/SDSU_Mechatronics/robosub-2022-software/tree/aio-dev/src/aio#Usage)
-* [Packet Messages](https://github.com/SDSU_Mechatronics/robosub-2022-software/tree/aio-dev/src/aio#Packet-Messages)
+* [What is AIO?](https://github.com/Mechatronics-SDSU/robosub-2022-software/tree/aio-dev/src/aio#what-is-aio)
+* [Sensor Suite](https://github.com/Mechatronics-SDSU/robosub-2022-software/tree/aio-dev/src/aio#Sensor-Suite)
+* [Packet Frame](https://github.com/Mechatronics-SDSU/robosub-2022-software/tree/aio-dev/src/aio#Packet-Frame)
+* [Usage](https://github.com/Mechatronics-SDSU/robosub-2022-software/tree/aio-dev/src/aio#Usage)
+* [Packet Messages](https://github.com/Mechatronics-SDSU/robosub-2022-software/tree/aio-dev/src/aio#Packet-Messages)
 
 ## What is AIO?
 The all in one PCB is a centralized PCB for SDSU Mechatronics' event based sensor suite for 2022 Robosub vehicle
