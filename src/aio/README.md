@@ -77,6 +77,23 @@ while True:
     print(value)
 ```
 
+Responds with the following ascii decimal value if kill state is off:
+```
+1114810
+```
+* 111 is decimal for 'o' in ascii
+* 48 is decimal for 0x30 in ascii which is the KILL_OFF message
+* 10 is decimal for '\n' in ascii
+  
+Responds with the following ascii decimal value if kill state is on:
+```
+1114910
+```
+* 111 is decimal for 'o' in ascii
+* 49 is decimal for 0x31 in ascii which is the KILL_ON message
+* 10 is decimal for '\n' in ascii
+
+
 ## Packet Messages
 | Name | Description | Value |
 |---|---|---|
