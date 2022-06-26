@@ -88,6 +88,7 @@ class AHRSDataWrapper(DataWrapper):
         String looks like:
         "P|<float>R|<float>Y|<float>\n"
         """
+        data = str(data)
         data = data.strip()  # Remove newline
         ind_1 = 0
         ind_2 = 0
