@@ -147,7 +147,7 @@ int argparse(int argc, char *argv[], argdef *argstructptr) {
 
 int main(int argc, char *argv[]) {
 	long unsigned int i;
-	int s;
+	int s = 0;
 	int argResult = 0;
 	for (i=0;i<sizeof(cpydev)/sizeof(cpydev[0]);i++){cpydev[i]=0;}
 	argdef argstruct;
@@ -226,14 +226,10 @@ int main(int argc, char *argv[]) {
 	/*Test to see if we only start without API*/
 	if (argstruct.setiarg)
 		s = 27; /*Every arg for full autonomous without APIs*/
-	if (s < 1) { /*Don't fork, integer failed to correctly parse*/
-		printf("Error: -s argument  less than 1.\n");
-		exit(EXIT_FAILURE);
-	}
 	if (argstruct.setdarg)
 		printf("Calculated sarg=[%d]\n", s);
 
-	/*Wait on watchdog for cnc server or switch program to set config*/
+	/*Wait for cnc server or switch program to set config*/
 	if (argstruct.setcarg) {
 		/*Manual pipe allocation*/
 		int cncpipes[2];
@@ -261,7 +257,7 @@ int main(int argc, char *argv[]) {
 					printf("dup2 failure.\n");
 				exit(EXIT_FAILURE);
 			}
-			/*Exec watchdog*/
+			/*Exec cnc*/
 			execvp(cncprog[0], cncprog);
 		}
 		/*Parent program*/
@@ -271,14 +267,18 @@ int main(int argc, char *argv[]) {
 			/*Read pipe for input from child*/
 			read(cncpipes[0], cbuf, 255);
 			/*Test for inputs to run correct programs*/
+			s = atoi(cbuf);
 			if (argstruct.setdarg)
-				printf("Masterprocess sees: %s\n", cbuf);
+				printf("Masterprocess sees CNC sent: %s\n", cbuf);
 			break;
 			/*Set s argument to start up relevant programs*/
 
 		}
 	}
-
+	if (s < 1) { /*Integer failed to correctly parse at this point*/
+		printf("Error: -s argument  less than 1.\n");
+		exit(EXIT_FAILURE);
+	}
 	/*Go through everything in s argument*/
 	int numPrograms = sizeof(programStartup)/sizeof(programStartup[0]);
 	/*Commented out myPid line until we need it later*/

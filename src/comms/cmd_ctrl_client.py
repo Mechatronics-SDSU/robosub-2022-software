@@ -8,7 +8,6 @@ Pickled array for configuration.
 
 import sys
 import socket
-import base64 as b64
 
 
 def cmd_ctrl_client(host: str, port: int) -> None:
@@ -31,7 +30,7 @@ def cmd_ctrl_client(host: str, port: int) -> None:
                 print('Reconnect fail max exceeded, closing...')
                 sys.exit(1)
         try:
-            s.send(b'Hello from CNC Client')
+            s.send(b'64')
             print('Sent message')
         except (ConnectionAbortedError, ConnectionResetError):
             print('Connection to server lost...')
