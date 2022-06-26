@@ -10,7 +10,7 @@ import sys
 import socket
 
 
-def cmd_ctrl_client(host: str, port: int) -> None:
+def cmd_ctrl_client(host: str, port: int, debug=False) -> None:
     """Driver code for the command and control server.
     """
     server_conn = False
@@ -21,7 +21,8 @@ def cmd_ctrl_client(host: str, port: int) -> None:
         try:
             s.connect((host, port))
             server_conn = True
-            print('Connection to CNC server established')
+            if debug:
+                print('Connection to CNC server established')
         except ConnectionRefusedError:
             rcon_try_count += 1
             server_conn = False
@@ -31,7 +32,8 @@ def cmd_ctrl_client(host: str, port: int) -> None:
                 sys.exit(1)
         try:
             s.send(b'64')
-            print('Sent message')
+            if debug:
+                print('Sent message')
         except (ConnectionAbortedError, ConnectionResetError):
             print('Connection to server lost...')
             server_conn = False
@@ -39,4 +41,4 @@ def cmd_ctrl_client(host: str, port: int) -> None:
 
 if __name__ == '__main__':
     if len(sys.argv) > 2:
-        cmd_ctrl_client(host=sys.argv[1], port=int(sys.argv[2]))
+        cmd_ctrl_client(host=sys.argv[1], port=int(sys.argv[2]), debug=True)

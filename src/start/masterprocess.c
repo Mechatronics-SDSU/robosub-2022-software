@@ -284,7 +284,6 @@ int main(int argc, char *argv[]) {
 	/*Commented out myPid line until we need it later*/
 	/* pid_t myPid = getpid();*/
 	pid_t childPid;
-	printf("maestro subsys[2]  = %s\n", *(thrusterSubsystem + 2));
 	for (i = numPrograms-1; i > 0; i--) {
 		/*Bitwise AND with the powers of 2 in s argument*/
 		if (s & (int)pow(2, i-1)) {
