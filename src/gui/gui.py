@@ -212,63 +212,28 @@ class GuiWindow(tk.Frame):
     def set_config_menu(self) -> None:
         """Set the config menu for what to enable, then send command packet to Scion.
         """
+        placeholder = '| PLACEHOLDER TEXT'
         # Build labels for boxes
         top = tk.Toplevel(self.master)  # Put this window on top
-        config_lb = tk.Label(top, text='Set Configuration', pady=10, justify='left', anchor='nw')
+        config_lb = tk.Label(top, text='Enable Programs', pady=10, justify='left', anchor='nw')
         config_lb.grid(column=0, row=0, sticky=W, columnspan=2)
-        port_cam_0_lb = tk.Label(top, text='Cam 0')
-        port_cam_0_diag = tk.Label(top)
-        port_cam_1_lb = tk.Label(top, text='Cam 1')
-        port_cam_1_diag = tk.Label(top)
-        port_tel_lb = tk.Label(top, text='Sensors')
-        port_tel_diag = tk.Label(top)
-        port_pilot_lb = tk.Label(top, text='Pilot')
-        port_pilot_diag = tk.Label(top)
-        port_logging_lb = tk.Label(top, text='Logging')
-        port_logging_diag = tk.Label(top)
-        # Grid everything
-        port_cam_0_lb.grid(column=0, row=1, sticky=W)
-        port_cam_0_diag.grid(column=1, row=1, sticky=W, columnspan=2)
-        port_cam_1_lb.grid(column=0, row=2, sticky=W)
-        port_cam_1_diag.grid(column=1, row=2, sticky=W, columnspan=2)
-        port_tel_lb.grid(column=0, row=3, sticky=W)
-        port_tel_diag.grid(column=1, row=3, sticky=W, columnspan=2)
-        port_pilot_lb.grid(column=0, row=4, sticky=W)
-        port_pilot_diag.grid(column=1, row=4, sticky=W, columnspan=2)
-        port_logging_lb.grid(column=0, row=5, sticky=W)
-        port_logging_diag.grid(column=1, row=5, sticky=W, columnspan=2)
-        # Config options
-        port_cam_0_text = tk.Label(master=port_cam_0_diag, text=str(self.camera_0_port))
-        port_cam_1_text = tk.Label(master=port_cam_1_diag, text=str(self.camera_1_port))
-        port_tel_text = tk.Label(master=port_tel_diag, text=str(self.telemetry_port))
-        port_pilot_text = tk.Label(master=port_pilot_diag, text=str(self.pilot_port))
-        port_logging_text = tk.Label(master=port_logging_diag, text=str(self.logging_port))
-        # Buttons for config options
-        port_cam_0_btn = tk.Button(master=port_cam_0_diag, text='Set Port',
-                                   command=partial(self.port_text_box, 'Camera 0', 1, self.camera_0_port, top,
-                                                   port_cam_0_text))
-        port_cam_1_btn = tk.Button(master=port_cam_1_diag, text='Set Port',
-                                   command=partial(self.port_text_box, 'Camera 1', 2, self.camera_1_port, top,
-                                                   port_cam_1_text))
-        port_tel_btn = tk.Button(master=port_tel_diag, text='Set Port',
-                                 command=partial(self.port_text_box, 'Telemetry', 1, self.telemetry_port, top,
-                                                 port_tel_text))
-        port_pilot_btn = tk.Button(master=port_pilot_diag, text='Set Port',
-                                   command=partial(self.port_text_box, 'Pilot', 1, self.pilot_port, top,
-                                                   port_pilot_text))
-        port_log_btn = tk.Button(master=port_logging_diag, text='Set Port',
-                                 command=partial(self.port_text_box, 'Logging', 1, self.logging_port, top,
-                                                 port_logging_text))
-        port_cam_0_text.grid(column=0, row=0, sticky=W)
-        port_cam_0_btn.grid(column=1, row=0, sticky=W)
-        port_cam_1_text.grid(column=0, row=1, sticky=W)
-        port_cam_1_btn.grid(column=1, row=1, sticky=W)
-        port_tel_text.grid(column=0, row=2, sticky=W)
-        port_tel_btn.grid(column=1, row=2, sticky=W)
-        port_pilot_text.grid(column=0, row=3, sticky=W)
-        port_pilot_btn.grid(column=1, row=3, sticky=W)
-        port_logging_text.grid(column=0, row=4, sticky=W)
-        port_log_btn.grid(column=1, row=4, sticky=W)
+        sensor_lb = tk.Label(top, text='Sensor API')
+        sensor_diag = tk.Label(top, text=placeholder)
+        ahrs_lb = tk.Label(top, text='AHRS Sensor')
+        ahrs_diag = tk.Label(top, text=placeholder)
+        depth_lb = tk.Label(top, text='Depth Sensor')
+        depth_diag = tk.Label(top, text=placeholder)
+        thruster_lb = tk.Label(top, text='Thrusters')
+        thruster_diag = tk.Label(top, text=placeholder)
+
+        sensor_lb.grid(column=0, row=1, sticky=W)
+        sensor_diag.grid(column=1, row=1, sticky=W)
+        ahrs_lb.grid(column=0, row=2, sticky=W)
+        ahrs_diag.grid(column=1, row=2, sticky=W)
+        depth_lb.grid(column=0, row=3, sticky=W)
+        depth_diag.grid(column=1, row=3, sticky=W)
+        thruster_lb.grid(column=0, row=4, sticky=W)
+        thruster_diag.grid(column=1, row=4, sticky=W)
 
     def port_text_box(self, port_name: str, def_port: int, current_port: int, parent_window: any, label: any) -> None:
         """Generate a text box for setting port; validates input is a valid port.
@@ -293,8 +258,7 @@ class GuiWindow(tk.Frame):
         """
         # Build labels for boxes
         top = tk.Toplevel(self.master)  # Put this window on top
-        config_lb = tk.Label(top, text='Enable Sockets', pady=10, justify='left', anchor='nw')
-        config_lb.grid(column=0, row=0, sticky=W, columnspan=2)
+        config_lb = tk.Label(top, text='Enable Programs', pady=10, justify='left', anchor='nw')
         cam_0_lb = tk.Label(top, text='Video 0:')  # Cameras
         cam_0_diag = tk.Label(top)
         cam_1_lb = tk.Label(top, text='Video 1:')
@@ -316,7 +280,9 @@ class GuiWindow(tk.Frame):
         pilot_diag.grid(column=1, row=4, sticky=W, columnspan=2)
         log_lb.grid(column=0, row=5, sticky=W)
         log_diag.grid(column=1, row=5, sticky=W, columnspan=2)
+        
         # Radio Buttons, handle grid in the button creation function
+        
         Radiobutton(cam_0_diag, text='Enable', variable=self.camera_0_enable, value=1,
                     command=partial(self.val_set, self.camera_0_enable, True)).grid(column=0, row=0)
         Radiobutton(cam_0_diag, text='Disable', variable=self.camera_0_enable, value=0,
