@@ -24,7 +24,7 @@ char *helparguments[] = {
 	"Arguments:",
 	" -a : [a]ll, Starts up everything. note: -c -w -s <all>",
 	" -i : ap[i], Start everything except ROS APIs. note: -c -w -s <autonomous>.",
-	" -c : [c]ommand and control, Start and wait on cnc server/autobutton."
+	" -c : [c]ommand and control, Start and wait on cnc server/autobutton.",
 	" -d : [d]ebug, Show full output",
 	" -h : [h]elp, Prints this screen.",
 	" -s <number>: [s]tart, Manually start program(s) based on program integer.",
@@ -45,9 +45,8 @@ char devs[sizeof(devstrs)/sizeof(devstrs[0])][255]; /*sorted output*/
 char devbuf[sizeof(devstrs)/sizeof(devstrs[0])][255]; /*unmatched device names ex. /dev/ttyUSB1*/
 char devnamebuf[sizeof(devstrs)/sizeof(devstrs[0])][255]; /*unmatched current devstrs*/
 
-/* Watchdog program string*/
-char *wdprog[] =  {"python3", "start/watchdog.py"};
-char *cncprog[] = {"python3", "comms/cmd_ctrl_server.py"};
+char *wdprog[] =  {"python3", "start/watchdog.py"}; /*Watchdog program*/
+char *cncprog[] = {"python3", "comms/cmd_ctrl_server.py"}; /*CNC program*/
 
 /* All commands are defined here in comma separated string consts for execvp 
 Commands with 2 NULL pointers will have string pointers set for device names.*/
