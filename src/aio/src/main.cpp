@@ -50,7 +50,7 @@
 #include <Servo.h>
 #include "aio.h"
 
-const uint16_t button_sensitivity = 75; // adjust for how sensitive the button is
+const uint16_t button_sensitivity = 150; // adjust for how sensitive the button is
 
 unsigned long time_now = 0;
 
@@ -289,11 +289,12 @@ void setup()
   pinMode(MOSFET_PIN, OUTPUT);
   pinMode(LEAK_PIN, INPUT);
 
+  digitalWrite(MOSFET_PIN, LOW);
+
   attachInterrupt(digitalPinToInterrupt(BAT_1_PIN), battery_1_undervoltage, HIGH);
   attachInterrupt(digitalPinToInterrupt(BAT_2_PIN), battery_2_undervoltage, HIGH);
-  // attachInterrupt(digitalPinToInterrupt(LEAK_PIN), leak_detection, CHANGE);
 
-  // arm.attach(ARM_PIN, 1400, 1600);
+  //  arm.attach(ARM_PIN, 1400, 1600);
   // torpedo_2.attach(TORPEDO_2_PIN);
 
   strip.begin();            // INITIALIZE NeoPixel strip object (REQUIRED)
@@ -325,7 +326,7 @@ void loop()
   }
 
   // Lead Detection Block
-  if (digitalRead(LEAK_PIN) == HIGH)
+  if (digitalRead(LEAK_PIN) == HIGH && leak.getState()==LOW)
   {
     serial_send('i', LEAK_TRUE);
     leak.setState(HIGH);
