@@ -1,3 +1,4 @@
+#!/usr/bin/env python3.8
 """AIO class wrapper for interfacing with AIO.
 
 This is meant to be imported and used by a ROS driver:
@@ -121,14 +122,23 @@ class AIOWrapper:
         """
         ret = ''
         ret = ret + (self.last_line[0])
-        ret = ret + serial_converstion_table[(int(self.last_line[1]) >> 4)]
-        ret = ret + hex(int(self.last_line[1]) & 15)[2:]  # Get N value, convert to hex, strip formatting
+        ret = ret + serial_converstion_table[(int(self.last_line[1:3], 16) >> 4)]
+        ret = ret + hex(int(self.last_line[1:3], 16) & 15)[2:]  # Get N value, convert to hex, strip formatting
         return ret
 
     def read_device(self) -> str:
         out = self.dev.readline()
+        result = chr(int(f'{out[0:3]}'[2:-1]))
         if out is not None:
-            out = str(out)
+            sep = ''
+            res = ''
+            i = 3
+            while sep != ord('\n'):
+                res = res + chr(out[i])
+                i += 1
+                sep = out[i]
+            result += hex(int(res))[2:]
+            out = str(result)
             self.last_line = out
             return out
 
