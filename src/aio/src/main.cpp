@@ -288,6 +288,8 @@ void setup()
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(MOSFET_PIN, OUTPUT);
   pinMode(LEAK_PIN, INPUT);
+  pinMode(BAT_1_PIN, INPUT);
+  pinMode(BAT_2_PIN, INPUT);
 
   digitalWrite(MOSFET_PIN, LOW);
 
