@@ -168,6 +168,12 @@ class GuiWindow(tk.Frame):
         self.pilot_enable = tk.BooleanVar(value=False)
         self.logging_enable = tk.BooleanVar(value=False)
 
+        # Master process
+        self.mp_sensors = tk.BooleanVar(value=False)
+        self.mp_ahrs = tk.BooleanVar(value=False)
+        self.mp_depth = tk.BooleanVar(value=False)
+        self.mp_thruster = tk.BooleanVar(value=False)
+
         # Main grid
         self.top_bar_fr.grid(row=0, column=0, columnspan=3)
         self.buttons_fr.grid(row=1, column=0)
@@ -218,13 +224,29 @@ class GuiWindow(tk.Frame):
         config_lb = tk.Label(top, text='Enable Programs', pady=10, justify='left', anchor='nw')
         config_lb.grid(column=0, row=0, sticky=W, columnspan=2)
         sensor_lb = tk.Label(top, text='Sensor API')
-        sensor_diag = tk.Label(top, text=placeholder)
+        sensor_diag = tk.Label(top)
+        Radiobutton(sensor_diag, text='Enable', variable=self.mp_sensors, value=1,
+                    command=partial(self.val_set, self.mp_sensors, True)).grid(column=0, row=0)
+        Radiobutton(sensor_diag, text='Disable', variable=self.mp_sensors, value=0,
+                    command=partial(self.val_set, self.mp_sensors, False)).grid(column=1, row=0)
         ahrs_lb = tk.Label(top, text='AHRS Sensor')
-        ahrs_diag = tk.Label(top, text=placeholder)
+        ahrs_diag = tk.Label(top)
+        Radiobutton(ahrs_diag, text='Enable', variable=self.mp_ahrs, value=1,
+                    command=partial(self.val_set, self.mp_ahrs, True)).grid(column=0, row=0)
+        Radiobutton(ahrs_diag, text='Disable', variable=self.mp_ahrs, value=0,
+                    command=partial(self.val_set, self.mp_ahrs, False)).grid(column=1, row=0)
         depth_lb = tk.Label(top, text='Depth Sensor')
         depth_diag = tk.Label(top, text=placeholder)
+        Radiobutton(depth_diag, text='Enable', variable=self.mp_depth, value=1,
+                    command=partial(self.val_set, self.mp_depth, True)).grid(column=0, row=0)
+        Radiobutton(depth_diag, text='Disable', variable=self.mp_depth, value=0,
+                    command=partial(self.val_set, self.mp_depth, False)).grid(column=1, row=0)
         thruster_lb = tk.Label(top, text='Thrusters')
         thruster_diag = tk.Label(top, text=placeholder)
+        Radiobutton(thruster_diag, text='Enable', variable=self.mp_thruster, value=1,
+                    command=partial(self.val_set, self.mp_thruster, True)).grid(column=0, row=0)
+        Radiobutton(thruster_diag, text='Disable', variable=self.mp_thruster, value=0,
+                    command=partial(self.val_set, self.mp_thruster, False)).grid(column=1, row=0)
 
         sensor_lb.grid(column=0, row=1, sticky=W)
         sensor_diag.grid(column=1, row=1, sticky=W)
