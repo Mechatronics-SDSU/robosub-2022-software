@@ -218,7 +218,6 @@ class GuiWindow(tk.Frame):
     def set_config_menu(self) -> None:
         """Set the config menu for what to enable, then send command packet to Scion.
         """
-        placeholder = '| PLACEHOLDER TEXT'
         # Build labels for boxes
         top = tk.Toplevel(self.master)  # Put this window on top
         config_lb = tk.Label(top, text='Enable Programs', pady=10, justify='left', anchor='nw')
@@ -236,11 +235,13 @@ class GuiWindow(tk.Frame):
         Radiobutton(ahrs_diag, text='Disable', variable=self.mp_ahrs, value=0,
                     command=partial(self.val_set, self.mp_ahrs, False)).grid(column=1, row=0)
         depth_lb = tk.Label(top, text='Depth Sensor')
+        depth_diag = tk.Label(top)
         Radiobutton(depth_diag, text='Enable', variable=self.mp_depth, value=1,
                     command=partial(self.val_set, self.mp_depth, True)).grid(column=0, row=0)
         Radiobutton(depth_diag, text='Disable', variable=self.mp_depth, value=0,
                     command=partial(self.val_set, self.mp_depth, False)).grid(column=1, row=0)
         thruster_lb = tk.Label(top, text='Thrusters')
+        thruster_diag = tk.Label(top)
         Radiobutton(thruster_diag, text='Enable', variable=self.mp_thruster, value=1,
                     command=partial(self.val_set, self.mp_thruster, True)).grid(column=0, row=0)
         Radiobutton(thruster_diag, text='Disable', variable=self.mp_thruster, value=0,
