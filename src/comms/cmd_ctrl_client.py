@@ -10,33 +10,38 @@ import sys
 import socket
 
 
+class CNCWrapper:
+    def __init__(self, host: str, port: int, debug: False) -> None:
+        self.host = host
+        self.port = port
+        self.debug = debug
+        self.server_conn = False
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.setup_connection()
+
+    def setup_connection(self) -> None:
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            self.sock.connect((self.host, self.port))
+            self.server_conn = True
+            if self.debug:
+                print('Connection to CNC Server Established.')
+        except ConnectionRefusedError:
+            self.server_conn = False
+
+    def send_message(self, message: bytes) -> None:
+        try:
+            self.sock.send(message)
+        except (ConnectionAbortedError, ConnectionResetError):
+            print('Connection to server lost...')
+            self.server_conn = False
+
+
 def cmd_ctrl_client(host: str, port: int, debug=False) -> None:
     """Driver code for the command and control server.
     """
-    server_conn = False
-    rcon_try_count = 0
-    rcon_try_count_max = 3
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        # s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        try:
-            s.connect((host, port))
-            server_conn = True
-            if debug:
-                print('Connection to CNC server established')
-        except ConnectionRefusedError:
-            rcon_try_count += 1
-            server_conn = False
-            if rcon_try_count >= rcon_try_count_max:
-                started = False
-                print('Reconnect fail max exceeded, closing...')
-                sys.exit(1)
-        try:
-            s.send(b'64')
-            if debug:
-                print('Sent message')
-        except (ConnectionAbortedError, ConnectionResetError):
-            print('Connection to server lost...')
-            server_conn = False
+    cnc = CNCWrapper(host=host, port=port, debug=debug)
+    cnc.send_message(b'64')
 
 
 if __name__ == '__main__':
