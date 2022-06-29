@@ -33,11 +33,10 @@ char *helparguments[] = {
 
 /*Fixed strings for devstrs in known_device_names.cfg*/
 char *devstrs[] = {
-	"Killswitch",
+	"AIO",
 	"AHRS",
 	"Depth",
-	"Maestro",
-	"Leak"
+	"Maestro"
 };
 
 int cpydev[sizeof(devstrs)/sizeof(devstrs[0])]; /*Booleans for if something was loaded*/
@@ -57,10 +56,10 @@ char *lsCommand[] = {
 	"ls", ".", NULL
 };
 char *killSwitch[] = {
-	"python3", "killswitch/killswitch-aio.py", NULL, NULL /*devs[0]*/
+	"python3", "killswitch/killswitch-aio.py", NULL, NULL
 };
-char *leakDetection[] = {
-	"python3", "sensor/leak_detection.py", NULL, NULL /*devs[4]*/
+char *aioBoard[] = {
+	"python3", "aio/aio_utils.py", NULL, NULL /*devs[0]*/
 };
 char *visionSubsystem[] = {
 	"python3", "comms/video_client.py", NULL
@@ -80,20 +79,18 @@ char *thrusterSubsystem[] = {
 
 /*List of programs to change nullptrs for to device names.*/
 char **syswdev[] = {
-	killSwitch,
+	aioBoard,
 	ahrsSensor,
 	depthSensor,
-	thrusterSubsystem,
-	leakDetection
+	thrusterSubsystem
 };
 
 /*Index location where the nullptrs are to change in syswdev.*/
 int syswdevloc[] = {
-	2, /*killswitch*/
+	2, /*aio*/
 	3, /*ahrs*/
 	3, /*depth*/
-	2, /*maestro*/
-	2 /*leak detection*/
+	2 /*maestro*/
 };
 
 /**
@@ -102,13 +99,12 @@ int syswdevloc[] = {
 */
 char **programStartup[] = {
 	noop, /*Remains at start*/
-	killSwitch, /*1*/
-	leakDetection, /*2*/
-	sensorApi, /*4*/
-	ahrsSensor, /*8*/
-	depthSensor, /*16*/
-	thrusterSubsystem, /*32*/
-	lsCommand /*64*/
+	aioBoard, /*1*/
+	sensorApi, /*2*/
+	ahrsSensor, /*4*/
+	depthSensor, /*8*/
+	thrusterSubsystem, /*16*/
+	lsCommand /*32*/
 };
 
 int helpcommand();
