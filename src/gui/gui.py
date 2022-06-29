@@ -452,7 +452,7 @@ def run_cnc_server() -> None:
     while True:
         if cnc_shm.buf[0] == 1:  # CNC enabled
             cnc_shm.buf[0] = 2  # Switch to CNC on
-            cnc = scion_cnc.CNCWrapper(host='localhost', port=SCION_COMMAND_PORT, debug=False)
+            cnc = scion_cnc.CNCWrapper(host=SCION_DEFAULT_IPV4, port=SCION_COMMAND_PORT, debug=False)
         elif cnc_shm.buf[0] == 3:  # GUI has indicated cnc is ready to send, read into a long long
             size_mp = 8
             b = bytearray(size_mp)
