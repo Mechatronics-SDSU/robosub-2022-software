@@ -493,15 +493,20 @@ class Dvl():
         return self._commands.port.set_baudrate(baudrate)
 
 def update_data(output_data: OutputData, obj):
-    """Prints data time to screen
+    """Prints velocity, floor range, and time data to screen
     """
     del obj
     if output_data is not None:
         time = output_data.get_date_time()
         txt = time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
         vels = np.array([output_data.vel_x, output_data.vel_y, output_data.vel_z])
+        floor_range = np.array([output_data.range_beam1, output_data.range_beam2, \
+            output_data.range_beam3, output_data.range_beam4])
         print("Got data {0}".format(txt))
-        print(f"%9.3f %9.3f %9.3f" % (vels[0], vels[1], vels[2]))
+        print(f"Velocities X: %9.3f Y: %9.3f Z: %9.3f" % (vels[0], vels[1], vels[2]))
+        print(f"Range to Floor Beam 1: %9.3f 2: %9.3f 3: %9.3f 4: %9.3f" % \
+                (floor_range[0], floor_range[1], floor_range[2], floor_range[3]))
+        print(f"Mean Range: %9.3f" % output_data.mean_range)
         
 
 def main(com_port:str) -> None:
@@ -511,7 +516,7 @@ def main(com_port:str) -> None:
     dvl.reset_to_defaults()
 
     dvl.get_setup()
-    dvl.system_setup.software_trigger = 1
+    dvl.system_setup.software_trigger = 1 # Enable for manual software triggered data ping rate
 
     dvl.enter_command_mode()
     twoseconds = dt.datetime.now() + dt.timedelta(seconds=2)
