@@ -1,13 +1,15 @@
 """Contains main Dvl class to connect to Wayfinder.
 """
-import datetime
-from dvl.packets import AppLayerPacket
-from dvl.commands import BinaryCommands, check_response
-from dvl.system import SystemInfo, SystemComponents, SystemFeatures, SystemSetup, \
-    SystemTests, FftData
-from dvl.commands import ResponseStatusType, CommandIdType
+import datetime as dt
+from packets import AppLayerPacket
+from commands import BinaryCommands, check_response
+from system import SystemInfo, SystemComponents, SystemFeatures, SystemSetup, \
+    SystemTests, FftData, OutputData
+from commands import ResponseStatusType, CommandIdType
 import sys
 import time
+import numpy as np
+import math
 
 class Dvl():
     """Main class to connect to Wayfinder.
@@ -133,7 +135,7 @@ class Dvl():
         """
         return self._is_connected
 
-    def get_time(self) -> datetime:
+    def get_time(self) -> dt:
         """Gets system time.
 
         Returns
@@ -144,11 +146,11 @@ class Dvl():
         (self.last_err, date_time) = self._commands.get_time()
         if self.last_err.value == ResponseStatusType.SUCCESS.value:
             if date_time is not None:
-                self.time_diff = date_time - datetime.datetime.now()
+                self.time_diff = date_time - dt.datetime.now()
             return date_time
         return None
 
-    def set_time(self, date_time: datetime) ->bool:
+    def set_time(self, date_time: dt) ->bool:
         """Sets system time.
 
         Parameters
@@ -490,15 +492,44 @@ class Dvl():
         baudrate = 115200 if baud_index == 7 else 9600
         return self._commands.port.set_baudrate(baudrate)
 
+def update_data(output_data: OutputData, obj):
+    """Prints data time to screen
+    """
+    del obj
+    if output_data is not None:
+        time = output_data.get_date_time()
+        txt = time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+        vels = np.array([output_data.vel_x, output_data.vel_y, output_data.vel_z])
+        print("Got data {0}".format(txt))
+        print(f"%9.3f %9.3f %9.3f" % (vels[0], vels[1], vels[2]))
+        
+
 def main(com_port:str) -> None:
     """Test Driver for basic DVL functionality
     """
-    if(Dvl(com=com_port)):
-        print("works")
+    dvl = Dvl(com=com_port)
+    dvl.reset_to_defaults()
+
+    dvl.get_setup()
+    dvl.system_setup.software_trigger = 1
+
+    dvl.enter_command_mode()
+    twoseconds = dt.datetime.now() + dt.timedelta(seconds=2)
+    timetarget = dt.datetime(twoseconds.year, twoseconds.month, twoseconds.day,
+        twoseconds.hour, twoseconds.minute, twoseconds.second)
+    now = dt.datetime.now()
+    time.sleep((timetarget - now).total_seconds())
+    
+    dvl.set_time(dt.datetime.now())
+
+    dvl.register_ondata_callback(update_data, None)
+
+    dvl.exit_command_mode()
+    
+
     while True:
-        # Retreive Velocities
-        # Receive Time
-        # Print if values present
+        if not dvl.send_software_trigger():
+            print("Failed to send software trigger")
         time.sleep(0.1)
 
 if __name__ == '__main__':

@@ -8,8 +8,8 @@ import struct
 import datetime
 from enum import Enum, auto
 import numpy as np
-from dvl.packets import AppLayerPacket, AppLayerIdType, calc_checksum
-from dvl.util import Setting, indent_string
+from packets import AppLayerPacket, AppLayerIdType, calc_checksum
+from util import Setting, indent_string
 
 class DateTime():
     """Date and time helper class for getting/setting system time.
