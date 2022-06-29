@@ -23,6 +23,7 @@ Latest verification test:
 
 from __future__ import print_function
 import multiprocessing as mp
+import sys
 from multiprocessing import shared_memory as shm
 import os
 from os.path import exists
@@ -34,7 +35,7 @@ import socket
 import time
 from functools import partial
 # import pickle
-# import struct
+import struct
 
 import tkinter as tk
 from tkinter import *
@@ -47,6 +48,7 @@ from PIL import Image as PILImage
 import cv2
 
 import gen_default_text as scion_gdt
+import comms.cmd_ctrl_client as scion_cnc
 import comms.camera_gui as scion_cam
 import comms.controller_client as scion_cc
 import sensor.telemetry_linker as scion_tl
@@ -170,8 +172,10 @@ class GuiWindow(tk.Frame):
 
         # Master process
         self.masterprocess = []
-        for i in range(4):
+        for i in range(5):
             self.masterprocess.append(tk.BooleanVar(value=False))
+        self.cnc_shm = shm.SharedMemory(name='cnc_shm')
+        self.cnc_val_shm = shm.SharedMemory(name='cnc_val_shm')
 
         # Main grid
         self.top_bar_fr.grid(row=0, column=0, columnspan=3)
@@ -206,6 +210,9 @@ class GuiWindow(tk.Frame):
         # Sensors
         self.telemetry_canvas_0.grid()
 
+        # Turn on cnc
+        self.cnc_shm.buf[0] = 1
+
         self.update()
 
     def val_set(self, old: any, new: any) -> None:
@@ -221,38 +228,46 @@ class GuiWindow(tk.Frame):
         top = tk.Toplevel(self.master)  # Put this window on top
         config_lb = tk.Label(top, text='Enable Programs', pady=10, justify='left', anchor='nw')
         config_lb.grid(column=0, row=0, sticky=W, columnspan=2)
+        aio_lb = tk.Label(top, text='AIO')
+        aio_diag = tk.Label(top)
+        Radiobutton(aio_diag, text='Enable', variable=self.masterprocess[0], value=1,
+                    command=partial(self.val_set, self.masterprocess[0], True)).grid(column=0, row=0)
+        Radiobutton(aio_diag, text='Disable', variable=self.masterprocess[0], value=0,
+                    command=partial(self.val_set, self.masterprocess[0], False)).grid(column=1, row=0)
         sensor_lb = tk.Label(top, text='Sensor API')
         sensor_diag = tk.Label(top)
-        Radiobutton(sensor_diag, text='Enable', variable=self.masterprocess[0], value=1,
-                    command=partial(self.val_set, self.masterprocess[0], True)).grid(column=0, row=0)
-        Radiobutton(sensor_diag, text='Disable', variable=self.masterprocess[0], value=0,
-                    command=partial(self.val_set, self.masterprocess[0], False)).grid(column=1, row=0)
+        Radiobutton(sensor_diag, text='Enable', variable=self.masterprocess[1], value=1,
+                    command=partial(self.val_set, self.masterprocess[1], True)).grid(column=0, row=0)
+        Radiobutton(sensor_diag, text='Disable', variable=self.masterprocess[1], value=0,
+                    command=partial(self.val_set, self.masterprocess[1], False)).grid(column=1, row=0)
         ahrs_lb = tk.Label(top, text='AHRS Sensor')
         ahrs_diag = tk.Label(top)
-        Radiobutton(ahrs_diag, text='Enable', variable=self.masterprocess[1], value=1,
-                    command=partial(self.val_set, self.masterprocess[1], True)).grid(column=0, row=0)
-        Radiobutton(ahrs_diag, text='Disable', variable=self.masterprocess[1], value=0,
-                    command=partial(self.val_set, self.masterprocess[1], False)).grid(column=1, row=0)
+        Radiobutton(ahrs_diag, text='Enable', variable=self.masterprocess[2], value=1,
+                    command=partial(self.val_set, self.masterprocess[2], True)).grid(column=0, row=0)
+        Radiobutton(ahrs_diag, text='Disable', variable=self.masterprocess[2], value=0,
+                    command=partial(self.val_set, self.masterprocess[2], False)).grid(column=1, row=0)
         depth_lb = tk.Label(top, text='Depth Sensor')
         depth_diag = tk.Label(top)
-        Radiobutton(depth_diag, text='Enable', variable=self.masterprocess[2], value=1,
-                    command=partial(self.val_set, self.masterprocess[2], True)).grid(column=0, row=0)
-        Radiobutton(depth_diag, text='Disable', variable=self.masterprocess[2], value=0,
-                    command=partial(self.val_set, self.masterprocess[2], False)).grid(column=1, row=0)
+        Radiobutton(depth_diag, text='Enable', variable=self.masterprocess[3], value=1,
+                    command=partial(self.val_set, self.masterprocess[3], True)).grid(column=0, row=0)
+        Radiobutton(depth_diag, text='Disable', variable=self.masterprocess[3], value=0,
+                    command=partial(self.val_set, self.masterprocess[3], False)).grid(column=1, row=0)
         thruster_lb = tk.Label(top, text='Thrusters')
         thruster_diag = tk.Label(top)
-        Radiobutton(thruster_diag, text='Enable', variable=self.masterprocess[3], value=1,
-                    command=partial(self.val_set, self.masterprocess[3], True)).grid(column=0, row=0)
-        Radiobutton(thruster_diag, text='Disable', variable=self.masterprocess[3], value=0,
-                    command=partial(self.val_set, self.masterprocess[3], False)).grid(column=1, row=0)
-        sensor_lb.grid(column=0, row=1, sticky=W)
-        sensor_diag.grid(column=1, row=1, sticky=W)
-        ahrs_lb.grid(column=0, row=2, sticky=W)
-        ahrs_diag.grid(column=1, row=2, sticky=W)
-        depth_lb.grid(column=0, row=3, sticky=W)
-        depth_diag.grid(column=1, row=3, sticky=W)
-        thruster_lb.grid(column=0, row=4, sticky=W)
-        thruster_diag.grid(column=1, row=4, sticky=W)
+        Radiobutton(thruster_diag, text='Enable', variable=self.masterprocess[4], value=1,
+                    command=partial(self.val_set, self.masterprocess[4], True)).grid(column=0, row=0)
+        Radiobutton(thruster_diag, text='Disable', variable=self.masterprocess[4], value=0,
+                    command=partial(self.val_set, self.masterprocess[4], False)).grid(column=1, row=0)
+        aio_lb.grid(column=0, row=1, sticky=W)
+        aio_diag.grid(column=1, row=1, sticky=W)
+        sensor_lb.grid(column=0, row=2, sticky=W)
+        sensor_diag.grid(column=1, row=2, sticky=W)
+        ahrs_lb.grid(column=0, row=3, sticky=W)
+        ahrs_diag.grid(column=1, row=3, sticky=W)
+        depth_lb.grid(column=0, row=4, sticky=W)
+        depth_diag.grid(column=1, row=4, sticky=W)
+        thruster_lb.grid(column=0, row=5, sticky=W)
+        thruster_diag.grid(column=1, row=5, sticky=W)
 
     def port_text_box(self, port_name: str, def_port: int, current_port: int, parent_window: any, label: any) -> None:
         """Generate a text box for setting port; validates input is a valid port.
@@ -301,7 +316,6 @@ class GuiWindow(tk.Frame):
         log_diag.grid(column=1, row=5, sticky=W, columnspan=2)
         
         # Radio Buttons, handle grid in the button creation function
-        
         Radiobutton(cam_0_diag, text='Enable', variable=self.camera_0_enable, value=1,
                     command=partial(self.val_set, self.camera_0_enable, True)).grid(column=0, row=0)
         Radiobutton(cam_0_diag, text='Disable', variable=self.camera_0_enable, value=0,
@@ -326,7 +340,15 @@ class GuiWindow(tk.Frame):
     def send_masterprocess(self) -> None:
         """Sets the masterprocess configuration in shm to send.
         """
-        pass
+        # Serialize booleans to calculate s argument to masterprocess
+        sarg = 0
+        for i in range(len(self.masterprocess)):
+            if self.masterprocess[i].get() is True:
+                sarg += pow(2, i)
+        sarg_struct = struct.pack('>q', sarg)  # Pack for shm
+        for i in range(8):
+            self.cnc_val_shm.buf[i] = sarg_struct[i]  # Set s argument in shared memory first
+        self.cnc_shm.buf[0] = 3  # Then enable CNC process to send configuration
 
     def start_camera_0(self) -> None:
         self.camera_0_shm.buf[0] = 1
@@ -424,7 +446,23 @@ class GuiWindow(tk.Frame):
 def run_cnc_server() -> None:
     """Run the command and control server for setting Scion's configuration before starting.
     """
-    pass
+    cnc_shm = shm.SharedMemory(name='cnc_shm')
+    cnc_val_shm = shm.SharedMemory(name='cnc_val_shm')
+    cnc = None
+    while True:
+        if cnc_shm.buf[0] == 1:  # CNC enabled
+            cnc_shm.buf[0] = 2  # Switch to CNC on
+            cnc = scion_cnc.CNCWrapper(host='localhost', port=SCION_COMMAND_PORT, debug=False)
+        elif cnc_shm.buf[0] == 3:  # GUI has indicated cnc is ready to send, read into a long long
+            size_mp = 8
+            b = bytearray(size_mp)
+            for i in range(size_mp):
+                b[i] = cnc_val_shm.buf[i]
+
+            cnc.send_message(b)  # Send mp i64
+            cnc_shm.buf[0] = 0  # Turn off CNC server in shm
+            sys.exit(0)  # Exit CNC server, it has successfully sent configuration
+        time.sleep(0.1)
 
 
 def run_video_client(wvc: mp.Pipe, server_port: int, start_context: mp.context, camera_num: int) -> None:
@@ -435,7 +473,7 @@ def run_video_client(wvc: mp.Pipe, server_port: int, start_context: mp.context, 
         if camera_0_shm.buf[0] == 1:
             camera_0_shm.buf[0] = 2
             print('Running camera client.')
-            scion_cam.run_camera_client(server_ip='192.168.3.1', port=50001, write_pipe=wvc,
+            scion_cam.run_camera_client(server_ip=SCION_DEFAULT_IPV4, port=50001, write_pipe=wvc,
                                         camera_num=camera_num)
 
 
@@ -508,6 +546,25 @@ def init_gui(host_context: mp.context) -> None:
     wvs_pipe_1, rvs_pipe_1 = host_context.Pipe()  # Camera 1 (write end) -> | -> GUI (read end)
 
     # Shared start integers
+    # CNC
+    try:
+        cnc_shm = shm.SharedMemory(create=True, size=1, name='cnc_shm')
+    except FileExistsError:
+        cnc_shm = shm.SharedMemory(name='cnc_shm')
+        cnc_shm.unlink()
+        cnc_shm = shm.SharedMemory(create=True, size=1, name='cnc_shm')
+    cnc_shm.buf[0] = 0
+    try:
+        cnc_val_shm = shm.SharedMemory(create=True, size=8, name='cnc_val_shm')
+    except FileExistsError:
+        cnc_val_shm = shm.SharedMemory(name='cnc_val_shm')
+        cnc_val_shm.unlink()
+        cnc_val_shm = shm.SharedMemory(create=True, size=8, name='cnc_val_shm')
+    for i in range(8):
+        cnc_val_shm.buf[i] = 0
+    cnc_proc = host_context.Process(target=run_cnc_server)
+    cnc_proc.start()
+
     try:  # Validate shared memory was closed properly
         shm_vs_0 = shm.SharedMemory(create=True, size=1, name='video_server_0_shm')
     except FileExistsError:
