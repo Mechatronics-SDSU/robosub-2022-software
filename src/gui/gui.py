@@ -169,10 +169,9 @@ class GuiWindow(tk.Frame):
         self.logging_enable = tk.BooleanVar(value=False)
 
         # Master process
-        self.mp_sensors = tk.BooleanVar(value=False)
-        self.mp_ahrs = tk.BooleanVar(value=False)
-        self.mp_depth = tk.BooleanVar(value=False)
-        self.mp_thruster = tk.BooleanVar(value=False)
+        self.masterprocess = []
+        for i in range(4):
+            self.masterprocess.append(tk.BooleanVar(value=False))
 
         # Main grid
         self.top_bar_fr.grid(row=0, column=0, columnspan=3)
@@ -189,7 +188,7 @@ class GuiWindow(tk.Frame):
         self.config_button = Button(master=self.top_bar_fr, text='Set Config', justify=LEFT, anchor='w',
                                     command=self.set_config_menu)
         self.conn_button = Button(master=self.top_bar_fr, text='Connect', justify=LEFT, anchor='w',
-                                  command=self.socket_menu)
+                                  command=self.send_masterprocess)
         self.cam_0_button = Button(master=self.top_bar_fr, text='Start Cam 0', justify=LEFT, anchor='w',
                                    command=self.start_camera_0)
         self.cam_1_button = Button(master=self.top_bar_fr, text='Start Cam 1', justify=LEFT, anchor='w',
@@ -224,29 +223,28 @@ class GuiWindow(tk.Frame):
         config_lb.grid(column=0, row=0, sticky=W, columnspan=2)
         sensor_lb = tk.Label(top, text='Sensor API')
         sensor_diag = tk.Label(top)
-        Radiobutton(sensor_diag, text='Enable', variable=self.mp_sensors, value=1,
-                    command=partial(self.val_set, self.mp_sensors, True)).grid(column=0, row=0)
-        Radiobutton(sensor_diag, text='Disable', variable=self.mp_sensors, value=0,
-                    command=partial(self.val_set, self.mp_sensors, False)).grid(column=1, row=0)
+        Radiobutton(sensor_diag, text='Enable', variable=self.masterprocess[0], value=1,
+                    command=partial(self.val_set, self.masterprocess[0], True)).grid(column=0, row=0)
+        Radiobutton(sensor_diag, text='Disable', variable=self.masterprocess[0], value=0,
+                    command=partial(self.val_set, self.masterprocess[0], False)).grid(column=1, row=0)
         ahrs_lb = tk.Label(top, text='AHRS Sensor')
         ahrs_diag = tk.Label(top)
-        Radiobutton(ahrs_diag, text='Enable', variable=self.mp_ahrs, value=1,
-                    command=partial(self.val_set, self.mp_ahrs, True)).grid(column=0, row=0)
-        Radiobutton(ahrs_diag, text='Disable', variable=self.mp_ahrs, value=0,
-                    command=partial(self.val_set, self.mp_ahrs, False)).grid(column=1, row=0)
+        Radiobutton(ahrs_diag, text='Enable', variable=self.masterprocess[1], value=1,
+                    command=partial(self.val_set, self.masterprocess[1], True)).grid(column=0, row=0)
+        Radiobutton(ahrs_diag, text='Disable', variable=self.masterprocess[1], value=0,
+                    command=partial(self.val_set, self.masterprocess[1], False)).grid(column=1, row=0)
         depth_lb = tk.Label(top, text='Depth Sensor')
         depth_diag = tk.Label(top)
-        Radiobutton(depth_diag, text='Enable', variable=self.mp_depth, value=1,
-                    command=partial(self.val_set, self.mp_depth, True)).grid(column=0, row=0)
-        Radiobutton(depth_diag, text='Disable', variable=self.mp_depth, value=0,
-                    command=partial(self.val_set, self.mp_depth, False)).grid(column=1, row=0)
+        Radiobutton(depth_diag, text='Enable', variable=self.masterprocess[2], value=1,
+                    command=partial(self.val_set, self.masterprocess[2], True)).grid(column=0, row=0)
+        Radiobutton(depth_diag, text='Disable', variable=self.masterprocess[2], value=0,
+                    command=partial(self.val_set, self.masterprocess[2], False)).grid(column=1, row=0)
         thruster_lb = tk.Label(top, text='Thrusters')
         thruster_diag = tk.Label(top)
-        Radiobutton(thruster_diag, text='Enable', variable=self.mp_thruster, value=1,
-                    command=partial(self.val_set, self.mp_thruster, True)).grid(column=0, row=0)
-        Radiobutton(thruster_diag, text='Disable', variable=self.mp_thruster, value=0,
-                    command=partial(self.val_set, self.mp_thruster, False)).grid(column=1, row=0)
-
+        Radiobutton(thruster_diag, text='Enable', variable=self.masterprocess[3], value=1,
+                    command=partial(self.val_set, self.masterprocess[3], True)).grid(column=0, row=0)
+        Radiobutton(thruster_diag, text='Disable', variable=self.masterprocess[3], value=0,
+                    command=partial(self.val_set, self.masterprocess[3], False)).grid(column=1, row=0)
         sensor_lb.grid(column=0, row=1, sticky=W)
         sensor_diag.grid(column=1, row=1, sticky=W)
         ahrs_lb.grid(column=0, row=2, sticky=W)
@@ -324,6 +322,11 @@ class GuiWindow(tk.Frame):
                     command=partial(self.val_set, self.logging_enable, True)).grid(column=0, row=0)
         Radiobutton(log_diag, text='Disable', variable=self.logging_enable, value=0,
                     command=partial(self.val_set, self.logging_enable, False)).grid(column=1, row=0)
+
+    def send_masterprocess(self) -> None:
+        """Sets the masterprocess configuration in shm to send.
+        """
+        pass
 
     def start_camera_0(self) -> None:
         self.camera_0_shm.buf[0] = 1

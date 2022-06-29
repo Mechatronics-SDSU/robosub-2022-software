@@ -41,7 +41,7 @@ def cmd_ctrl_client(host: str, port: int, debug=False) -> None:
     """Driver code for the command and control server.
     """
     cnc = CNCWrapper(host=host, port=port, debug=debug)
-    cnc.send_message(b'64')
+    cnc.send_message(b'32')
 
 
 if __name__ == '__main__':
