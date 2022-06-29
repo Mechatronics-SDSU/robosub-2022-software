@@ -492,7 +492,64 @@ class Dvl():
         baudrate = 115200 if baud_index == 7 else 9600
         return self._commands.port.set_baudrate(baudrate)
 
-def update_data(output_data: OutputData, obj):
+
+
+class Dvl_sample:
+    """This class stores values from the last dvl sample processed by the
+    dvl callback method.
+    """
+    def __init__(self) -> None:
+        """Initializes variables for last dvl sample
+        """
+        self.time = None
+        self.velocity = [None]
+        self.velocity_err = None
+        self.beam_range = [None]
+        self.beam_avg = None
+    
+    def set_data(self, _time:str, _velocity:list, _velocity_err:float, \
+        _beam_range:list, _beam_avg:float):
+        self.time = _time
+        self.velocity = _velocity
+        self.velocity_err = _velocity_err
+        self.beam_range = _beam_range
+        self.beam_avg = _beam_avg
+
+    def get_velocity(self):
+        return self.velocity
+    
+    def get_velocity_err(self):
+        return self.velocity_err
+    
+    def get_beam_range(self):
+        return self.beam_range
+
+    def get_beam_avg(self):
+        return self.beam_avg
+
+
+def dvl_data_callback(self, output_data: OutputData, obj: Dvl_sample):
+    """Enters upon each software triggered ping to organize time, velocity,
+    and range data.
+    Returns:
+        time: A string containing the time of last sample
+        velocity: A list containing the velocities in x,y,z axis
+        velocity_err: A float containing the predicted error on velocity value
+        floor_range: A list containing the range to the floor from each dvl beam
+        floor_mean: A float containing the averaged range to the floor
+    """
+    if output_data is not None:
+        time_raw = output_data.get_date_time()
+        time = time_raw.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+        velocity = np.array([output_data.vel_x, output_data.vel_y, output_data.vel_z])
+        velocity_err = output_data.vel_err
+        beam_range = np.array([output_data.range_beam1, output_data.range_beam2, \
+            output_data.range_beam3, output_data.range_beam4])
+        beam_mean = output_data.mean_range
+        obj.set_data(time, velocity, velocity_err, beam_range, beam_mean)
+    print("No output data connection")
+        
+def print_data_callback(output_data: OutputData, obj):
     """Prints velocity, floor range, and time data to screen
     """
     del obj
@@ -513,6 +570,7 @@ def main(com_port:str) -> None:
     """Test Driver for basic DVL functionality
     """
     dvl = Dvl(com=com_port)
+    dvl_data = Dvl_sample()
     dvl.reset_to_defaults()
 
     dvl.get_setup()
@@ -527,7 +585,7 @@ def main(com_port:str) -> None:
     
     dvl.set_time(dt.datetime.now())
 
-    dvl.register_ondata_callback(update_data, None)
+    dvl.register_ondata_callback(print_data_callback, None)
 
     dvl.exit_command_mode()
     
