@@ -3,14 +3,14 @@
   This board interfaces the following sensors for the 2022 robosub vehicle:
             Sensor           |        Packet - Message
     -------------------------|----------------------------
-    Arm Gripper              |          0x0M - 0 Open, 1 Closed, F Get
-    Autonomous Mode Button   |          0x1M - 0 Disable, 1 Enable, F Get
+    Autonomous Mode Button   |          0x1M - 0 Disable, 1 Enable, E Response, F Get
     Battery Monitor          |          0x2M - 0 Both Battery Sable,
                              |                 1 Battery #1 Voltage Unstable,
                              |                 2 Battery #2 Voltage Unstable,
+                             |                 E Response,
                              |                 F Get
-    Kill Mode Button         |          0x3M - 0 Disable, 1 Enable, F Get
-    Leak Detection           |          0x4M - 0 No Leak, 1 Leak, F Get
+    Kill Mode Button         |          0x3M - 0 Disable, 1 Enable, E Response, F Get
+    Leak Detection           |          0x4M - 0 No Leak, 1 Leak, E Response, F Get
     LED Strip                |           n/a
     Relay Mosfet Signal      |           n/a
     Torpedo Servo Motor      |          0x8M - 1 Torpedo #1 Empty,
@@ -19,7 +19,9 @@
                              |                 5 Torpedo #1 Fire,
                              |                 6 Torpedo #2 Fire,
                              |                 7 Both Fire,
+                             |                 E Response
                              |                 F Get
+    Arm Gripper              |          0xAM - 0 Open, 1 Closed, F Get
 
   Data stream behavior:
     Interrupt Packet - A packet sent by either device indicating new alert
@@ -47,6 +49,7 @@
 #include <switch.h>
 #include <serial.h>
 #include <leak.h>
+#include <arm.h>
 #include <Servo.h>
 #include "aio.h"
 
@@ -67,8 +70,9 @@ Switch *auto_ptr = &auto_switch;
 
 Leak leak;
 
-Servo arm;
 Servo torpedo_2;
+
+Arm gripper(ARM_PIN);
 
 void colorWipe(uint32_t color, int wait)
 {
@@ -263,7 +267,24 @@ void serial_check()
       // Arm related tasks
       if (serial_buf == ARM_GET)
       {
-        ;
+        if(gripper.getState()==HIGH)
+        {
+          serial_send('o', ARM_OPEN);
+        }
+        else if(gripper.getState()==LOW)
+        {
+          serial_send('o', ARM_CLOSE);
+        }
+      }
+      else if(serial_buf == ARM_CLOSE)
+      {
+        gripper.setState(LOW);
+        serial_send('o', ARM_CLOSE);
+      }
+      else if(serial_buf == ARM_OPEN)
+      {
+        gripper.setState(HIGH);
+        serial_send('o', ARM_OPEN);
       }
     }
   }
@@ -296,18 +317,18 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(BAT_1_PIN), battery_1_undervoltage, HIGH);
   attachInterrupt(digitalPinToInterrupt(BAT_2_PIN), battery_2_undervoltage, HIGH);
 
-  //  arm.attach(ARM_PIN, 1400, 1600);
-  // torpedo_2.attach(TORPEDO_2_PIN);
+  torpedo_2.attach(TORPEDO_2_PIN);
 
   strip.begin();            // INITIALIZE NeoPixel strip object (REQUIRED)
   strip.show();             // Turn OFF all pixels ASAP, Send the updated pixel colors to the hardware.
   strip.setBrightness(100); // Set BRIGHTNESS to about 1/5 (max = 255)
   rainbow(0);               // Flowing rainbow cycle along the whole strip for boot animation
 
-  Serial.begin(9600);
+  colorWipe(strip.Color(255, 0, 0), 0); // turn LED strip Red
 
-  // arm.writeMicroseconds(1450);
-  // torpedo_2.writeMicroseconds(1400);
+  gripper.setState(LOW);    // Initialize the arm in closed state
+
+  Serial.begin(9600);
 }
 
 void loop()
@@ -321,13 +342,13 @@ void loop()
     switch_update(kill_ptr, 'i');
   }
 
-  // // Autoswitch Block
+  // Autoswitch Block
   if (auto_switch.readSwitch())
   {
     switch_update(auto_ptr, 'i');
   }
 
-  // Lead Detection Block
+  // Leak Detection Block
   if (digitalRead(LEAK_PIN) == HIGH && leak.getState()==LOW)
   {
     serial_send('i', LEAK_TRUE);
@@ -348,7 +369,7 @@ void loop()
     // auto_switch.setState(LOW);
     // switch_update(auto_ptr, 'i');
     battery_1_flag = LOW;
-    colorWipe(strip.Color(255, 255, 0), 0);
+    colorWipe(strip.Color(255, 255, 0), 0); // Turn LED strip Yellow
   }
   if (battery_2_flag)
   {
@@ -358,10 +379,6 @@ void loop()
     // auto_switch.setState(LOW);
     // switch_update(auto_ptr, 'i');
     battery_2_flag = LOW;
-    colorWipe(strip.Color(255, 255, 0), 0);
+    colorWipe(strip.Color(255, 255, 0), 0); // Turn LED strip Yellow
   }
-
-  // Torpedo Block
-
-  // Arm Block
 }
