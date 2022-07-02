@@ -57,8 +57,8 @@ const uint16_t button_sensitivity = 150; // adjust for how sensitive the button 
 
 unsigned long time_now = 0;
 
-bool battery_1_flag = LOW;
-bool battery_2_flag = LOW;
+// bool battery_1_flag = LOW;
+// bool battery_2_flag = LOW;
 
 Adafruit_NeoPixel strip(LED_COUNT, LED_STRIP_PIN, NEO_GRB + NEO_KHZ800);
 
@@ -188,29 +188,29 @@ void serial_check()
       }
     }
 
-    else if (!((serial_buf & 0xF0) ^ BAT_MASK))
-    {
-      // Battery related tasks
-      if (serial_buf == BAT_GET)
-      {
-        if (digitalRead(BAT_1_PIN) == LOW && digitalRead(BAT_2_PIN) == LOW)
-        {
-          serial_send('o', BAT_STABLE);
-        }
-        else if (digitalRead(BAT_1_PIN) == HIGH && digitalRead(BAT_2_PIN) == LOW)
-        {
-          serial_send('o', BAT_WARN_1);
-        }
-        else if (digitalRead(BAT_1_PIN) == LOW && digitalRead(BAT_2_PIN) == HIGH)
-        {
-          serial_send('o', BAT_WARN_2);
-        }
-        else if (digitalRead(BAT_1_PIN) == HIGH && digitalRead(BAT_2_PIN) == HIGH)
-        {
-          serial_send('o', BAT_WARN_BOTH);
-        }
-      }
-    }
+    // else if (!((serial_buf & 0xF0) ^ BAT_MASK))
+    // {
+    //   // Battery related tasks
+    //   if (serial_buf == BAT_GET)
+    //   {
+    //     if (digitalRead(BAT_1_PIN) == LOW && digitalRead(BAT_2_PIN) == LOW)
+    //     {
+    //       serial_send('o', BAT_STABLE);
+    //     }
+    //     else if (digitalRead(BAT_1_PIN) == HIGH && digitalRead(BAT_2_PIN) == LOW)
+    //     {
+    //       serial_send('o', BAT_WARN_1);
+    //     }
+    //     else if (digitalRead(BAT_1_PIN) == LOW && digitalRead(BAT_2_PIN) == HIGH)
+    //     {
+    //       serial_send('o', BAT_WARN_2);
+    //     }
+    //     else if (digitalRead(BAT_1_PIN) == HIGH && digitalRead(BAT_2_PIN) == HIGH)
+    //     {
+    //       serial_send('o', BAT_WARN_BOTH);
+    //     }
+    //   }
+    // }
 
     else if (!((serial_buf & 0xF0) ^ KILL_MASK))
     {
@@ -251,6 +251,11 @@ void serial_check()
           serial_send('o', LEAK_FALSE);
         }
       }
+      else if(serial_buf == LEAK_FALSE)
+      {
+        leak.setState(LOW);
+        serial_send('o', LEAK_FALSE);
+      }
     }
 
     else if (!((serial_buf & 0xF0) ^ TORPEDO_MASK))
@@ -290,32 +295,32 @@ void serial_check()
   }
 }
 
-void battery_1_undervoltage()
-{
-  // Interrupt Service Routine for toggling battery 1 state flag
+// void battery_1_undervoltage()
+// {
+//   // Interrupt Service Routine for toggling battery 1 state flag
 
-  battery_1_flag = HIGH;
-}
+//   battery_1_flag = HIGH;
+// }
 
-void battery_2_undervoltage()
-{
-  // Interrupt Service Routine for toggling battery 2 state flag
+// void battery_2_undervoltage()
+// {
+//   // Interrupt Service Routine for toggling battery 2 state flag
 
-  battery_2_flag = HIGH;
-}
+//   battery_2_flag = HIGH;
+// }
 
 void setup()
 {
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(MOSFET_PIN, OUTPUT);
   pinMode(LEAK_PIN, INPUT);
-  pinMode(BAT_1_PIN, INPUT);
-  pinMode(BAT_2_PIN, INPUT);
+  // pinMode(BAT_1_PIN, INPUT);
+  // pinMode(BAT_2_PIN, INPUT);
 
   digitalWrite(MOSFET_PIN, LOW);
 
-  attachInterrupt(digitalPinToInterrupt(BAT_1_PIN), battery_1_undervoltage, HIGH);
-  attachInterrupt(digitalPinToInterrupt(BAT_2_PIN), battery_2_undervoltage, HIGH);
+  // attachInterrupt(digitalPinToInterrupt(BAT_1_PIN), battery_1_undervoltage, HIGH);
+  // attachInterrupt(digitalPinToInterrupt(BAT_2_PIN), battery_2_undervoltage, HIGH);
 
   torpedo_2.attach(TORPEDO_2_PIN);
 
@@ -351,34 +356,50 @@ void loop()
   // Leak Detection Block
   if (digitalRead(LEAK_PIN) == HIGH && leak.getState()==LOW)
   {
+    // Trigger Leak Indicators
     serial_send('i', LEAK_TRUE);
     leak.setState(HIGH);
-    kill_switch.setState(HIGH);
-    // switch_update(kill_ptr, 'i');
-    auto_switch.setState(LOW);
-    // switch_update(auto_ptr, 'i');
     colorWipe(strip.Color(0, 0, 255), 0); // turn LED strip Blue
+
+    // Enable Kill Mode
+    kill_switch.setState(HIGH);
+    digitalWrite(MOSFET_PIN, LOW); 
+    serial_send('i', KILL_ON);
+
+    // Disable AI Mode
+    auto_switch.setState(LOW);
+    serial_send('i', AUTO_OFF);
   }
 
-  // Battery Block
-  if (battery_1_flag)
-  {
-    serial_send('i', BAT_WARN_1);
-    // kill_switch.setState(HIGH);
-    // switch_update(kill_ptr, 'i');
-    // auto_switch.setState(LOW);
-    // switch_update(auto_ptr, 'i');
-    battery_1_flag = LOW;
-    colorWipe(strip.Color(255, 255, 0), 0); // Turn LED strip Yellow
-  }
-  if (battery_2_flag)
-  {
-    serial_send('i', BAT_WARN_2);
-    // kill_switch.setState(HIGH);
-    // switch_update(kill_ptr, 'i');
-    // auto_switch.setState(LOW);
-    // switch_update(auto_ptr, 'i');
-    battery_2_flag = LOW;
-    colorWipe(strip.Color(255, 255, 0), 0); // Turn LED strip Yellow
-  }
+  // // Battery Block
+  // if (battery_1_flag)
+  // {
+  //   serial_send('i', BAT_WARN_1);
+  //   battery_1_flag = LOW;
+  //   colorWipe(strip.Color(255, 255, 0), 0); // Turn LED strip Yellow
+
+  //   // Enable Kill Mode
+  //   kill_switch.setState(HIGH);
+  //   digitalWrite(MOSFET_PIN, LOW); 
+  //   serial_send('i', KILL_ON);
+
+  //   // Disable AI Mode
+  //   auto_switch.setState(LOW);
+  //   serial_send('i', AUTO_OFF);
+  // }
+  // if (battery_2_flag)
+  // {
+  //   serial_send('i', BAT_WARN_2);
+  //   battery_2_flag = LOW;
+  //   colorWipe(strip.Color(255, 255, 0), 0); // Turn LED strip Yellow
+
+  //   // Enable Kill Mode
+  //   kill_switch.setState(HIGH);
+  //   digitalWrite(MOSFET_PIN, LOW); 
+  //   serial_send('i', KILL_ON);
+
+  //   // Disable AI Mode
+  //   auto_switch.setState(LOW);
+  //   serial_send('i', AUTO_OFF);
+  // }
 }
