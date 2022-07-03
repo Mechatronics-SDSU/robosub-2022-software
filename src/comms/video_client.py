@@ -49,6 +49,7 @@ def main(host: str, port: int, cap: int, write_frame: bool) -> None:
     """Runs the client code to connect to server and capture frames.
     """
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     client_socket.connect((host, port))
     cam = cv2.VideoCapture(cap)
     cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))

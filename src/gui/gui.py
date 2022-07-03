@@ -404,7 +404,7 @@ def run_telemetry_client(scion_ip: str, server_port: int) -> None:
         else:  # Establish a connection and put transmitted data into shared memory
             print("Starting telemetry socket")
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Reuse the address to bypass errno 98
                 try:
                     s.connect((scion_ip, server_port))
                     telemetry_ctrl_shm.buf[0] = 2
@@ -439,7 +439,7 @@ def run_pilot_client() -> None:
         else:  # Validate controller exists before starting up client
             pg.joystick.init()
             if pg.joystick.get_count() > 0:  # Start client
-                scion_cc.pilot_proc(argc=3, argv=['', '192.168.3.1', pilot_shm.buf[1] + SCION_COMMAND_PORT])
+                scion_cc.pilot_proc(argc=3, argv=['', SCION_DEFAULT_IPV4, pilot_shm.buf[1] + SCION_COMMAND_PORT])
             else:
                 print('ERROR: Attempted to start pilot without joystick')
                 pilot_shm.buf[0] = 0

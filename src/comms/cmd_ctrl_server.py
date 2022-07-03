@@ -15,7 +15,7 @@ def cmd_ctrl_server():
     data = None
     # Start up socket
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        # s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(('', CMD_CTRL_SERVER_PORT))
         s.listen()
         conn, addr = s.accept()
