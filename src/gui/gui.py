@@ -39,7 +39,7 @@ import struct
 
 import tkinter as tk
 from tkinter import *
-from tkinter import simpledialog
+# from tkinter import simpledialog
 
 import pygame as pg
 from PIL import ImageTk
@@ -52,7 +52,7 @@ import comms.cmd_ctrl_client as scion_cnc
 import comms.camera_gui as scion_cam
 import comms.controller_client as scion_cc
 import sensor.telemetry_linker as scion_tl
-import utils.scion_utils as scion_ut
+# import utils.scion_utils as scion_ut
 
 # GUI constants
 edge_size = 2
@@ -79,6 +79,16 @@ SCION_CAMERA_1_PORT = 50002
 SCION_CONTROL_PORT = 50004
 SCION_SENSOR_PORT = 50003
 SCION_LOGGING_PORT = 50005
+
+# Master process
+SCION_CONFIG_MENU_STRINGS = [  # Enumerated for consistency with start/masterprocess.h
+    'AIO',
+    'Sensor API',
+    'AHRS Sensor',
+    'Depth Sensor',
+    'Thrusters',
+    'Cameras'
+]
 
 
 class GuiWindow(tk.Frame):
@@ -172,7 +182,7 @@ class GuiWindow(tk.Frame):
 
         # Master process
         self.masterprocess = []
-        for i in range(5):
+        for i in range(len(SCION_CONFIG_MENU_STRINGS)):  # Make a tkinter boolean for everything in master process
             self.masterprocess.append(tk.BooleanVar(value=False))
         self.cnc_shm = shm.SharedMemory(name='cnc_shm')
         self.cnc_val_shm = shm.SharedMemory(name='cnc_val_shm')
@@ -189,7 +199,7 @@ class GuiWindow(tk.Frame):
         # Sub-grids
         # Button Grid
         self.buttons_cv.grid()
-        self.config_button = Button(master=self.top_bar_fr, text='Set Config', justify=LEFT, anchor='w',
+        self.config_button = Button(master=self.top_bar_fr, text='Set Masterprocess', justify=LEFT, anchor='w',
                                     command=self.set_config_menu)
         self.conn_button = Button(master=self.top_bar_fr, text='Connect', justify=LEFT, anchor='w',
                                   command=self.send_masterprocess)
@@ -228,114 +238,17 @@ class GuiWindow(tk.Frame):
         top = tk.Toplevel(self.master)  # Put this window on top
         config_lb = tk.Label(top, text='Enable Programs', pady=10, justify='left', anchor='nw')
         config_lb.grid(column=0, row=0, sticky=W, columnspan=2)
-        aio_lb = tk.Label(top, text='AIO')
-        aio_diag = tk.Label(top)
-        Radiobutton(aio_diag, text='Enable', variable=self.masterprocess[0], value=1,
-                    command=partial(self.val_set, self.masterprocess[0], True)).grid(column=0, row=0)
-        Radiobutton(aio_diag, text='Disable', variable=self.masterprocess[0], value=0,
-                    command=partial(self.val_set, self.masterprocess[0], False)).grid(column=1, row=0)
-        sensor_lb = tk.Label(top, text='Sensor API')
-        sensor_diag = tk.Label(top)
-        Radiobutton(sensor_diag, text='Enable', variable=self.masterprocess[1], value=1,
-                    command=partial(self.val_set, self.masterprocess[1], True)).grid(column=0, row=0)
-        Radiobutton(sensor_diag, text='Disable', variable=self.masterprocess[1], value=0,
-                    command=partial(self.val_set, self.masterprocess[1], False)).grid(column=1, row=0)
-        ahrs_lb = tk.Label(top, text='AHRS Sensor')
-        ahrs_diag = tk.Label(top)
-        Radiobutton(ahrs_diag, text='Enable', variable=self.masterprocess[2], value=1,
-                    command=partial(self.val_set, self.masterprocess[2], True)).grid(column=0, row=0)
-        Radiobutton(ahrs_diag, text='Disable', variable=self.masterprocess[2], value=0,
-                    command=partial(self.val_set, self.masterprocess[2], False)).grid(column=1, row=0)
-        depth_lb = tk.Label(top, text='Depth Sensor')
-        depth_diag = tk.Label(top)
-        Radiobutton(depth_diag, text='Enable', variable=self.masterprocess[3], value=1,
-                    command=partial(self.val_set, self.masterprocess[3], True)).grid(column=0, row=0)
-        Radiobutton(depth_diag, text='Disable', variable=self.masterprocess[3], value=0,
-                    command=partial(self.val_set, self.masterprocess[3], False)).grid(column=1, row=0)
-        thruster_lb = tk.Label(top, text='Thrusters')
-        thruster_diag = tk.Label(top)
-        Radiobutton(thruster_diag, text='Enable', variable=self.masterprocess[4], value=1,
-                    command=partial(self.val_set, self.masterprocess[4], True)).grid(column=0, row=0)
-        Radiobutton(thruster_diag, text='Disable', variable=self.masterprocess[4], value=0,
-                    command=partial(self.val_set, self.masterprocess[4], False)).grid(column=1, row=0)
-        aio_lb.grid(column=0, row=1, sticky=W)
-        aio_diag.grid(column=1, row=1, sticky=W)
-        sensor_lb.grid(column=0, row=2, sticky=W)
-        sensor_diag.grid(column=1, row=2, sticky=W)
-        ahrs_lb.grid(column=0, row=3, sticky=W)
-        ahrs_diag.grid(column=1, row=3, sticky=W)
-        depth_lb.grid(column=0, row=4, sticky=W)
-        depth_diag.grid(column=1, row=4, sticky=W)
-        thruster_lb.grid(column=0, row=5, sticky=W)
-        thruster_diag.grid(column=1, row=5, sticky=W)
-
-    def port_text_box(self, port_name: str, def_port: int, current_port: int, parent_window: any, label: any) -> None:
-        """Generate a text box for setting port; validates input is a valid port.
-        """
-        prompt = simpledialog.askstring('Input', f'Set the {port_name} port here: (Currently {current_port})',
-                                        parent=parent_window)
-        if isinstance(prompt, str):  # None returned if window does not exit properly
-            try:
-                new_port = int(prompt)
-            except ValueError:
-                new_port = self.def_ports[def_port]
-            self.current_ports[def_port] = new_port
-            # Update ports
-            self.camera_0_port = self.current_ports[1]
-            self.camera_1_port = self.current_ports[2]
-            self.telemetry_port = self.current_ports[3]
-            self.pilot_port = self.current_ports[4]
-            self.logging_port = self.current_ports[5]
-
-    def socket_menu(self) -> None:
-        """Create a new dialog box to configure elements of communication with Scion.
-        """
-        # Build labels for boxes
-        top = tk.Toplevel(self.master)  # Put this window on top
-        config_lb = tk.Label(top, text='Enable Programs', pady=10, justify='left', anchor='nw')
-        cam_0_lb = tk.Label(top, text='Video 0:')  # Cameras
-        cam_0_diag = tk.Label(top)
-        cam_1_lb = tk.Label(top, text='Video 1:')
-        cam_1_diag = tk.Label(top)
-        tel_lb = tk.Label(top, text='Sensors:')  # Telemetry
-        tel_diag = tk.Label(top)
-        pilot_lb = tk.Label(top, text='Pilot Control:')  # Pilot
-        pilot_diag = tk.Label(top)
-        log_lb = tk.Label(top, text='Logging:')  # Logging
-        log_diag = tk.Label(top)
-        # Grid everything
-        cam_0_lb.grid(column=0, row=1, sticky=W)
-        cam_0_diag.grid(column=1, row=1, sticky=W, columnspan=2)
-        cam_1_lb.grid(column=0, row=2, sticky=W)
-        cam_1_diag.grid(column=1, row=2, sticky=W, columnspan=2)
-        tel_lb.grid(column=0, row=3, sticky=W)
-        tel_diag.grid(column=1, row=3, sticky=W, columnspan=2)
-        pilot_lb.grid(column=0, row=4, sticky=W)
-        pilot_diag.grid(column=1, row=4, sticky=W, columnspan=2)
-        log_lb.grid(column=0, row=5, sticky=W)
-        log_diag.grid(column=1, row=5, sticky=W, columnspan=2)
-        
-        # Radio Buttons, handle grid in the button creation function
-        Radiobutton(cam_0_diag, text='Enable', variable=self.camera_0_enable, value=1,
-                    command=partial(self.val_set, self.camera_0_enable, True)).grid(column=0, row=0)
-        Radiobutton(cam_0_diag, text='Disable', variable=self.camera_0_enable, value=0,
-                    command=partial(self.val_set, self.camera_0_enable, False)).grid(column=1, row=0)
-        Radiobutton(cam_1_diag, text='Enable', variable=self.camera_1_enable, value=1,
-                    command=partial(self.val_set, self.camera_1_enable, True)).grid(column=0, row=0)
-        Radiobutton(cam_1_diag, text='Disable', variable=self.camera_1_enable, value=0,
-                    command=partial(self.val_set, self.camera_1_enable, False)).grid(column=1, row=0)
-        Radiobutton(tel_diag, text='Enable', variable=self.telemetry_enable, value=1,
-                    command=partial(self.val_set, self.telemetry_enable, True)).grid(column=0, row=0)
-        Radiobutton(tel_diag, text='Disable', variable=self.telemetry_enable, value=0,
-                    command=partial(self.val_set, self.telemetry_enable, False)).grid(column=1, row=0)
-        Radiobutton(pilot_diag, text='Enable', variable=self.pilot_enable, value=1,
-                    command=partial(self.val_set, self.pilot_enable, True)).grid(column=0, row=0)
-        Radiobutton(pilot_diag, text='Disable', variable=self.pilot_enable, value=0,
-                    command=partial(self.val_set, self.pilot_enable, False)).grid(column=1, row=0)
-        Radiobutton(log_diag, text='Enable', variable=self.logging_enable, value=1,
-                    command=partial(self.val_set, self.logging_enable, True)).grid(column=0, row=0)
-        Radiobutton(log_diag, text='Disable', variable=self.logging_enable, value=0,
-                    command=partial(self.val_set, self.logging_enable, False)).grid(column=1, row=0)
+        mp_lbs = []
+        mp_diags = []
+        for i in range(len(SCION_CONFIG_MENU_STRINGS)):
+            mp_lbs.append(tk.Label(top, text=SCION_CONFIG_MENU_STRINGS[i]))
+            mp_diags.append(tk.Label(top))
+            Radiobutton(mp_diags[i], text='Enable', variable=self.masterprocess[i], value=1,
+                        command=partial(self.val_set, self.masterprocess[i], True)).grid(column=0, row=0)
+            Radiobutton(mp_diags[i], text='Disable', variable=self.masterprocess[i], value=0,
+                        command=partial(self.val_set, self.masterprocess[i], False)).grid(column=1, row=0)
+            mp_lbs[i].grid(column=0, row=i+1, sticky=W)
+            mp_diags[i].grid(column=1, row=i+1, sticky=W)
 
     def send_masterprocess(self) -> None:
         """Sets the masterprocess configuration in shm to send.
