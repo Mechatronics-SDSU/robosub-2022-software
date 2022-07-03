@@ -46,7 +46,7 @@ def load_cameras() -> list:
     """Attempt to test the video cameras using opencv's builtins.
     """
     functional_ports = []
-    dev_max = 199
+    dev_max = 5
     dev = 0
     while dev < dev_max:
         cam = cv2.VideoCapture(dev)
@@ -63,6 +63,8 @@ def load_cameras() -> list:
 def video_server(port: int, cap: int, write_frame: bool) -> None:
     """Runs the video server and waits for client connection.
     """
+    if write_frame:
+        search_file()
     # CV
     cam = cv2.VideoCapture(cap)
     cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
@@ -99,5 +101,8 @@ def start_video_servers(cameras: list) -> None:
 
 
 if __name__ == '__main__':
-    cams = load_cameras()
-    start_video_servers(cameras=cams)
+    # cams = load_cameras()
+    # start_video_servers(cameras=cams)
+    video_server(50001, 0, write_frame=True)
+
+
