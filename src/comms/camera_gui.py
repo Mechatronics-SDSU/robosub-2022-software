@@ -11,6 +11,7 @@ def run_camera_client(server_ip: str, port: int, test=False, write_pipe=None, ca
     """Run the camera client for the GUI by connecting to the relevant ports.
     """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Reuse address to prevent errno 98
     s.connect((server_ip, port))
     data = b''
     payload_size = struct.calcsize(">L")
@@ -37,4 +38,6 @@ def run_camera_client(server_ip: str, port: int, test=False, write_pipe=None, ca
 
 
 if __name__ == '__main__':
-    run_camera_client(server_ip='127.0.0.1', port=50001, test=True)
+    ip = '127.0.0.1'
+    print(f'Starting camera client on {ip}')
+    run_camera_client(server_ip=ip, port=50001, test=True)

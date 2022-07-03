@@ -22,6 +22,7 @@ def main(host: str, port: int, ind: bool, write_pipe=None, context=None, camera_
     while shm_camera.buf[0] == 0:  # Wait for GUI to signal ready
         time.sleep(thread_sleep_s)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     print(f'Video socket created on port {PORT}')
     s.bind((HOST, PORT))
     s.listen(5)

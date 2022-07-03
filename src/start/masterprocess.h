@@ -76,6 +76,9 @@ char *depthSensor[] = {
 char *thrusterSubsystem[] = {
 	"python3", "comms/controller_server.py", NULL, NULL  /*devs[3]*/
 };
+char *cameraDriver[] = {
+	"python3", "comms/camera_scion.py", NULL
+};
 
 /*List of programs to change nullptrs for to device names.*/
 char **syswdev[] = {
@@ -104,7 +107,8 @@ char **programStartup[] = {
 	ahrsSensor, /*4*/
 	depthSensor, /*8*/
 	thrusterSubsystem, /*16*/
-	lsCommand /*32*/
+	cameraDriver, /*32*/
+	lsCommand /*64*/
 };
 
 int helpcommand();
