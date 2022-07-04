@@ -313,7 +313,8 @@ void setup()
 {
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(MOSFET_PIN, OUTPUT);
-  pinMode(LEAK_PIN, INPUT);
+  pinMode(LEAK_1_PIN, INPUT);
+  pinMode(LEAK_2_PIN, INPUT);
   // pinMode(BAT_1_PIN, INPUT);
   // pinMode(BAT_2_PIN, INPUT);
 
@@ -354,7 +355,7 @@ void loop()
   }
 
   // Leak Detection Block
-  if (digitalRead(LEAK_PIN) == HIGH && leak.getState()==LOW)
+  if (digitalRead(LEAK_1_PIN) == HIGH && leak.getState()==LOW || digitalRead(LEAK_2_PIN) == HIGH && leak.getState()==LOW)
   {
     // Trigger Leak Indicators
     serial_send('i', LEAK_TRUE);

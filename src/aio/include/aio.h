@@ -8,7 +8,8 @@
 #define MOSFET_PIN        4
 #define TORPEDO_1_PIN     5
 #define ARM_PIN           6
-#define LEAK_PIN          7
+#define LEAK_1_PIN        7
+#define LEAK_2_PIN        8
 #define TORPEDO_2_PIN     9
 #define LED_STRIP_PIN     11  
 #define AUTO_PIN          A0          
