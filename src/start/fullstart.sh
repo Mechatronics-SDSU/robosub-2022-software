@@ -30,4 +30,4 @@ source devel/setup.bash
 cd ..
 roscore &
 # Start masterprocess
-# ./start/masterprocess -a
+./start/masterprocess -c -d

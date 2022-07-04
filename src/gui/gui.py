@@ -209,11 +209,14 @@ class GuiWindow(tk.Frame):
                                    command=self.start_camera_1)
         self.tel_button = Button(master=self.top_bar_fr, text='Start Sensors', justify=LEFT, anchor='w',
                                  command=self.start_telemetry)
+        self.plt_button = Button(master=self.top_bar_fr, text='Start Pilot', justify=LEFT, anchor='w',
+                                 command=self.start_pilot)
         self.config_button.grid(row=0, column=0, sticky=W)
         self.conn_button.grid(row=0, column=1, sticky=W)
         self.cam_0_button.grid(row=0, column=2, sticky=W)
         self.cam_1_button.grid(row=0, column=3, sticky=W)
         self.tel_button.grid(row=0, column=4, sticky=W)
+        self.plt_button.grid(row=0, column=5, sticky=W)
         # Camera Grid
         self.camera_0_cv.grid(row=0, column=0)
         self.camera_1_cv.grid(row=1, column=0)
@@ -274,6 +277,9 @@ class GuiWindow(tk.Frame):
 
     def start_logging(self) -> None:
         self.logging_ctrl_shm.buf[0] = 1
+
+    def start_pilot(self) -> None:
+        self.pilot_ctrl_shm.buf[0] = 1
 
     def update_sensors(self) -> None:
         """Update data in the tkinter window by reading what was last sent on the sensor thread.
@@ -345,7 +351,7 @@ class GuiWindow(tk.Frame):
         self.camera_1_shm.buf[0] = int(self.camera_1_enable.get() is True)
         self.telemetry_ctrl_shm.buf[0] = int(self.telemetry_enable.get() is True)
         self.pilot_ctrl_shm.buf[0] = int(self.pilot_enable.get() is True)
-        self.pilot_ctrl_shm.buf[1] = self.current_ports[4] - 50000
+        self.pilot_ctrl_shm.buf[1] = 50004
 
     def update(self) -> None:
         """Update dynamic elements in the GUI window, read elements from other threads.
@@ -439,7 +445,7 @@ def run_pilot_client() -> None:
         else:  # Validate controller exists before starting up client
             pg.joystick.init()
             if pg.joystick.get_count() > 0:  # Start client
-                scion_cc.pilot_proc(argc=3, argv=['', SCION_DEFAULT_IPV4, pilot_shm.buf[1] + SCION_COMMAND_PORT])
+                scion_cc.pilot_proc(argc=3, argv=['', SCION_DEFAULT_IPV4, str(SCION_CONTROL_PORT)])
             else:
                 print('ERROR: Attempted to start pilot without joystick')
                 pilot_shm.buf[0] = 0

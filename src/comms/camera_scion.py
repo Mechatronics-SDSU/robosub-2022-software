@@ -72,6 +72,7 @@ def video_server(port: int, cap: int, write_frame: bool) -> None:
     encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
     # Socket
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_sock:
+        server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server_sock.bind(('', port))
         server_sock.listen(5)
         conn, addr = server_sock.accept()

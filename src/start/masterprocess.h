@@ -55,14 +55,8 @@ char *noop[] = {
 char *lsCommand[] = {
 	"ls", ".", NULL
 };
-char *killSwitch[] = {
-	"python3", "killswitch/killswitch-aio.py", NULL, NULL
-};
 char *aioBoard[] = {
 	"python3", "aio/aio_utils.py", NULL, NULL /*devs[0]*/
-};
-char *visionSubsystem[] = {
-	"python3", "comms/video_client.py", NULL
 };
 char *sensorApi[] = {
 	"rosrun", "scion_ros", "sensor_listener.py", NULL
@@ -80,6 +74,7 @@ char *cameraDriver[] = {
 	"python3", "comms/camera_scion.py", NULL
 };
 
+
 /*List of programs to change nullptrs for to device names.*/
 char **syswdev[] = {
 	aioBoard,
@@ -87,7 +82,7 @@ char **syswdev[] = {
 	depthSensor,
 	thrusterSubsystem
 };
-
+ 
 /*Index location where the nullptrs are to change in syswdev.*/
 int syswdevloc[] = {
 	2, /*aio*/
