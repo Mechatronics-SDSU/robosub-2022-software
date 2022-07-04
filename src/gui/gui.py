@@ -52,7 +52,7 @@ import comms.cmd_ctrl_client as scion_cnc
 import comms.camera_gui as scion_cam
 import comms.controller_client as scion_cc
 import sensor.telemetry_linker as scion_tl
-# import utils.scion_utils as scion_ut
+import utils.scion_utils as scion_ut
 
 # GUI constants
 edge_size = 2
@@ -289,14 +289,18 @@ class GuiWindow(tk.Frame):
             # Text elements for displaying data
             sensor_frame = cv2.imread('img/sensor_22.png')
             # Load text into an opencv frame
-            cv2.putText(img=sensor_frame, text=f'{round(self.telemetry_linker.data[0], 3)}', org=(150, 25),
-                        fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1.2, color=color_term_green, thickness=1)
-            cv2.putText(img=sensor_frame, text=f'{round(self.telemetry_linker.data[1], 3)}', org=(150, 50),
-                        fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1.2, color=color_term_green, thickness=1)
-            cv2.putText(img=sensor_frame, text=f'{round(self.telemetry_linker.data[2], 3)}', org=(150, 75),
-                        fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1.2, color=color_term_green, thickness=1)
-            cv2.putText(img=sensor_frame, text=f'{round(self.telemetry_linker.data[3], 3)}', org=(150, 100),
-                        fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1.2, color=color_term_green, thickness=1)
+            cv2.putText(img=sensor_frame, text=f'{round(self.telemetry_linker.data[0], 3)}',
+                        org=(150, scion_ut.RIGHT_WIN_CONF[8]), fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1.2,
+                        color=color_term_green, thickness=1)
+            cv2.putText(img=sensor_frame, text=f'{round(self.telemetry_linker.data[1], 3)}',
+                        org=(150, scion_ut.RIGHT_WIN_CONF[9]), fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1.2,
+                        color=color_term_green, thickness=1)
+            cv2.putText(img=sensor_frame, text=f'{round(self.telemetry_linker.data[2], 3)}',
+                        org=(150, scion_ut.RIGHT_WIN_CONF[10]), fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1.2,
+                        color=color_term_green, thickness=1)
+            cv2.putText(img=sensor_frame, text=f'{round(self.telemetry_linker.data[3], 3)}',
+                        org=(150, scion_ut.RIGHT_WIN_CONF[11]), fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1.2,
+                        color=color_term_green, thickness=1)
             # Convert to be tkinter compatible
             self.telemetry_frame_counter += 1
             if self.telemetry_frame_counter % 2 == 1:
@@ -351,7 +355,7 @@ class GuiWindow(tk.Frame):
         self.camera_1_shm.buf[0] = int(self.camera_1_enable.get() is True)
         self.telemetry_ctrl_shm.buf[0] = int(self.telemetry_enable.get() is True)
         self.pilot_ctrl_shm.buf[0] = int(self.pilot_enable.get() is True)
-        self.pilot_ctrl_shm.buf[1] = 50004
+        self.pilot_ctrl_shm.buf[1] = 4
 
     def update(self) -> None:
         """Update dynamic elements in the GUI window, read elements from other threads.

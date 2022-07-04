@@ -1,3 +1,4 @@
+#!/usr/bin/env python3.8
 import sys
 
 import sensor.telemetry_linker as scion_tl
@@ -99,7 +100,11 @@ class AHRSDataWrapper(DataWrapper):
                 ind_1 = i+2
             elif (data[i] == 'R') and (ind_1 != 0):
                 ind_2 = i
-                self.pitch = float(data[ind_1:ind_2])
+                self.pitch = data[ind_1:ind_2]
+                if self.pitch == 'None':
+                    self.pitch = 0.0
+                else:
+                    self.pitch = float(self.pitch)
                 data = data[ind_2 + 2:]
                 break
         # Roll
@@ -107,9 +112,17 @@ class AHRSDataWrapper(DataWrapper):
         for i in range(len(data)):
             if data[i] == 'Y':
                 ind_2 = i
-                self.roll = float(data[:ind_2])
+                self.roll = data[:ind_2]
+                if self.roll == 'None':
+                    self.roll = 0.0
+                else:
+                    self.roll = float(self.roll)
                 # Yaw
-                self.yaw = float(data[ind_2 + 2:])
+                self.yaw = data[ind_2 + 2:-1]
+                if self.yaw == 'None':
+                    self.yaw = 0.0
+                else:
+                    self.yaw = float(self.yaw)
 
 
 def scion_print(print_input: str):
