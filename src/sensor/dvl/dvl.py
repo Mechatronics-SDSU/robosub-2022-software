@@ -10,6 +10,7 @@ import sys
 import time
 import numpy as np
 import math
+import struct
 
 class Dvl():
     """Main class to connect to Wayfinder.
@@ -494,38 +495,25 @@ class Dvl():
 
 
 
-class Dvl_sample:
+class Dvl_sample():
     """This class stores values from the last dvl sample processed by the
     dvl callback method.
     """
     def __init__(self) -> None:
         """Initializes variables for last dvl sample
         """
-        self.time = None
-        self.velocity = [None]
-        self.velocity_err = None
-        self.beam_range = [None]
-        self.beam_avg = None
+        self.time = 0.0
+        self.data = []
     
-    def set_data(self, _time:str, _velocity:list, _velocity_err:float, \
-        _beam_range:list, _beam_avg:float):
+    def set_data(self, _time:float, _data:list):
         self.time = _time
-        self.velocity = _velocity
-        self.velocity_err = _velocity_err
-        self.beam_range = _beam_range
-        self.beam_avg = _beam_avg
+        self.data = _data
 
-    def get_velocity(self):
-        return self.velocity
-    
-    def get_velocity_err(self):
-        return self.velocity_err
-    
-    def get_beam_range(self):
-        return self.beam_range
+    def get_time(self) -> float:
+        return self.time
 
-    def get_beam_avg(self):
-        return self.beam_avg
+    def get_data(self) -> list:
+        return self.data
 
 
 def dvl_data_callback(self, output_data: OutputData, obj: Dvl_sample):
@@ -533,20 +521,17 @@ def dvl_data_callback(self, output_data: OutputData, obj: Dvl_sample):
     and range data.
     Returns:
         time: A string containing the time of last sample
-        velocity: A list containing the velocities in x,y,z axis
-        velocity_err: A float containing the predicted error on velocity value
-        floor_range: A list containing the range to the floor from each dvl beam
-        floor_mean: A float containing the averaged range to the floor
+        ret: A list of float32 containing the velocities in x,y,z axis and mean range to floor
     """
     if output_data is not None:
         time_raw = output_data.get_date_time()
-        time = time_raw.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-        velocity = np.array([output_data.vel_x, output_data.vel_y, output_data.vel_z])
-        velocity_err = output_data.vel_err
-        beam_range = np.array([output_data.range_beam1, output_data.range_beam2, \
-            output_data.range_beam3, output_data.range_beam4])
-        beam_mean = output_data.mean_range
-        obj.set_data(time, velocity, velocity_err, beam_range, beam_mean)
+        time = time_raw.strftime('%H:%M:%S.%f')[:-3]
+        data = [output_data.vel_x, output_data.vel_y, output_data.vel_z,  output_data.mean_range]
+        ret = []
+        for i in data:
+            ret.append(struct.pack(">1f", i))
+        obj.set_data(time, ret)
+
     print("No output data connection")
         
 def print_data_callback(output_data: OutputData, obj):
@@ -555,14 +540,10 @@ def print_data_callback(output_data: OutputData, obj):
     del obj
     if output_data is not None:
         time = output_data.get_date_time()
-        txt = time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+        txt = time.strftime('%H:%M:%S.%f')[:-3]
         vels = np.array([output_data.vel_x, output_data.vel_y, output_data.vel_z])
-        floor_range = np.array([output_data.range_beam1, output_data.range_beam2, \
-            output_data.range_beam3, output_data.range_beam4])
         print("Got data {0}".format(txt))
         print(f"Velocities X: %9.3f Y: %9.3f Z: %9.3f" % (vels[0], vels[1], vels[2]))
-        print(f"Range to Floor Beam 1: %9.3f 2: %9.3f 3: %9.3f 4: %9.3f" % \
-                (floor_range[0], floor_range[1], floor_range[2], floor_range[3]))
         print(f"Mean Range: %9.3f" % output_data.mean_range)
         
 

@@ -3,7 +3,7 @@
 """
 import rospy
 import sys
-from std_msgs.msg import String
+from std_msgs.msg import Float64, Float32MultiArray
 import logging
 import time
 
@@ -15,24 +15,31 @@ DVL_FETCH_HERTZ = 100
 
 def dvl_driver(dvl_name: str) -> None:
     dvl = scion_dvl.Dvl(com=dvl_name)
+    dvl_sample = scion_dvl.Dvl_sample()
 
     dvl.enter_command_mode()
 
     # Insert code for dvl setup configuration
 
     # Register callback function
-    dvl.register_ondata_callback(scion_dvl.dvl_data_callback, None)
+    dvl.register_ondata_callback(scion_dvl.dvl_data_callback, dvl_sample)
 
     dvl.exit_command_mode()
 
     # Update to correct topic message
-    # pub = rospy.Publisher('dvl_state', String, queue_size=10)
-    # rospy.init_node('pub', anonymous=True)
+    pub_time = rospy.Publisher('dvl_time', Float64, queue_size=10)
+    pub_data = rospy.Publisher('dvl_data', Float32MultiArray, queue_size=10)
+    rospy.init_node('dvl_driver', anonymous=True)
     rate = rospy.Rate(DVL_FETCH_HERTZ)
 
     while True:
         # Trigger DVL data capture
+        time = dvl_sample.get_time()
+        data = dvl_sample.get_data()
+
         dvl.send_software_trigger()
+        pub_time.publish(time)
+        pub_data.publish(data)
         rate.sleep()
 
 
