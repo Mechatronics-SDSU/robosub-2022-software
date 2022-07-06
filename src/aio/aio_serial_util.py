@@ -2,7 +2,7 @@ import serial
 import time
 
 # Hard coded port for serial connection
-arduino = serial.Serial(port='/dev/ttyUSB1', baudrate=9600, timeout=.1)
+arduino = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=.1)
 
 
 def write_read(x):

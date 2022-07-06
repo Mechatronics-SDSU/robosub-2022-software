@@ -71,8 +71,9 @@ Switch *auto_ptr = &auto_switch;
 Leak leak;
 
 Servo torpedo_2;
+Servo arm_1;
 
-Arm gripper(ARM_PIN);
+// Arm gripper(ARM_PIN);
 
 void colorWipe(uint32_t color, int wait)
 {
@@ -267,32 +268,32 @@ void serial_check()
       }
     }
 
-    else if (!((serial_buf & 0xF0) ^ ARM_MASK))
-    {
-      // Arm related tasks
-      if (serial_buf == ARM_GET)
-      {
-        if(gripper.getState()==HIGH)
-        {
-          serial_send('o', ARM_OPEN);
-        }
-        else if(gripper.getState()==LOW)
-        {
-          serial_send('o', ARM_CLOSE);
-        }
-      }
-      else if(serial_buf == ARM_CLOSE)
-      {
-        gripper.setState(LOW);
-        serial_send('o', ARM_CLOSE);
-      }
-      else if(serial_buf == ARM_OPEN)
-      {
-        gripper.setState(HIGH);
-        serial_send('o', ARM_OPEN);
-      }
-    }
-  }
+//     else if (!((serial_buf & 0xF0) ^ ARM_MASK))
+//     {
+//       // Arm related tasks
+//       if (serial_buf == ARM_GET)
+//       {
+//         if(gripper.getState()==HIGH)
+//         {
+//           serial_send('o', ARM_OPEN);
+//         }
+//         else if(gripper.getState()==LOW)
+//         {
+//           serial_send('o', ARM_CLOSE);
+//         }
+//       }
+//       else if(serial_buf == ARM_CLOSE)
+//       {
+//         gripper.setState(LOW);
+//         serial_send('o', ARM_CLOSE);
+//       }
+//       else if(serial_buf == ARM_OPEN)
+//       {
+//         gripper.setState(HIGH);
+//         serial_send('o', ARM_OPEN);
+//       }
+//     }
+   }
 }
 
 // void battery_1_undervoltage()
@@ -323,7 +324,7 @@ void setup()
   // attachInterrupt(digitalPinToInterrupt(BAT_1_PIN), battery_1_undervoltage, HIGH);
   // attachInterrupt(digitalPinToInterrupt(BAT_2_PIN), battery_2_undervoltage, HIGH);
 
-  torpedo_2.attach(TORPEDO_2_PIN);
+  // torpedo_2.attach(TORPEDO_2_PIN);
 
   strip.begin();            // INITIALIZE NeoPixel strip object (REQUIRED)
   strip.show();             // Turn OFF all pixels ASAP, Send the updated pixel colors to the hardware.
@@ -332,7 +333,10 @@ void setup()
 
   colorWipe(strip.Color(255, 0, 0), 0); // turn LED strip Red
 
-  gripper.setState(LOW);    // Initialize the arm in closed state
+  // gripper.setState(HIGH);    // Initialize the arm in closed state
+
+  arm_1.attach(ARM_PIN);
+  arm_1.writeMicroseconds(1300);
 
   Serial.begin(9600);
 }

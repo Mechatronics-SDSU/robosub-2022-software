@@ -3,9 +3,10 @@
 
 Arm::Arm(unsigned int pin) {
     _arm_state = false;
-    _open_pwm = 1100;
-    _close_pwm = 1900;
+    _open_pwm = 1600;
+    _close_pwm = 1300;
     arm.attach(pin);
+    Serial.println("Created  Arm");
 }
 
 bool Arm::getState() {
