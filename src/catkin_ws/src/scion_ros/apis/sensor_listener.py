@@ -10,7 +10,7 @@ import utils.scion_utils as scion_ut
 import sensor.telemetry_linker as scion_tl
 
 
-def sensor_listener():
+def sensor_listener() -> None:
     """Listens to all ROS topics regarding sensors, updates telemetry linker class, forwards pickled data to clients.
     """
     '''Telemetry Linker. Not using shared memory because we listen to ROS directly. Since we only call pack_data, we
