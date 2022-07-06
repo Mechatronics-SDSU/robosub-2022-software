@@ -1,5 +1,6 @@
 #!/usr/bin/env python3.8
 import sys
+import struct
 
 import sensor.telemetry_linker as scion_tl
 
@@ -67,6 +68,38 @@ class DataWrapper:
         self.data = data.data
         if self.debug:
             print(f'API SEES: {data.data}')
+
+
+class DVLDataWrapper(DataWrapper):
+    """Specific wrapper for the DVL data.
+    """
+    def __init__(self, debug: bool):
+        super().__init__(debug)
+        self.dvl_x = scion_tl.TELEMETRY_DEFAULT_DATA[4]
+        self.dvl_y = scion_tl.TELEMETRY_DEFAULT_DATA[5]
+        self.dvl_z = scion_tl.TELEMETRY_DEFAULT_DATA[6]
+        self.dvl_mean = scion_tl.TELEMETRY_DEFAULT_DATA[7]
+
+    def callback(self, data) -> None:
+        if self.debug:
+            print(data)
+        self.dvl_x = struct.pack('>1f', data[0])
+        self.dvl_y = struct.pack('>1f', data[1])
+        self.dvl_z = struct.pack('>1f', data[2])
+        self.dvl_mean = struct.pack('>1f', data[3])
+
+
+class DVLTimeWrapper(DataWrapper):
+    """Specific wrapper for the DVL timestamps.
+    """
+    def __init__(self, debug: bool):
+        super().__init__(debug)
+        self.dvl_time = scion_tl.TELEMETRY_DEFAULT_DATA[8]
+
+    def callback(self, data) -> None:
+        if self.debug:
+            print(data)
+        self.dvl_time = float(data)
 
 
 class DepthDataWrapper(DataWrapper):

@@ -588,11 +588,12 @@ def main(com_port:str) -> None:
     dvl.register_ondata_callback(print_data_callback, None)
 
     dvl.exit_command_mode()
-    
 
     while True:
         if not dvl.send_software_trigger():
             print("Failed to send software trigger")
+        else:
+            print("Successfully sent software trigger")
         time.sleep(0.1)
 
 if __name__ == '__main__':
