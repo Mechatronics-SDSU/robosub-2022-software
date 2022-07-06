@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3
 """AIO class wrapper for interfacing with AIO.
 
 This is meant to be imported and used by a ROS driver:
