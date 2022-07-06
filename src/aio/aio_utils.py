@@ -82,33 +82,29 @@ nmask_dict_indicies = {
 
 # Lookup table for conversion from ROS
 ros_conversion_table = {
-    'a': 1,  # autonomous button
-    'b': 2,  # battery
-    'k': 3,  # killswitch
-    'l': 4,  # leak
-    't': 8,  # torpedo
-    'r': 10,  # arm
+    scion_ut.AIO_AUTO_NMASK_ROS: 1,  # autonomous button
+    scion_ut.AIO_BAT_NMASK_ROS: 2,  # battery
+    scion_ut.AIO_KILL_NMASK_ROS: 3,  # killswitch
+    scion_ut.AIO_LEAK_NMASK_ROS: 4,  # leak
+    scion_ut.AIO_TORPEDO_NMASK_ROS: 8,  # torpedo
+    scion_ut.AIO_ARM_NMASK_ROS: 10,  # arm
 }
 # Lookup table for conversion to ROS
 serial_converstion_table = {
-    1: 'a',  # autonomous button
-    2: 'b',  # battery
-    3: 'k',  # killswitch
-    4: 'l',  # leak
-    8: 't',  # torpedo
-    10: 'r',  # arm
+    1: scion_ut.AIO_AUTO_NMASK_ROS,  # autonomous button
+    2: scion_ut.AIO_BAT_NMASK_ROS,  # battery
+    3: scion_ut.AIO_KILL_NMASK_ROS,  # killswitch
+    4: scion_ut.AIO_LEAK_NMASK_ROS,  # leak
+    8: scion_ut.AIO_TORPEDO_NMASK_ROS,  # torpedo
+    10: scion_ut.AIO_ARM_NMASK_ROS,  # arm
 }
-
-NMASKS = [scion_ut.AIO_ARM_NMASK, scion_ut.AIO_AUTO_NMASK, scion_ut.AIO_BAT_NMASK, scion_ut.AIO_KILL_NMASK,
-          scion_ut.AIO_LEAK_NMASK, scion_ut.AIO_TORPEDO_NMASK]
-GET_REQ = [scion_ut.AIO_ARM_GET, scion_ut.AIO_AUTO_GET, scion_ut.AIO_BAT_GET, scion_ut.AIO_KILL_GET,
-           scion_ut.AIO_LEAK_GET, scion_ut.AIO_TORPEDO_GET]
 
 
 class AIOWrapper:
-    def __init__(self, device_name: str):
+    def __init__(self, device_name: str, timeout=0.0) -> None:
         self.dev_name = device_name
-        self.dev = serial.Serial(self.dev_name, 9600)
+        self.timeout = timeout
+        self.dev = serial.Serial(self.dev_name, baudrate=9600, timeout=timeout)
         self.last_line = ''
 
     def send_input_packet(self, nmask: str, value: int) -> None:
@@ -126,7 +122,7 @@ class AIOWrapper:
         ret = ret + hex(int(self.last_line[1:3], 16) & 15)[2:]  # Get N value, convert to hex, strip formatting
         return ret
 
-    def read_device(self) -> str:
+    def read_device(self) -> any:
         out = self.dev.readline()
         result = chr(int(f'{out[0:3]}'[2:-1]))
         if out is not None:
@@ -141,6 +137,7 @@ class AIOWrapper:
             out = str(result)
             self.last_line = out
             return out
+        return None
 
     @staticmethod
     def _gen_input_packet_int(nmask: str, val: int) -> bytes:
