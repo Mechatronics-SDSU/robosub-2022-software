@@ -16,7 +16,7 @@ AHRS_FETCH_HERTZ = 100
 def ahrs_driver(ahrs_name: str) -> None:
     ahrs = scion_ahrs.SpartonAHRSDataPackets(_com_port=ahrs_name)
     pub = rospy.Publisher('ahrs_state', String, queue_size=10)
-    rospy.init_node('pub', anonymous=True)
+    rospy.init_node('ahrs_driver', anonymous=True)
     rate = rospy.Rate(AHRS_FETCH_HERTZ)
     while True:
         yaw = ahrs.get_true_heading()

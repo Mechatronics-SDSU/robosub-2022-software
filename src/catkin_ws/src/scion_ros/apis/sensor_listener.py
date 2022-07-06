@@ -3,7 +3,7 @@
 """
 
 import rospy
-from std_msgs.msg import String, Float64
+from std_msgs.msg import String, Float64, Float32MultiArray
 import socket
 
 import utils.scion_utils as scion_ut
@@ -21,10 +21,14 @@ def sensor_listener() -> None:
     # ROS
     dw_ahrs = scion_ut.AHRSDataWrapper(debug=False)
     dw_depth = scion_ut.DepthDataWrapper(debug=False)
+    dw_dvl = scion_ut.DVLDataWrapper(debug=False)
+    dw_dvl_time = scion_ut.DVLTimeWrapper(debug=False)
     rospy.init_node('sensor_listener', anonymous=True)
     # Listen to all sensors
     rospy.Subscriber('ahrs_state', String, dw_ahrs.callback)
     rospy.Subscriber('depth_state', Float64, dw_depth.callback)
+    rospy.Subscriber('dvl_data', Float32MultiArray, dw_dvl.callback)
+    rospy.Subscriber('dvl_time', Float64, dw_dvl_time.callback)
     # Add more sensors here as they get added to ROS and update the telemetry linker
     # Frontend access
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -42,6 +46,11 @@ def sensor_listener() -> None:
                 linker.data[1] = dw_ahrs.roll
                 linker.data[2] = dw_ahrs.yaw
                 linker.data[3] = float(dw_depth.depth)
+                linker.data[4] = dw_dvl.dvl_x
+                linker.data[5] = dw_dvl.dvl_y
+                linker.data[6] = dw_dvl.dvl_z
+                linker.data[7] = dw_dvl.dvl_mean
+                linker.data[8] = dw_dvl_time.dvl_time
                 # Pickle and send
                 data = linker.pack_data()
                 conn.sendall(data)

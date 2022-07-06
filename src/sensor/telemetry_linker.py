@@ -8,29 +8,36 @@ import pickle
 from multiprocessing import shared_memory as shm
 
 
-TELEMETRY_DEFAULT_DATA = (0.0, 0.0, 0.0, 0.0)
-TELEMETRY_DATA_SIZES = (8, 8, 8, 8)
+TELEMETRY_DEFAULT_DATA = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+TELEMETRY_DATA_SIZES = (8, 8, 8, 8, 4, 4, 4, 4, 8)
 
 telemetry_names_from_val = {
     0: 'pitch',
     1: 'roll',
     2: 'yaw',
     3: 'depth',
+    4: 'dvl_x',
+    5: 'dvl_y',
+    6: 'dvl_z',
+    7: 'dvl_mean',
+    8: 'dvl_time'
 }
 
 telemetry_vals_from_name = {
     'pitch': 0,
     'roll': 1,
     'yaw': 2,
-    'depth': 3
+    'depth': 3,
+    'dvl_x': 4,
+    'dvl_y': 5,
+    'dvl_z': 6,
+    'dvl_mean': 7,
+    'dvl_time': 8
 }
 
-telemetry_data = [
-    TELEMETRY_DEFAULT_DATA[0],
-    TELEMETRY_DEFAULT_DATA[1],
-    TELEMETRY_DEFAULT_DATA[2],
-    TELEMETRY_DEFAULT_DATA[3]
-]
+telemetry_data = []
+for x in range(len(TELEMETRY_DEFAULT_DATA)):
+    telemetry_data.append(TELEMETRY_DEFAULT_DATA[x])
 
 
 class TelemetryLinker:
@@ -40,9 +47,9 @@ class TelemetryLinker:
         self.data = copy.deepcopy(telemetry_data)
         if use_shm:
             self.shm_objects = []
-            self.setup()
+            self.setup_shm()
 
-    def setup(self):
+    def setup_shm(self):
         """Set up all shared memory
         """
         for i in range(len(self.data)):
@@ -58,9 +65,14 @@ class TelemetryLinker:
     def _set_shm(self, shm_val: int, value: any) -> None:
         """Load shared memory located at shm_val with MSB to LSB byte-ordered values in list.
         """
-        ba = bytearray(struct.pack('d', value))
-        for i in range(len(ba)):
-            self.shm_objects[shm_val].buf[i] = ba[i]
+        ba = None
+        if TELEMETRY_DATA_SIZES[shm_val] == 8:
+            ba = bytearray(struct.pack('d', value))
+        elif TELEMETRY_DATA_SIZES[shm_val] == 4:
+            ba = bytearray(struct.pack('f', value))
+        if ba is not None:
+            for i in range(len(ba)):
+                self.shm_objects[shm_val].buf[i] = ba[i]
 
     def load_data(self, shm_index: int, value: any) -> None:
         """Load data by string into the class, then call internal _set_shm to set it in shm.
@@ -87,7 +99,10 @@ class TelemetryLinker:
         ba = bytearray()
         for i in range(TELEMETRY_DATA_SIZES[shm_val]):
             ba.append(self.shm_objects[shm_val].buf[i])
-        return struct.unpack('d', ba)[0]
+        if TELEMETRY_DATA_SIZES[shm_val] == 8:
+            return struct.unpack('d', ba)[0]
+        elif TELEMETRY_DATA_SIZES[shm_val] == 4:
+            return struct.unpack('f', ba)[0]
 
     def pack_data(self) -> any:
         """Load all data the class has into a pickle, set integer after comparing to default values.
