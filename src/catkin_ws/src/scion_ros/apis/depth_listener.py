@@ -6,21 +6,12 @@ import rospy
 import socket
 from std_msgs.msg import String
 
-
-class DataWrapper:
-    def __init__(self, debug: bool) -> None:
-        self.data = None
-        self.debug = debug
-
-    def callback(self, data) -> None:
-        self.data = data.data
-        if self.debug:
-            print(f'API SEES: {data.data}')
+import utils.scion_utils as scion_ut
 
 
 def depth_listener() -> None:
     # ROS
-    dw = DataWrapper(debug=False)
+    dw = scion_ut.DataWrapper(debug=False)
     rospy.init_node('depth_listener', anonymous=True)
     rospy.Subscriber('depth_state', String, dw.callback)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:

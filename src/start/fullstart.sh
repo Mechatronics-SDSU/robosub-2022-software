@@ -28,6 +28,17 @@ if [[ $CATKIN_BUILT == 0 ]]; then
 fi
 source devel/setup.bash
 cd ..
-roscore &
+# Test for ROS running
+ROS_RUNNING=$(ps -a | grep roscore | wc -l)
+if [[ $ROS_RUNNING == 0 ]]; then
+  roscore &
+fi
+# Test if masterprocess has been built
+MP_BUILT=$(ls start/ | grep masterprocess.o | wc -l)
+if [[ $MP_BUILT == 0]]; then
+  cd start
+  make
+  cd ..
+fi
 # Start masterprocess
 ./start/masterprocess -c -d

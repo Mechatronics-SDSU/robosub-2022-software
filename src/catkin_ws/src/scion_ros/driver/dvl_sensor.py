@@ -12,6 +12,7 @@ import sensor.dvl.dvl as scion_dvl
 # Can be faster if needed
 DVL_FETCH_HERTZ = 100
 
+
 def dvl_driver(dvl_name: str) -> None:
     dvl = scion_dvl.Dvl(com=dvl_name)
 
