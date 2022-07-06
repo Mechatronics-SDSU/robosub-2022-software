@@ -1,7 +1,7 @@
 """Contains several classes that implement binary packet interface.
 """
 from enum import Enum
-from util import print_bytes, print_bytearray, indent_string
+from sensor.dvl.util import print_bytes, print_bytearray, indent_string
 
 class AppLayerIdType(Enum):
     """Enumerated type class that defines IDs for application layer packets.

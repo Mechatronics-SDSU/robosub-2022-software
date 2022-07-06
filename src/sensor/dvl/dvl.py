@@ -1,11 +1,11 @@
 """Contains main Dvl class to connect to Wayfinder.
 """
 import datetime as dt
-from packets import AppLayerPacket
-from commands import BinaryCommands, check_response
-from system import SystemInfo, SystemComponents, SystemFeatures, SystemSetup, \
+from sensor.dvl.packets import AppLayerPacket
+from sensor.dvl.commands import BinaryCommands, check_response
+from sensor.dvl.system import SystemInfo, SystemComponents, SystemFeatures, SystemSetup, \
     SystemTests, FftData, OutputData
-from commands import ResponseStatusType, CommandIdType
+from sensor.dvl.commands import ResponseStatusType, CommandIdType
 import sys
 import time
 import numpy as np
