@@ -18,3 +18,10 @@ __pycache__/
 */catkin_ws/devel
 */catkin_ws/logs
 ros_lib/
+
+# Specific files
+# Startup
+src/start/current_device_names.cfg
+src/start/current_devices.cfg
+src/start/masterprocess
+src/start/masterprocess.o
