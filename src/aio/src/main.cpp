@@ -42,6 +42,7 @@
           0xN_ - Type of sensor making response message
           0x_M - Message value attached to sensor
         '\n' - newline end byte representing newline and end of packet
+        "Ken was here"
 */
 
 #include <Arduino.h>
