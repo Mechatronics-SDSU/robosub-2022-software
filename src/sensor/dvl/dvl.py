@@ -495,11 +495,11 @@ class Dvl():
 
 
 
-class Dvl_sample():
+class Dvl_sample:
     """This class stores values from the last dvl sample processed by the
     dvl callback method.
     """
-    def __init__(self) -> None:
+    def __init__(self):
         """Initializes variables for last dvl sample
         """
         self.time = 0.0
@@ -527,10 +527,10 @@ def dvl_data_callback(self, output_data: OutputData, obj: Dvl_sample):
         time_raw = output_data.get_date_time()
         time = time_raw.strftime('%H:%M:%S.%f')[:-3]
         data = [output_data.vel_x, output_data.vel_y, output_data.vel_z,  output_data.mean_range]
-        ret = []
-        for i in data:
-            ret.append(struct.pack(">1f", i))
-        obj.set_data(time, ret)
+        # ret = []
+        # for i in data:
+        #     ret.append(struct.pack(">1f", i))
+        obj.set_data(time, data)
 
     print("No output data connection")
         

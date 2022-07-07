@@ -6,6 +6,7 @@ import sys
 from std_msgs.msg import Float64, Float32MultiArray
 import logging
 import time
+import struct
 
 import sensor.dvl.dvl as scion_dvl
 
@@ -35,9 +36,11 @@ def dvl_driver(dvl_name: str) -> None:
     while True:
         # Trigger DVL data capture
         time = dvl_sample.get_time()
-        data = dvl_sample.get_data()
+        data_rec = dvl_sample.get_data()
+        data = []
+        for i in data_rec:
+            data.append(struct.pack(">1f", i))
 
-        dvl.send_software_trigger()
         pub_time.publish(time)
         pub_data.publish(data)
         rate.sleep()
