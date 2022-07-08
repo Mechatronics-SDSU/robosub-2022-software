@@ -79,6 +79,8 @@ SCION_CAMERA_1_PORT = 50002
 SCION_CONTROL_PORT = 50004
 SCION_SENSOR_PORT = 50003
 SCION_LOGGING_PORT = 50005
+SCION_AIO_C_PORT = 50006
+SCION_AIO_L_PORT = 50007
 
 # Master process
 SCION_CONFIG_MENU_STRINGS = [  # Enumerated for consistency with start/masterprocess.h
@@ -461,6 +463,18 @@ def run_logging_client(out_pipe: mp.Pipe, _: str) -> None:
     pass
 
 
+def run_aio_command_client(scion_ip: str, server_port: int) -> None:
+    """Run the AIO command client for setting the AIO from GUI.
+    """
+    pass
+
+
+def run_aio_listener_client(scion_ip: str, server_port: int) -> None:
+    """Run the AIO listener client for listening to AIO updates on the ROS listener.
+    """
+    pass
+
+
 def init_gui(host_context: mp.context) -> None:
     """Starts up GUI window and all related programs
     """
@@ -528,7 +542,7 @@ def init_gui(host_context: mp.context) -> None:
         pilot_shm.unlink()
         pilot_shm = shm.SharedMemory(create=True, size=2, name='pilot_ctrl_shm')
     pilot_shm.buf[0] = 0
-    pilot_shm.buf[1] = SCION_CONTROL_PORT - SCION_COMMAND_PORT
+    pilot_shm.buf[1] = SCION_CONTROL_PORT - SCION_COMMAND_PORT  # Holdover from port swap, can be changed(?)
     pilot_proc = host_context.Process(target=run_pilot_client)
     pilot_proc.start()
 
@@ -544,6 +558,27 @@ def init_gui(host_context: mp.context) -> None:
 
     logging_proc = host_context.Process(target=run_logging_client, args=(wls_pipe_0, ''))
     logging_proc.start()
+
+    # Start AIO Command client
+    try:
+        aio_command_shm = shm.SharedMemory(create=True, size=1, name='aio_command_shm')
+    except FileExistsError:
+        aio_command_shm = shm.SharedMemory(name='aio_command_shm')
+        aio_command_shm.unlink()
+        aio_command_shm = shm.SharedMemory(create=True, size=1, name='aio_command_shm')
+    aio_command_proc = host_context.Process(target=run_aio_command_client, args=(SCION_DEFAULT_IPV4, SCION_AIO_C_PORT))
+    aio_command_proc.start()
+
+    # Start AIO Listener client
+    try:
+        aio_listener_shm = shm.SharedMemory(create=True, size=1, name='aio_listener_shm')
+    except FileExistsError:
+        aio_listener_shm = shm.SharedMemory(name='aio_listener_shm')
+        aio_listener_shm.unlink()
+        aio_listener_shm = shm.SharedMemory(create=True, size=1, name='aio_listener_shm')
+    aio_listener_proc = host_context.Process(target=run_aio_listener_client,
+                                             args=(SCION_DEFAULT_IPV4, SCION_AIO_L_PORT))
+    aio_listener_proc.start()
 
     # Start GUI
     gui_window = tk.Tk()
