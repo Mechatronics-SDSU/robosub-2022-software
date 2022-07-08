@@ -15,7 +15,15 @@
 #define AUTO_PIN          A0          
 #define KILL_PIN          A1
 
+/////////////////// MACROS ///////////////////
+
 #define LED_COUNT         60          // Number of NeoPixel cells on LED strip
+#define LEFT              1000
+#define CENTER            1500
+#define RIGHT             2000
+#define CLOSE             1100
+#define STOP              1500
+#define OPEN              1900
 
 /////////////////// PACKETS //////////////////
 
@@ -49,6 +57,7 @@
 #define TORPEDO_EMPTY_1     0x81
 #define TORPEDO_EMPTY_2     0x82
 #define TORPEDO_EMPTY_BOTH  0x83
+#define TORPEDO_FULL        0x84
 #define TORPEDO_FIRE_1      0x85
 #define TORPEDO_FIRE_2      0x86
 #define TORPEDO_FIRE_BOTH   0x87

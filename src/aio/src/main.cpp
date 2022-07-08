@@ -50,13 +50,14 @@
 #include <switch.h>
 #include <serial.h>
 #include <leak.h>
-#include <arm.h>
 #include <Servo.h>
 #include "aio.h"
 
 const uint16_t button_sensitivity = 150; // adjust for how sensitive the button is
 
 unsigned long time_now = 0;
+
+unsigned long servo_delay = 500;
 
 // bool battery_1_flag = LOW;
 // bool battery_2_flag = LOW;
@@ -71,8 +72,11 @@ Switch *auto_ptr = &auto_switch;
 
 Leak leak;
 
-Servo torpedo_2;
-Servo arm_1;
+uint8_t torpedo_state = TORPEDO_FULL;
+uint8_t arm_state = ARM_CLOSE;
+
+Servo torpedo;
+Servo arm;
 
 // Arm gripper(ARM_PIN);
 
@@ -265,35 +269,76 @@ void serial_check()
       // Torpedo related tasks
       if (serial_buf == TORPEDO_GET)
       {
-        ;
+        serial_send('o', torpedo_state);
+      }
+
+      else if(serial_buf == TORPEDO_FIRE_1)
+      {
+        torpedo.writeMicroseconds(LEFT);           // Move Servo to left
+        time_now = millis();                       // Gather current time
+        while (millis() < time_now + servo_delay); // Delay for wait milliseconds
+       
+        torpedo.writeMicroseconds(CENTER);           // Move Servo to center
+        time_now = millis();                       // Gather current time
+        while (millis() < time_now + servo_delay); // Delay for wait milliseconds
+
+        serial_send('o', TORPEDO_EMPTY_1);
+        torpedo_state = TORPEDO_EMPTY_1;
+      }
+
+      else if(serial_buf == TORPEDO_FIRE_2)
+      {
+        torpedo.writeMicroseconds(RIGHT);          // Move Servo to right
+        time_now = millis();                       // Gather current time
+        while (millis() < time_now + servo_delay); // Delay for wait milliseconds
+
+        torpedo.writeMicroseconds(CENTER);         // Move Servo to center
+        time_now = millis();                       // Gather current time
+        while (millis() < time_now + servo_delay); // Delay for wait milliseconds
+        
+        serial_send('o', TORPEDO_EMPTY_2);
+        torpedo_state = TORPEDO_EMPTY_2;
+      }
+
+      else if(serial_buf == TORPEDO_FIRE_BOTH)
+      {
+        torpedo.writeMicroseconds(LEFT);           // Move Servo to left
+        time_now = millis();                       // Gather current time
+        while (millis() < time_now + servo_delay); // Delay for wait milliseconds
+        
+        torpedo.writeMicroseconds(RIGHT);           // Move Servo to right
+        time_now = millis();                       // Gather current time
+        while (millis() < time_now + servo_delay); // Delay for wait milliseconds
+
+        torpedo.writeMicroseconds(CENTER);           // Move Servo to center
+        time_now = millis();                       // Gather current time
+        while (millis() < time_now + servo_delay); // Delay for wait milliseconds
+
+        serial_send('o', TORPEDO_EMPTY_BOTH);
+        torpedo_state = TORPEDO_EMPTY_BOTH;
       }
     }
 
-//     else if (!((serial_buf & 0xF0) ^ ARM_MASK))
-//     {
-//       // Arm related tasks
-//       if (serial_buf == ARM_GET)
-//       {
-//         if(gripper.getState()==HIGH)
-//         {
-//           serial_send('o', ARM_OPEN);
-//         }
-//         else if(gripper.getState()==LOW)
-//         {
-//           serial_send('o', ARM_CLOSE);
-//         }
-//       }
-//       else if(serial_buf == ARM_CLOSE)
-//       {
-//         gripper.setState(LOW);
-//         serial_send('o', ARM_CLOSE);
-//       }
-//       else if(serial_buf == ARM_OPEN)
-//       {
-//         gripper.setState(HIGH);
-//         serial_send('o', ARM_OPEN);
-//       }
-//     }
+    else if (!((serial_buf & 0xF0) ^ ARM_MASK))
+    {
+      // Arm related tasks
+      if (serial_buf == ARM_GET)
+      {
+        serial_send('o', arm_state);
+      }
+      else if(serial_buf == ARM_CLOSE)
+      {
+        arm.writeMicroseconds(CLOSE);
+        arm_state = ARM_CLOSE;
+        serial_send('o', ARM_CLOSE);
+      }
+      else if(serial_buf == ARM_OPEN)
+      {
+        arm.writeMicroseconds(OPEN);
+        arm_state = ARM_OPEN;
+        serial_send('o', ARM_OPEN);
+      }
+    }
    }
 }
 
@@ -325,7 +370,8 @@ void setup()
   // attachInterrupt(digitalPinToInterrupt(BAT_1_PIN), battery_1_undervoltage, HIGH);
   // attachInterrupt(digitalPinToInterrupt(BAT_2_PIN), battery_2_undervoltage, HIGH);
 
-  // torpedo_2.attach(TORPEDO_2_PIN);
+  torpedo.attach(TORPEDO_2_PIN);
+  arm.attach(ARM_PIN);
 
   strip.begin();            // INITIALIZE NeoPixel strip object (REQUIRED)
   strip.show();             // Turn OFF all pixels ASAP, Send the updated pixel colors to the hardware.
@@ -336,8 +382,8 @@ void setup()
 
   // gripper.setState(HIGH);    // Initialize the arm in closed state
 
-  arm_1.attach(ARM_PIN);
-  arm_1.writeMicroseconds(1300);
+  arm.writeMicroseconds(OPEN);    // open arm
+  torpedo.writeMicroseconds(CENTER); // Center torpedo servo
 
   Serial.begin(9600);
 }
@@ -360,7 +406,8 @@ void loop()
   }
 
   // Leak Detection Block
-  if (digitalRead(LEAK_1_PIN) == HIGH && leak.getState()==LOW || digitalRead(LEAK_2_PIN) == HIGH && leak.getState()==LOW)
+  if ((digitalRead(LEAK_1_PIN) == HIGH && leak.getState()==LOW) || 
+  (digitalRead(LEAK_2_PIN) == HIGH && leak.getState()==LOW))
   {
     // Trigger Leak Indicators
     serial_send('i', LEAK_TRUE);
@@ -372,7 +419,7 @@ void loop()
     digitalWrite(MOSFET_PIN, LOW); 
     serial_send('i', KILL_ON);
 
-    // Disable AI Mode
+    // Disable AI Mode   
     auto_switch.setState(LOW);
     serial_send('i', AUTO_OFF);
   }

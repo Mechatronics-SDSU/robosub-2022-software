@@ -6,7 +6,6 @@ Arm::Arm(unsigned int pin) {
     _open_pwm = 1600;
     _close_pwm = 1300;
     arm.attach(pin);
-    Serial.println("Created  Arm");
 }
 
 bool Arm::getState() {
@@ -16,9 +15,11 @@ bool Arm::getState() {
 void Arm::setState(bool state) {
     if(state == LOW){
         arm.writeMicroseconds(_close_pwm);
+        //delay
     }
     else if(state == HIGH) {
         arm.writeMicroseconds(_open_pwm);
+        //delay
     }
     _arm_state = state;
 }
