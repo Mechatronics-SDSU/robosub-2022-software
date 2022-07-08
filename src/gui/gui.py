@@ -48,6 +48,8 @@ from PIL import Image as PILImage
 import cv2
 
 import gen_default_text as scion_gdt
+import aio.aio_command as scion_aioc
+import aio.aio_forward as scion_aiol
 import comms.cmd_ctrl_client as scion_cnc
 import comms.camera_gui as scion_cam
 import comms.controller_client as scion_cc
