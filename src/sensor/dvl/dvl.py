@@ -495,22 +495,17 @@ class Dvl():
 
 
 
-class Dvl_sample():
+class Dvl_sample:
     """This class stores values from the last dvl sample processed by the
     dvl callback method.
     """
-    def __init__(self) -> None:
+    def __init__(self):
         """Initializes variables for last dvl sample
         """
-        self.time = 0.0
         self.data = []
     
-    def set_data(self, _time:float, _data:list):
-        self.time = _time
+    def set_data(self, _data:list):
         self.data = _data
-
-    def get_time(self) -> float:
-        return self.time
 
     def get_data(self) -> list:
         return self.data
@@ -524,13 +519,12 @@ def dvl_data_callback(self, output_data: OutputData, obj: Dvl_sample):
         ret: A list of float32 containing the velocities in x,y,z axis and mean range to floor
     """
     if output_data is not None:
-        time_raw = output_data.get_date_time()
-        time = time_raw.strftime('%H:%M:%S.%f')[:-3]
-        data = [output_data.vel_x, output_data.vel_y, output_data.vel_z,  output_data.mean_range]
-        ret = []
-        for i in data:
-            ret.append(struct.pack(">1f", i))
-        obj.set_data(time, ret)
+        data = [
+            output_data.year, output_data.month, output_data.day,
+            output_data.hour, output_data.minute, output_data.second, output_data.millisecond,
+            output_data.vel_x, output_data.vel_y, output_data.vel_z,  
+            output_data.mean_range]
+        obj.set_data(data)
 
     print("No output data connection")
         
