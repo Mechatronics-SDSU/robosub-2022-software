@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """ROS-connected DVL sensor driver
 """
+from re import I
 import rospy
 import sys
 from std_msgs.msg import Float64, Float32MultiArray
@@ -20,8 +21,6 @@ def dvl_driver(dvl_name: str) -> None:
 
     dvl.enter_command_mode()
 
-    # Insert code for dvl setup configuration
-
     # Register callback function
     dvl.register_ondata_callback(scion_dvl.dvl_data_callback, dvl_sample)
 
@@ -33,18 +32,19 @@ def dvl_driver(dvl_name: str) -> None:
     rospy.init_node('dvl_driver', anonymous=True)
     rate = rospy.Rate(DVL_FETCH_HERTZ)
 
+    data_arr = Float32MultiArray()
+    data_arr.data = []
+
     while True:
         # Trigger DVL data capture
-        time = dvl_sample.get_time()
-        data_rec = dvl_sample.get_data()
-        data = []
-        for i in data_rec:
-            data.append(struct.pack(">1f", i))
+        _time = dvl_sample.get_time()
+        data_arr.data = dvl_sample.get_data()
 
-        pub_time.publish(time)
-        pub_data.publish(data)
+        # print(f'Update: {data_arr.data}')
+        pub_time.publish(_time)
+        pub_data.publish(data_arr)
+
         rate.sleep()
-
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
