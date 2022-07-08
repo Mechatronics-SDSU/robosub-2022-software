@@ -4,7 +4,7 @@
 from re import I
 import rospy
 import sys
-from std_msgs.msg import Float64, Float32MultiArray
+from std_msgs.msg import Float32MultiArray
 import logging
 import time
 import struct
@@ -27,7 +27,6 @@ def dvl_driver(dvl_name: str) -> None:
     dvl.exit_command_mode()
 
     # Update to correct topic message
-    pub_time = rospy.Publisher('dvl_time', Float64, queue_size=10)
     pub_data = rospy.Publisher('dvl_data', Float32MultiArray, queue_size=10)
     rospy.init_node('dvl_driver', anonymous=True)
     rate = rospy.Rate(DVL_FETCH_HERTZ)
@@ -37,11 +36,9 @@ def dvl_driver(dvl_name: str) -> None:
 
     while True:
         # Trigger DVL data capture
-        _time = dvl_sample.get_time()
         data_arr.data = dvl_sample.get_data()
 
-        # print(f'Update: {data_arr.data}')
-        pub_time.publish(_time)
+        print(f'Update: {data_arr.data}')
         pub_data.publish(data_arr)
 
         rate.sleep()
