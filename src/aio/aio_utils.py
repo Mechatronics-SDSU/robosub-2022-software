@@ -66,6 +66,8 @@ import serial
 
 import utils.scion_utils as scion_ut
 
+# from ..utils import scion_utils as scion_ut
+
 # Defining above spec in docstring
 IN_HEADER_BYTE = ord('i')
 OUT_HEADER_BYTE = ord('o')

@@ -3,14 +3,14 @@
   This board interfaces the following sensors for the 2022 robosub vehicle:
             Sensor           |        Packet - Message
     -------------------------|----------------------------
-    Arm Gripper              |          0x0M - 0 Open, 1 Closed, F Get
-    Autonomous Mode Button   |          0x1M - 0 Disable, 1 Enable, F Get
+    Autonomous Mode Button   |          0x1M - 0 Disable, 1 Enable, E Response, F Get
     Battery Monitor          |          0x2M - 0 Both Battery Sable,
                              |                 1 Battery #1 Voltage Unstable,
                              |                 2 Battery #2 Voltage Unstable,
+                             |                 E Response,
                              |                 F Get
-    Kill Mode Button         |          0x3M - 0 Disable, 1 Enable, F Get
-    Leak Detection           |          0x4M - 0 No Leak, 1 Leak, F Get
+    Kill Mode Button         |          0x3M - 0 Disable, 1 Enable, E Response, F Get
+    Leak Detection           |          0x4M - 0 No Leak, 1 Leak, E Response, F Get
     LED Strip                |           n/a
     Relay Mosfet Signal      |           n/a
     Torpedo Servo Motor      |          0x8M - 1 Torpedo #1 Empty,
@@ -19,7 +19,9 @@
                              |                 5 Torpedo #1 Fire,
                              |                 6 Torpedo #2 Fire,
                              |                 7 Both Fire,
+                             |                 E Response
                              |                 F Get
+    Arm Gripper              |          0xAM - 0 Open, 1 Closed, F Get
 
   Data stream behavior:
     Interrupt Packet - A packet sent by either device indicating new alert
@@ -40,6 +42,7 @@
           0xN_ - Type of sensor making response message
           0x_M - Message value attached to sensor
         '\n' - newline end byte representing newline and end of packet
+        "Ken was here"
 */
 
 #include <Arduino.h>
@@ -54,8 +57,10 @@ const uint16_t button_sensitivity = 150; // adjust for how sensitive the button 
 
 unsigned long time_now = 0;
 
-bool battery_1_flag = LOW;
-bool battery_2_flag = LOW;
+unsigned long servo_delay = 500;
+
+// bool battery_1_flag = LOW;
+// bool battery_2_flag = LOW;
 
 Adafruit_NeoPixel strip(LED_COUNT, LED_STRIP_PIN, NEO_GRB + NEO_KHZ800);
 
@@ -67,8 +72,13 @@ Switch *auto_ptr = &auto_switch;
 
 Leak leak;
 
+uint8_t torpedo_state = TORPEDO_FULL;
+uint8_t arm_state = ARM_CLOSE;
+
+Servo torpedo;
 Servo arm;
-Servo torpedo_2;
+
+// Arm gripper(ARM_PIN);
 
 void colorWipe(uint32_t color, int wait)
 {
@@ -184,29 +194,29 @@ void serial_check()
       }
     }
 
-    else if (!((serial_buf & 0xF0) ^ BAT_MASK))
-    {
-      // Battery related tasks
-      if (serial_buf == BAT_GET)
-      {
-        if (digitalRead(BAT_1_PIN) == LOW && digitalRead(BAT_2_PIN) == LOW)
-        {
-          serial_send('o', BAT_STABLE);
-        }
-        else if (digitalRead(BAT_1_PIN) == HIGH && digitalRead(BAT_2_PIN) == LOW)
-        {
-          serial_send('o', BAT_WARN_1);
-        }
-        else if (digitalRead(BAT_1_PIN) == LOW && digitalRead(BAT_2_PIN) == HIGH)
-        {
-          serial_send('o', BAT_WARN_2);
-        }
-        else if (digitalRead(BAT_1_PIN) == HIGH && digitalRead(BAT_2_PIN) == HIGH)
-        {
-          serial_send('o', BAT_WARN_BOTH);
-        }
-      }
-    }
+    // else if (!((serial_buf & 0xF0) ^ BAT_MASK))
+    // {
+    //   // Battery related tasks
+    //   if (serial_buf == BAT_GET)
+    //   {
+    //     if (digitalRead(BAT_1_PIN) == LOW && digitalRead(BAT_2_PIN) == LOW)
+    //     {
+    //       serial_send('o', BAT_STABLE);
+    //     }
+    //     else if (digitalRead(BAT_1_PIN) == HIGH && digitalRead(BAT_2_PIN) == LOW)
+    //     {
+    //       serial_send('o', BAT_WARN_1);
+    //     }
+    //     else if (digitalRead(BAT_1_PIN) == LOW && digitalRead(BAT_2_PIN) == HIGH)
+    //     {
+    //       serial_send('o', BAT_WARN_2);
+    //     }
+    //     else if (digitalRead(BAT_1_PIN) == HIGH && digitalRead(BAT_2_PIN) == HIGH)
+    //     {
+    //       serial_send('o', BAT_WARN_BOTH);
+    //     }
+    //   }
+    // }
 
     else if (!((serial_buf & 0xF0) ^ KILL_MASK))
     {
@@ -247,6 +257,11 @@ void serial_check()
           serial_send('o', LEAK_FALSE);
         }
       }
+      else if(serial_buf == LEAK_FALSE)
+      {
+        leak.setState(LOW);
+        serial_send('o', LEAK_FALSE);
+      }
     }
 
     else if (!((serial_buf & 0xF0) ^ TORPEDO_MASK))
@@ -254,7 +269,53 @@ void serial_check()
       // Torpedo related tasks
       if (serial_buf == TORPEDO_GET)
       {
-        ;
+        serial_send('o', torpedo_state);
+      }
+
+      else if(serial_buf == TORPEDO_FIRE_1)
+      {
+        torpedo.writeMicroseconds(LEFT);           // Move Servo to left
+        time_now = millis();                       // Gather current time
+        while (millis() < time_now + servo_delay); // Delay for wait milliseconds
+       
+        torpedo.writeMicroseconds(CENTER);           // Move Servo to center
+        time_now = millis();                       // Gather current time
+        while (millis() < time_now + servo_delay); // Delay for wait milliseconds
+
+        serial_send('o', TORPEDO_EMPTY_1);
+        torpedo_state = TORPEDO_EMPTY_1;
+      }
+
+      else if(serial_buf == TORPEDO_FIRE_2)
+      {
+        torpedo.writeMicroseconds(RIGHT);          // Move Servo to right
+        time_now = millis();                       // Gather current time
+        while (millis() < time_now + servo_delay); // Delay for wait milliseconds
+
+        torpedo.writeMicroseconds(CENTER);         // Move Servo to center
+        time_now = millis();                       // Gather current time
+        while (millis() < time_now + servo_delay); // Delay for wait milliseconds
+        
+        serial_send('o', TORPEDO_EMPTY_2);
+        torpedo_state = TORPEDO_EMPTY_2;
+      }
+
+      else if(serial_buf == TORPEDO_FIRE_BOTH)
+      {
+        torpedo.writeMicroseconds(LEFT);           // Move Servo to left
+        time_now = millis();                       // Gather current time
+        while (millis() < time_now + servo_delay); // Delay for wait milliseconds
+        
+        torpedo.writeMicroseconds(RIGHT);           // Move Servo to right
+        time_now = millis();                       // Gather current time
+        while (millis() < time_now + servo_delay); // Delay for wait milliseconds
+
+        torpedo.writeMicroseconds(CENTER);           // Move Servo to center
+        time_now = millis();                       // Gather current time
+        while (millis() < time_now + servo_delay); // Delay for wait milliseconds
+
+        serial_send('o', TORPEDO_EMPTY_BOTH);
+        torpedo_state = TORPEDO_EMPTY_BOTH;
       }
     }
 
@@ -263,51 +324,68 @@ void serial_check()
       // Arm related tasks
       if (serial_buf == ARM_GET)
       {
-        ;
+        serial_send('o', arm_state);
+      }
+      else if(serial_buf == ARM_CLOSE)
+      {
+        arm.writeMicroseconds(CLOSE);
+        arm_state = ARM_CLOSE;
+        serial_send('o', ARM_CLOSE);
+      }
+      else if(serial_buf == ARM_OPEN)
+      {
+        arm.writeMicroseconds(OPEN);
+        arm_state = ARM_OPEN;
+        serial_send('o', ARM_OPEN);
       }
     }
-  }
+   }
 }
 
-void battery_1_undervoltage()
-{
-  // Interrupt Service Routine for toggling battery 1 state flag
+// void battery_1_undervoltage()
+// {
+//   // Interrupt Service Routine for toggling battery 1 state flag
 
-  battery_1_flag = HIGH;
-}
+//   battery_1_flag = HIGH;
+// }
 
-void battery_2_undervoltage()
-{
-  // Interrupt Service Routine for toggling battery 2 state flag
+// void battery_2_undervoltage()
+// {
+//   // Interrupt Service Routine for toggling battery 2 state flag
 
-  battery_2_flag = HIGH;
-}
+//   battery_2_flag = HIGH;
+// }
 
 void setup()
 {
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(MOSFET_PIN, OUTPUT);
-  pinMode(LEAK_PIN, INPUT);
-  pinMode(BAT_1_PIN, INPUT);
-  pinMode(BAT_2_PIN, INPUT);
+  pinMode(LEAK_1_PIN, INPUT);
+  pinMode(LEAK_2_PIN, INPUT);
+  // pinMode(BAT_1_PIN, INPUT);
+  // pinMode(BAT_2_PIN, INPUT);
 
   digitalWrite(MOSFET_PIN, LOW);
 
-  attachInterrupt(digitalPinToInterrupt(BAT_1_PIN), battery_1_undervoltage, HIGH);
-  attachInterrupt(digitalPinToInterrupt(BAT_2_PIN), battery_2_undervoltage, HIGH);
+  // attachInterrupt(digitalPinToInterrupt(BAT_1_PIN), battery_1_undervoltage, HIGH);
+  // attachInterrupt(digitalPinToInterrupt(BAT_2_PIN), battery_2_undervoltage, HIGH);
 
-  //  arm.attach(ARM_PIN, 1400, 1600);
-  // torpedo_2.attach(TORPEDO_2_PIN);
+  torpedo.attach(TORPEDO_2_PIN);
+  arm.attach(ARM_PIN);
 
   strip.begin();            // INITIALIZE NeoPixel strip object (REQUIRED)
   strip.show();             // Turn OFF all pixels ASAP, Send the updated pixel colors to the hardware.
   strip.setBrightness(100); // Set BRIGHTNESS to about 1/5 (max = 255)
   rainbow(0);               // Flowing rainbow cycle along the whole strip for boot animation
 
-  Serial.begin(9600);
+  colorWipe(strip.Color(255, 0, 0), 0); // turn LED strip Red
 
-  // arm.writeMicroseconds(1450);
-  // torpedo_2.writeMicroseconds(1400);
+  // gripper.setState(HIGH);    // Initialize the arm in closed state
+
+  arm.writeMicroseconds(OPEN);    // open arm
+  torpedo.writeMicroseconds(CENTER); // Center torpedo servo
+
+  Serial.begin(9600);
 }
 
 void loop()
@@ -321,47 +399,60 @@ void loop()
     switch_update(kill_ptr, 'i');
   }
 
-  // // Autoswitch Block
+  // Autoswitch Block
   if (auto_switch.readSwitch())
   {
     switch_update(auto_ptr, 'i');
   }
 
-  // Lead Detection Block
-  if (digitalRead(LEAK_PIN) == HIGH && leak.getState()==LOW)
+  // Leak Detection Block
+  if ((digitalRead(LEAK_1_PIN) == HIGH && leak.getState()==LOW) || 
+  (digitalRead(LEAK_2_PIN) == HIGH && leak.getState()==LOW))
   {
+    // Trigger Leak Indicators
     serial_send('i', LEAK_TRUE);
     leak.setState(HIGH);
-    kill_switch.setState(HIGH);
-    // switch_update(kill_ptr, 'i');
-    auto_switch.setState(LOW);
-    // switch_update(auto_ptr, 'i');
     colorWipe(strip.Color(0, 0, 255), 0); // turn LED strip Blue
+
+    // Enable Kill Mode
+    kill_switch.setState(HIGH);
+    digitalWrite(MOSFET_PIN, LOW); 
+    serial_send('i', KILL_ON);
+
+    // Disable AI Mode   
+    auto_switch.setState(LOW);
+    serial_send('i', AUTO_OFF);
   }
 
-  // Battery Block
-  if (battery_1_flag)
-  {
-    serial_send('i', BAT_WARN_1);
-    // kill_switch.setState(HIGH);
-    // switch_update(kill_ptr, 'i');
-    // auto_switch.setState(LOW);
-    // switch_update(auto_ptr, 'i');
-    battery_1_flag = LOW;
-    colorWipe(strip.Color(255, 255, 0), 0);
-  }
-  if (battery_2_flag)
-  {
-    serial_send('i', BAT_WARN_2);
-    // kill_switch.setState(HIGH);
-    // switch_update(kill_ptr, 'i');
-    // auto_switch.setState(LOW);
-    // switch_update(auto_ptr, 'i');
-    battery_2_flag = LOW;
-    colorWipe(strip.Color(255, 255, 0), 0);
-  }
+  // // Battery Block
+  // if (battery_1_flag)
+  // {
+  //   serial_send('i', BAT_WARN_1);
+  //   battery_1_flag = LOW;
+  //   colorWipe(strip.Color(255, 255, 0), 0); // Turn LED strip Yellow
 
-  // Torpedo Block
+  //   // Enable Kill Mode
+  //   kill_switch.setState(HIGH);
+  //   digitalWrite(MOSFET_PIN, LOW); 
+  //   serial_send('i', KILL_ON);
 
-  // Arm Block
+  //   // Disable AI Mode
+  //   auto_switch.setState(LOW);
+  //   serial_send('i', AUTO_OFF);
+  // }
+  // if (battery_2_flag)
+  // {
+  //   serial_send('i', BAT_WARN_2);
+  //   battery_2_flag = LOW;
+  //   colorWipe(strip.Color(255, 255, 0), 0); // Turn LED strip Yellow
+
+  //   // Enable Kill Mode
+  //   kill_switch.setState(HIGH);
+  //   digitalWrite(MOSFET_PIN, LOW); 
+  //   serial_send('i', KILL_ON);
+
+  //   // Disable AI Mode
+  //   auto_switch.setState(LOW);
+  //   serial_send('i', AUTO_OFF);
+  // }
 }
