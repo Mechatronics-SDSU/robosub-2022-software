@@ -6,10 +6,10 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 
-#Create a "positional" pid control system for the PICO mini auv. There will be 5 controller for
+#Create a "positional" pid control system for the Scion. There will be 5 controller for
 #(roll, pitch, yaw, x, z). These are the DOFs controllable by the actuator.
 
-class Pico_PID_Controller:
+class Scion_PID_Controller:
     
     def __init__(self, pid_params=None):
         '''
@@ -42,17 +42,19 @@ class Pico_PID_Controller:
                 self._controllers[ctrl_type].i_min = pid_params[ctrl_type]["i_min"]
                 
         print(type(self.z_pid.cmd_min))
-        #matrix mapping the 5 pid controller outputs to the 6 thrusters
-        # -----roll---pitch---yaw---x---z
+        # matrix mapping the 6 pid controller outputs to the 8 thrusters
+        # -----roll---pitch---yaw---x---y---z
+        #| T0
         #| T1
         #| T2
         #| T3
         #| T4
         #| T5
         #| T6
+        #| T7
         
-        self.pid_thrust_mapper = np.array([[ 1,  1,  0,  0, 1],
-                                           [ 0,  0,  -1,  1,  0],
+        self.pid_thrust_mapper = np.array([[ 1,  1,  0,  0,  0,  1],
+                                           [ 0,  0,  1,  1,  1,  0],
                                            [ 1, -1,  0,  0, 1],
                                            [-1, -1,  0,  0, 1],
                                            [ 0,  0,   1,  1,  0],
@@ -93,7 +95,7 @@ class Pico_PID_Controller:
         return(thrusts, errors, z_cmd)
 
 '''
-The code below shows an example of using the Pico_PID_Controller(). The controller
+The code below shows an example of using the Scion_PID_Controller(). The controller
 receives a desired_states (i.e. set_point), and uses the control system to make the vehicle
 achieve the desired_state. A possible implementation to send the desired_states to the control
 system is via IPC (like sockets.)
@@ -120,14 +122,14 @@ if __name__ == "__main__":
 
     state_estimator = State_Estimator()
 
-    maestro_driver = Maestro_Driver('/dev/picoMaestroM')
+    maestro_driver = Maestro_Driver('/dev/ScionMaestroM')
     
     #load the pid_controller  parameters from a formatted json file
     import json
     with open("pid_params_1.json") as pid_param_file:
         pid_params = json.load(pid_param_file)
 
-    controller = Pico_PID_Controller(pid_params)
+    controller = Scion_PID_Controller(pid_params)
     
     ''' 
     #Tune the PID controllers
