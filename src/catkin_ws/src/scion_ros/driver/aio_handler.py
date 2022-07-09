@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.8
 import rospy
 from std_msgs.msg import String
 
@@ -15,25 +15,25 @@ def aio_handler(aio_name: str, debug=False) -> None:
     aio = scion_aio.AIOWrapper(device_name=aio_name, timeout=AIO_TIMEOUT_MS)
     # ROS topics
     aio_auto_pub = rospy.Publisher('aio_auto_state', String, queue_size=1)
-    aio_auto_dw = scion_ut.DataWrapper(debug=False)
+    aio_auto_dw = scion_ut.DataWrapper(debug=debug)
     rospy.Subscriber('aio_auto_change', String, aio_auto_dw.callback)
     aio_bat_pub = rospy.Publisher('aio_bat_state', String, queue_size=1)
-    aio_bat_dw = scion_ut.DataWrapper(debug=False)
+    aio_bat_dw = scion_ut.DataWrapper(debug=debug)
     rospy.Subscriber('aio_bat_change', String, aio_bat_dw.callback)
     aio_kill_pub = rospy.Publisher('aio_kill_state', String, queue_size=1)
-    aio_kill_dw = scion_ut.DataWrapper(debug=False)
+    aio_kill_dw = scion_ut.DataWrapper(debug=debug)
     rospy.Subscriber('aio_kill_change', String, aio_kill_dw.callback)
     aio_leak_pub = rospy.Publisher('aio_leak_state', String, queue_size=1)
-    aio_leak_dw = scion_ut.DataWrapper(debug=False)
+    aio_leak_dw = scion_ut.DataWrapper(debug=debug)
     rospy.Subscriber('aio_leak_change', String, aio_leak_dw.callback)
     aio_torp_pub = rospy.Publisher('aio_torp_state', String, queue_size=1)
-    aio_torp_dw = scion_ut.DataWrapper(debug=False)
+    aio_torp_dw = scion_ut.DataWrapper(debug=debug)
     rospy.Subscriber('aio_torp_change', String, aio_torp_dw.callback)
     aio_arm_pub = rospy.Publisher('aio_arm_state', String, queue_size=1)
-    aio_arm_dw = scion_ut.DataWrapper(debug=False)
+    aio_arm_dw = scion_ut.DataWrapper(debug=debug)
     rospy.Subscriber('aio_arm_change', String, aio_arm_dw.callback)
     rospy.init_node('aio_handler', anonymous=True)
-    rate = rospy.Rate()
+    rate = rospy.Rate(AIO_FETCH_DELAY)
     # Main loop
     while True:
         # Check for new messages
@@ -53,7 +53,7 @@ def aio_handler(aio_name: str, debug=False) -> None:
                 aio_torp_pub.publish(ret)
             elif ret[1] == scion_ut.AIO_ARM_NMASK_ROS:
                 aio_arm_pub.publish(ret)
-        rate.sleep(AIO_FETCH_DELAY)
+        rate.sleep()
         # Check for latest messages in callbacks
         '''
         Order of the following if/else block matters. Things ordered higher in the block
@@ -72,7 +72,7 @@ def aio_handler(aio_name: str, debug=False) -> None:
                 print(f'AIO kill sees: callback_data={data} | nmask={nmask} | val={val}')
             aio.send_input_packet(nmask=nmask, value=val)
             aio_kill_dw.data = None
-        elif aio_leak_dw is not None:
+        elif aio_leak_dw.data is not None:
             data = str(aio_leak_dw.data)
             nmask = data[1]
             val = int(data[2], 16)
@@ -96,7 +96,7 @@ def aio_handler(aio_name: str, debug=False) -> None:
                 print(f'AIO auto sees: callback_data={data} | nmask={nmask} | val={val}')
             aio.send_input_packet(nmask=nmask, value=val)
             aio_auto_dw.data = None
-        elif aio_torp_dw is not None:
+        elif aio_torp_dw.data is not None:
             data = str(aio_torp_dw.data)
             nmask = data[1]
             val = int(data[2], 16)
@@ -104,7 +104,7 @@ def aio_handler(aio_name: str, debug=False) -> None:
                 print(f'AIO torp sees: callback_data={data} | nmask={nmask} | val={val}')
             aio.send_input_packet(nmask=nmask, value=val)
             aio_torp_dw.data = None
-        elif aio_arm_dw is not None:
+        elif aio_arm_dw.data is not None:
             data = str(aio_arm_dw.data)
             nmask = data[1]
             val = int(data[2], 16)
@@ -112,7 +112,7 @@ def aio_handler(aio_name: str, debug=False) -> None:
                 print(f'AIO arm sees: callback_data={data} | nmask={nmask} | val={val}')
             aio.send_input_packet(nmask=nmask, value=val)
             aio_arm_dw.data = None
-        rate.sleep(AIO_FETCH_DELAY)
+        rate.sleep()
 
 
 if __name__ == '__main__':
