@@ -48,6 +48,7 @@ from PIL import Image as PILImage
 import cv2
 
 import gen_default_text as scion_gdt
+import aio.aio_linker as scion_aiol
 import comms.cmd_ctrl_client as scion_cnc
 import comms.camera_gui as scion_cam
 import comms.controller_client as scion_cc
@@ -67,7 +68,7 @@ logging_resolution = (640, 690)
 sensor_resolution = (320, 960)
 
 gui_update_ms = 10  # Update time for all GUI elements
-sleep_thread_s = 0.25  # Time to check for new threads to be enabled
+sleep_thread_s = 0.05  # Time to check for new threads to be enabled
 color_term_green = (74, 246, 38)
 color_error_red = (255, 0, 3)
 
@@ -79,6 +80,8 @@ SCION_CAMERA_1_PORT = 50002
 SCION_CONTROL_PORT = 50004
 SCION_SENSOR_PORT = 50003
 SCION_LOGGING_PORT = 50005
+SCION_AIO_C_PORT = 50006
+SCION_AIO_L_PORT = 50007
 
 # Master process
 SCION_CONFIG_MENU_STRINGS = [  # Enumerated for consistency with start/masterprocess.h
@@ -104,11 +107,7 @@ class GuiWindow(tk.Frame):
         self.top_bar_fr = tk.Frame(master=self.tk_master, width=top_bar_resolution[0], height=top_bar_resolution[1],
                                    bg='black')
         self.buttons_fr = tk.Frame(master=self.tk_master, width=button_display_resolution[0],
-                                   height=button_display_resolution[1], bg='blue')
-        self.buttons_cv = tk.Canvas(master=self.buttons_fr, width=button_display_resolution[0],
-                                    height=button_display_resolution[1], bg='blue')
-        self.buttons_cv_img = ImageTk.PhotoImage(PILImage.open('img/buttons_22.png'))
-        self.buttons_cv.create_image((edge_size, edge_size), anchor=tk.NW, image=self.buttons_cv_img)
+                                   height=button_display_resolution[1], bg='white')
         self.weapons_fr = tk.Frame(master=self.tk_master, width=weapons_status_resolution[0],
                                    height=weapons_status_resolution[1], bg='red')
         self.thrusters_fr = tk.Frame(master=self.tk_master, width=thruster_status_resolution[0],
@@ -180,6 +179,31 @@ class GuiWindow(tk.Frame):
         self.pilot_enable = tk.BooleanVar(value=False)
         self.logging_enable = tk.BooleanVar(value=False)
 
+        # AIO
+        self.aio_command_shm = shm.SharedMemory(name='aio_command_shm')
+        self.aio_listener_shm = shm.SharedMemory(name='aio_listener_shm')
+        self.aio_current_vals = shm.SharedMemory(name='aio_shared_vals_shm')
+        self.aio_enable_btn = Button(master=self.buttons_fr, text='Enable AIO', justify=LEFT, anchor='w',
+                                     command=self.start_aio)
+        self.aio_kill_disable_btn = Button(master=self.buttons_fr, text='UNKILL', justify=LEFT, anchor='w',
+                                           command=partial(self.update_aio_state, 0, 0))
+        self.aio_kill_enable_btn = Button(master=self.buttons_fr, text='KILL', justify=LEFT, anchor='w',
+                                          command=partial(self.update_aio_state, 0, 1))
+        self.aio_auto_disable_btn = Button(master=self.buttons_fr, text='MANUAL', justify=LEFT, anchor='w',
+                                           command=partial(self.update_aio_state, 1, 0))
+        self.aio_auto_enable_btn = Button(master=self.buttons_fr, text='AUTO', justify=LEFT, anchor='w',
+                                          command=partial(self.update_aio_state, 1, 1))
+        self.aio_torpedo_fire_1_btn = Button(master=self.buttons_fr, text='FIRE TORPEDO 1', justify=LEFT, anchor='w',
+                                             command=partial(self.update_aio_state, 4, 5))
+        self.aio_torpedo_fire_2_btn = Button(master=self.buttons_fr, text='FIRE TORPEDO 2', justify=LEFT, anchor='w',
+                                             command=partial(self.update_aio_state, 4, 6))
+        self.aio_torpedo_fire_both_btn = Button(master=self.buttons_fr, text='FIRE EVERYTHING', justify=LEFT, anchor='w',
+                                                command=partial(self.update_aio_state, 4, 7))
+        self.aio_arm_close_btn = Button(master=self.buttons_fr, text='CLOSE', justify=LEFT, anchor='w',
+                                        command=partial(self.update_aio_state, 5, 1))
+        self.aio_arm_open_btn = Button(master=self.buttons_fr, text='OPEN', justify=LEFT, anchor='w',
+                                       command=partial(self.update_aio_state, 5, 0))
+
         # Master process
         self.masterprocess = []
         for i in range(len(SCION_CONFIG_MENU_STRINGS)):  # Make a tkinter boolean for everything in master process
@@ -198,7 +222,6 @@ class GuiWindow(tk.Frame):
 
         # Sub-grids
         # Button Grid
-        self.buttons_cv.grid()
         self.config_button = Button(master=self.top_bar_fr, text='Set Masterprocess', justify=LEFT, anchor='w',
                                     command=self.set_config_menu)
         self.conn_button = Button(master=self.top_bar_fr, text='Connect', justify=LEFT, anchor='w',
@@ -217,6 +240,17 @@ class GuiWindow(tk.Frame):
         self.cam_1_button.grid(row=0, column=3, sticky=W)
         self.tel_button.grid(row=0, column=4, sticky=W)
         self.plt_button.grid(row=0, column=5, sticky=W)
+        # Button grid for AIO
+        self.aio_enable_btn.grid(row=0, column=0, sticky=N, columnspan=2)
+        self.aio_kill_disable_btn.grid(row=1, column=0, sticky=N)
+        self.aio_kill_enable_btn.grid(row=1, column=1, sticky=N)
+        self.aio_auto_disable_btn.grid(row=2, column=0, sticky=N)
+        self.aio_auto_enable_btn.grid(row=2, column=1, sticky=N)
+        self.aio_torpedo_fire_1_btn.grid(row=3, column=0, sticky=N, columnspan=2)
+        self.aio_torpedo_fire_2_btn.grid(row=4, column=0, sticky=N, columnspan=2)
+        self.aio_torpedo_fire_both_btn.grid(row=5, column=0, sticky=N, columnspan=2)
+        self.aio_arm_open_btn.grid(row=6, column=0, sticky=N)
+        self.aio_arm_close_btn.grid(row=6, column=1, sticky=N)
         # Camera Grid
         self.camera_0_cv.grid(row=0, column=0)
         self.camera_1_cv.grid(row=1, column=0)
@@ -280,6 +314,11 @@ class GuiWindow(tk.Frame):
 
     def start_pilot(self) -> None:
         self.pilot_ctrl_shm.buf[0] = 1
+
+    def start_aio(self) -> None:
+        print('Started AIO')
+        self.aio_command_shm.buf[0] = 1
+        self.aio_listener_shm.buf[0] = 1
 
     def update_sensors(self) -> None:
         """Update data in the tkinter window by reading what was last sent on the sensor thread.
@@ -350,6 +389,19 @@ class GuiWindow(tk.Frame):
                     self.camera_1_img_1 = ImageTk.PhotoImage(PILImage.fromarray(image_1))
                     self.camera_1_cv.itemconfig(self.video_window_img_cv_1, image=self.camera_1_img_1)
 
+    def update_aio_state(self, index: int, new_value: int) -> None:
+        """Update AIO state for a particular index. Post to shm for command aio.
+        """
+        if self.aio_command_shm.buf[0] == 1:
+            self.aio_current_vals.buf[index] = new_value
+            self.aio_command_shm.buf[0] = 2
+            print(f'NEW AIO VALS: {self.aio_current_vals.buf[index]}')
+
+    def update_aio(self) -> None:
+        """Update the AIO variables in the display for feedback.
+        """
+        pass
+
     def update_host_display(self) -> None:
         self.camera_0_shm.buf[0] = int(self.camera_0_enable.get() is True)
         self.camera_1_shm.buf[0] = int(self.camera_1_enable.get() is True)
@@ -363,6 +415,7 @@ class GuiWindow(tk.Frame):
         """
         self.update_cameras()
         self.update_sensors()
+        self.update_aio()
         self.after(gui_update_ms, self.update)  # Run this function again after delay of gui_update_ms
 
 
@@ -385,7 +438,7 @@ def run_cnc_server() -> None:
             cnc.send_message(b)  # Send mp i64
             cnc_shm.buf[0] = 0  # Turn off CNC server in shm
             sys.exit(0)  # Exit CNC server, it has successfully sent configuration
-        time.sleep(0.1)
+        time.sleep(sleep_thread_s)
 
 
 def run_video_client(wvc: mp.Pipe, server_port: int, start_context: mp.context, camera_num: int) -> None:
@@ -398,6 +451,7 @@ def run_video_client(wvc: mp.Pipe, server_port: int, start_context: mp.context, 
             print('Running camera client.')
             scion_cam.run_camera_client(server_ip=SCION_DEFAULT_IPV4, port=50001, write_pipe=wvc,
                                         camera_num=camera_num)
+        time.sleep(sleep_thread_s)
 
 
 def run_telemetry_client(scion_ip: str, server_port: int) -> None:
@@ -407,7 +461,6 @@ def run_telemetry_client(scion_ip: str, server_port: int) -> None:
     telemetry_ctrl_shm = shm.SharedMemory(name='telemetry_ctrl_shm')
     # Setup telemetry linker
     linker = scion_tl.TelemetryLinker(use_shm=True)
-
     while True:
         if telemetry_ctrl_shm.buf[0] == 0:  # Wait for telemetry to be enabled
             time.sleep(sleep_thread_s)
@@ -435,6 +488,7 @@ def run_telemetry_client(scion_ip: str, server_port: int) -> None:
                         break
                     # Parse into telemetry linker
                     linker.unpack_data(loading_pickle=data)
+        time.sleep(sleep_thread_s)
 
 
 def run_pilot_client() -> None:
@@ -459,6 +513,69 @@ def run_logging_client(out_pipe: mp.Pipe, _: str) -> None:
     """Run the log client, setting up a pipe to the GUI to receive strings.
     """
     pass
+
+
+def run_aio_command_client(scion_ip: str, server_port: int) -> None:
+    """Run the AIO command client for setting the AIO from GUI.
+    (Talks to aio_listener.)
+    """
+    aiol = scion_aiol.AIOLinker()
+    print('Started Command Client')
+    aio_command_shm = shm.SharedMemory(name='aio_command_shm')
+    aio_current_vals = shm.SharedMemory(name='aio_shared_vals_shm')
+    while True:
+        if aio_command_shm.buf[0] > 0:  # Turned on from GUI
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Reuse the address to bypass errno 98
+                try:
+                    s.connect((scion_ip, server_port))
+                except ConnectionRefusedError as e:
+                    print("Error with connecting to aio listener server.")
+                    print(e)
+                    aio_command_shm.buf[0] = 0
+                while aio_command_shm.buf[0] > 0:
+                    if aio_command_shm.buf[0] == 2:  # Load aio linker from the listener client
+                        for i in range(6):
+                            aiol.data[i] = aio_current_vals.buf[i]
+                        s.sendall(aiol.serialize())
+                        print('Sent config')
+                        aio_command_shm.buf[0] = 1  # Reset post
+                    time.sleep(sleep_thread_s)
+        time.sleep(sleep_thread_s)
+
+
+def run_aio_listener_client(scion_ip: str, server_port: int) -> None:
+    """Run the AIO listener client for listening to AIO updates on the ROS listener.
+    (Talks to aio_forward.)
+    """
+    aiol = scion_aiol.AIOLinker()
+    print('Started Listener Client')
+    aio_listener_shm = shm.SharedMemory(name='aio_listener_shm')
+    aio_shared_vals_shm = shm.SharedMemory(name='aio_listener_shm')
+    while True:
+        if aio_listener_shm.buf[0] > 1:  # Turned on from GUI
+            aio_listener_shm.buf[0] = 2
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Reuse the address to bypass errno 98
+                try:
+                    s.connect((scion_ip, server_port))
+                except ConnectionRefusedError as e:
+                    print("Error with connecting to aio forward server.")
+                    print(e)
+                    aio_listener_shm.buf[0] = 0
+                if aio_listener_shm.buf[0] == 2:  # Check for AIO State
+                    s.sendall(b'1')  # Request to receive current AIO state
+                while aio_listener_shm.buf[0] == 2:
+                    try:
+                        data = s.recv(4096)
+                    except (ConnectionAbortedError, ConnectionResetError):
+                        aio_listener_shm.buf[0] = 1
+                        break
+                    ret = aiol.from_serial_with_diff(data)
+                    if len(ret[0]) > 0:
+                        for i in range(6):
+                            aio_shared_vals_shm.buf[i] = aiol.data[i]
+        time.sleep(sleep_thread_s)
 
 
 def init_gui(host_context: mp.context) -> None:
@@ -528,7 +645,7 @@ def init_gui(host_context: mp.context) -> None:
         pilot_shm.unlink()
         pilot_shm = shm.SharedMemory(create=True, size=2, name='pilot_ctrl_shm')
     pilot_shm.buf[0] = 0
-    pilot_shm.buf[1] = SCION_CONTROL_PORT - SCION_COMMAND_PORT
+    pilot_shm.buf[1] = SCION_CONTROL_PORT - SCION_COMMAND_PORT  # Holdover from port swap, can be changed(?)
     pilot_proc = host_context.Process(target=run_pilot_client)
     pilot_proc.start()
 
@@ -544,6 +661,33 @@ def init_gui(host_context: mp.context) -> None:
 
     logging_proc = host_context.Process(target=run_logging_client, args=(wls_pipe_0, ''))
     logging_proc.start()
+
+    # Start AIO Command client
+    try:
+        aio_command_shm = shm.SharedMemory(create=True, size=1, name='aio_command_shm')
+    except FileExistsError:
+        aio_command_shm = shm.SharedMemory(name='aio_command_shm')
+        aio_command_shm.unlink()
+        aio_command_shm = shm.SharedMemory(create=True, size=1, name='aio_command_shm')
+    aio_command_proc = host_context.Process(target=run_aio_command_client, args=(SCION_DEFAULT_IPV4, SCION_AIO_C_PORT))
+    aio_command_proc.start()
+    try:
+        aio_current_vals = shm.SharedMemory(create=True, size=6, name='aio_shared_vals_shm')
+    except FileExistsError:
+        aio_current_vals = shm.SharedMemory(name='aio_shared_vals_shm')
+        aio_current_vals.unlink()
+        aio_current_vals = shm.SharedMemory(create=True, size=6, name='aio_shared_vals_shm')
+
+    # Start AIO Listener client
+    try:
+        aio_listener_shm = shm.SharedMemory(create=True, size=1, name='aio_listener_shm')
+    except FileExistsError:
+        aio_listener_shm = shm.SharedMemory(name='aio_listener_shm')
+        aio_listener_shm.unlink()
+        aio_listener_shm = shm.SharedMemory(create=True, size=1, name='aio_listener_shm')
+    aio_listener_proc = host_context.Process(target=run_aio_listener_client,
+                                             args=(SCION_DEFAULT_IPV4, SCION_AIO_L_PORT))
+    aio_listener_proc.start()
 
     # Start GUI
     gui_window = tk.Tk()

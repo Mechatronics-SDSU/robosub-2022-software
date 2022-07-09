@@ -1,6 +1,7 @@
 #!/usr/bin/env python3.8
 import sys
 import struct
+from multiprocessing import shared_memory as shm
 
 import sensor.telemetry_linker as scion_tl
 
@@ -68,6 +69,33 @@ class DataWrapper:
         self.data = data.data
         if self.debug:
             print(f'API SEES: {data.data}')
+
+
+class AIODataWrapper(DataWrapper):
+    def __init__(self, debug: bool) -> None:
+        super().__init__(debug)
+        self.data = None
+
+    def callback(self, data) -> None:
+        self.data = data.data
+        if self.debug:
+            print(f'AIODataWrapper sees: {data.data}')
+
+
+class AIODataWrapperListener(DataWrapper):
+    def __init__(self, debug: bool, shm_index: int) -> None:
+        super().__init__(debug)
+        self.data = None
+        self.shm_index = shm_index
+        self.aio_state_shm = shm.SharedMemory(name='aio_state_shm')
+        self.state_send_shm = shm.SharedMemory(name='state_send_shm')
+
+    def callback(self, data) -> None:
+        self.data = data.data
+        self.state_send_shm.buf[0] = 1
+        self.aio_state_shm.buf[self.shm_index] = data.data
+        if self.debug:
+            print(f'AIODataWrapperListener sees: {data.data}')
 
 
 class DVLDataWrapper(DataWrapper):
