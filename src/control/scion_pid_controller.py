@@ -21,11 +21,13 @@ class Scion_PID_Controller:
         self.pitch_pid = PID_Controller(0.0, 0.0, 0.0, angle_wrap=True)
         self.yaw_pid = PID_Controller(0.0, 0.0, 0.0, angle_wrap=True)
         self.x_pid = PID_Controller(0.0, 0.0, 0.0)
+        self.y_pid = PID_Controller(0.0, 0.0, 0.0)
         
         self._controllers = {"roll" : self.roll_pid, 
                              "pitch" : self.pitch_pid,
                              "yaw" : self.yaw_pid,
                              "x" : self.x_pid,
+                             "y" : self.y_pid,
                              "z" : self.z_pid}
 
         #load pid parameter values from dictionary
@@ -53,10 +55,10 @@ class Scion_PID_Controller:
         #| T6
         #| T7
         
-        self.pid_thrust_mapper = np.array([[ 1,  1,  0,  0,  0,  1],
+        self.pid_thrust_mapper = np.array([[-1, -1,  0,  0,  0,  1],
                                            [ 0,  0,  1,  1,  1,  0],
-                                           [ 1, -1,  0,  0, 1],
-                                           [-1, -1,  0,  0, 1],
+                                           [-1,  1,  0,  0,  0,  1],
+                                           [ 0,  0,  1,  1,  1,  0],
                                            [ 0,  0,   1,  1,  0],
                                            [-1,  1,  0,  0, 1]])
         
