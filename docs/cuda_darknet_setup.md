@@ -25,3 +25,6 @@ https://github.com/pjreddie/darknet
 
 ### Make Instructions 
 https://pjreddie.com/darknet/install/
+
+### Darknet Setup
+https://pjreddie.com/darknet/yolo/
