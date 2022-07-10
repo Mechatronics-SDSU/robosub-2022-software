@@ -57,7 +57,7 @@ class State_Estimator(threading.Thread):
                     self.state[8] = self._angle_wrapped_error(yaw, self.prev_state[2]) / self.dt
                     self.state[9] = (x - self.prev_state[3]) / self.dt
                     self.state[10] = 0.0
-                    self.state[11] = (z - self.prev_state[5]) / self.dt
+                    self.state[11] = (z - self.prev_state[6]) / self.dt
                         
                     
                     self.prev_state = np.copy(self.state)

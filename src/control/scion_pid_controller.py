@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from pid_controller import PID_Controller
 from state_estimator import State_Estimator
-from maestro_driver import Maestro_Driver
+from utils.maestro_driver import MaestroDriver
 import numpy as np
 import time
 import matplotlib.pyplot as plt
@@ -72,8 +72,8 @@ class Scion_PID_Controller:
         '''
         Perform PID controller update step and return the thrust to each of the 6 thrusters.
         
-        :param set_point - The desired state of the vehicle [roll, pitch, yaw, x, z] (np.array)
-        :param process_point - The current state of the vehicle [roll, pitch, yaw, x, z] (np.array)
+        :param set_point - The desired state of the vehicle [roll, pitch, yaw, x, y, z] (np.array)
+        :param process_point - The current state of the vehicle [roll, pitch, yaw, x, y, z] (np.array)
         :param dt - Update interval in seconds (float)
         
         :return thrusts - A list of length 6 of the thrusts to apply to each motor: Range [-100, 100] (np.array)
@@ -84,12 +84,13 @@ class Scion_PID_Controller:
         yaw_cmd, yaw_error = self.yaw_pid.update(set_point[2], process_point[2], dt)
         z_cmd, z_error = self.z_pid.update(set_point[5], process_point[5], dt)
         
-        errors = np.array([roll_error, pitch_error, yaw_error, 0.0, z_error])
+        errors = np.array([roll_error, pitch_error, yaw_error, 0.0, 0.0, z_error])
         
         cmds = np.array([
             roll_cmd,
             pitch_cmd,
             yaw_cmd,
+            0.0,
             0.0,
             z_cmd
         ])
@@ -126,7 +127,7 @@ if __name__ == "__main__":
 
     state_estimator = State_Estimator()
 
-    maestro_driver = Maestro_Driver('/dev/ScionMaestroM')
+    maestro_driver = MaestroDriver('/dev/ScionMaestroM')
     
     #load the pid_controller  parameters from a formatted json file
     import json
