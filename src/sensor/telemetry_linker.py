@@ -7,7 +7,6 @@ import struct
 import pickle
 from multiprocessing import shared_memory as shm
 
-
 TELEMETRY_DEFAULT_DATA = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 TELEMETRY_DATA_SIZES = (8, 8, 8, 8, 4, 4, 4, 4, 8)
 

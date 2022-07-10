@@ -154,7 +154,7 @@ if __name__ == "__main__":
     roll_data = []
     pitch_data = []
     yaw_data = []
-    z_data = []
+    z_data = [] 
     z_cmds = []
     
     curr_time = 0.0
@@ -179,7 +179,7 @@ if __name__ == "__main__":
         time.sleep(dt)
         curr_time = (time.time() - start_time)
     
-    maestro_driver.set_thrusts([0, 0, 0, 0, 0, 0])
+    maestro_driver.set_thrusts([0, 0, 0, 0, 0, 0, 0, 0])
 
     t = np.arange(len(z_data)) * dt
     fig, ((roll_plot, pitch_plot), (yaw_plot, z_plot)) = plt.subplots(2, 2)

@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 import threading
-from motherboard_driver import Motherboard_Driver
 import numpy as np
 import time
 
-class State_Estimator(threading.Thread):
+# class State_Estimator(threading.Thread):
+class State_Estimator:
     
     def __init__(self, dt=0.010):
         '''
         '''
-        threading.Thread.__init__(self)
+        # threading.Thread.__init__(self)
         
-        self.run_thread = True
+        # self.run_thread = True
         
-        self.motherboard = Motherboard_Driver('/dev/picoM', 115200)
+        # Get measured data
+        # self.motherboard = Motherboard_Driver('/dev/picoM', 115200)
         
         #[roll, pitch, yaw, x, y, z, droll, dpitch, dyaw, dx, dy, dz]
         self.state = np.zeros(12)
@@ -36,7 +37,8 @@ class State_Estimator(threading.Thread):
     def run(self):
         self.cnt = 0
         
-        while(self.run_thread):
+        # while(self.run_thread):
+        while True:
             
             try:
                 
@@ -57,7 +59,7 @@ class State_Estimator(threading.Thread):
                     self.state[8] = self._angle_wrapped_error(yaw, self.prev_state[2]) / self.dt
                     self.state[9] = (x - self.prev_state[3]) / self.dt
                     self.state[10] = 0.0
-                    self.state[11] = (z - self.prev_state[6]) / self.dt
+                    self.state[11] = (z - self.prev_state[5]) / self.dt
                         
                     
                     self.prev_state = np.copy(self.state)
