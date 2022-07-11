@@ -14,10 +14,10 @@ import numpy as np
 
 PID_FETCH_HERTZ = 100
 
-def target_depth_callback(self, data) -> None:
+def target_depth_callback(data, args) -> None:
     """Get targeted depth value. It should be already a float.
     """
-    self.depth = data
+    args = data
         
 
 def _angle_wrapped_error(self, angle_1, angle_2):
@@ -44,9 +44,9 @@ def pid_driver(pid_name: str) -> None:
     rospy.Subscriber('ahrs_state', String, dw_ahrs.callback)
     rospy.Subscriber('depth_state', Float64, dw_depth.callback)
     rospy.Subscriber('dvl_data', Float32MultiArray, dw_dvl.callback)
-    rospy.Subscriber('target_depth', Float64, target_depth_callback)
+    rospy.Subscriber('target_depth', Float64, target_depth_callback, desired_depth)
     
-    # desired_depth = 2.0 #1.0m depth
+    desired_depth = 0.0 #1.0m depth
     desired_roll = 0.0 #rad
     desired_pitch = 0.0 #rad
     desired_yaw = 0.0 #rad
