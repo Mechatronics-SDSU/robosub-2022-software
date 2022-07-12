@@ -56,7 +56,13 @@ char *lsCommand[] = {
 	"ls", ".", NULL
 };
 char *aioBoard[] = {
-	"python3", "aio/aio_utils.py", NULL, NULL /*devs[0]*/
+	"rosrun", "scion_ros", "aio_handler.py", NULL, NULL /*devs[0]*/
+};
+char *aioListener[] = {
+	"rosrun", "scion_ros", "aio_listener.py", NULL	
+};
+char *aioForward[] = {
+	"rosrun", "scion_ros", "aio_forward.py", NULL	
 };
 char *sensorApi[] = {
 	"rosrun", "scion_ros", "sensor_listener.py", NULL
@@ -85,7 +91,7 @@ char **syswdev[] = {
  
 /*Index location where the nullptrs are to change in syswdev.*/
 int syswdevloc[] = {
-	2, /*aio*/
+	3, /*aio*/
 	3, /*ahrs*/
 	3, /*depth*/
 	2 /*maestro*/
@@ -103,7 +109,9 @@ char **programStartup[] = {
 	depthSensor, /*8*/
 	thrusterSubsystem, /*16*/
 	cameraDriver, /*32*/
-	lsCommand /*64*/
+	aioForward, /*64*/
+	aioListener, /*128*/
+	lsCommand /*256*/
 };
 
 int helpcommand();
