@@ -126,6 +126,8 @@ class AIOWrapper:
 
     def read_device(self) -> any:
         out = self.dev.readline()
+            if out == b'':
+                return None
         result = chr(int(f'{out[0:3]}'[2:-1]))
         if out is not None:
             sep = ''
