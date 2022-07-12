@@ -35,7 +35,7 @@ if [[ $ROS_RUNNING == 0 ]]; then
 fi
 # Test if masterprocess has been built
 MP_BUILT=$(ls start/ | grep masterprocess.o | wc -l)
-if [[ $MP_BUILT == 0]]; then
+if [[ $MP_BUILT == 0 ]]; then
   cd start
   make
   cd ..
