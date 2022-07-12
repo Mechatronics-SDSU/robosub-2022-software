@@ -90,7 +90,9 @@ SCION_CONFIG_MENU_STRINGS = [  # Enumerated for consistency with start/masterpro
     'AHRS Sensor',
     'Depth Sensor',
     'Thrusters',
-    'Cameras'
+    'Cameras',
+    'AIO Forward',
+    'AIO Listener'
 ]
 
 
