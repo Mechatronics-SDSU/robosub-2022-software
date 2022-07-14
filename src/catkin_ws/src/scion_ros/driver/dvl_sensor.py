@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """ROS-connected DVL sensor driver
 """
-from re import I
 import rospy
 import sys
 from std_msgs.msg import Float32MultiArray
@@ -20,6 +19,10 @@ def dvl_driver(dvl_name: str) -> None:
     dvl_sample = scion_dvl.Dvl_sample()
 
     dvl.enter_command_mode()
+
+    # Reset to factory defaults (requires Wayfinder to be in 'command mode')
+    if not dvl.reset_to_defaults():
+        print("Failed to reset to factory defaults")
 
     # Register callback function
     dvl.register_ondata_callback(scion_dvl.dvl_data_callback, dvl_sample)
