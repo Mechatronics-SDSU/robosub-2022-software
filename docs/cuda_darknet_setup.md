@@ -28,3 +28,7 @@ https://pjreddie.com/darknet/install/
 
 ### Darknet Setup
 https://pjreddie.com/darknet/yolo/
+
+### Tensorflow
+https://docs.nvidia.com/deeplearning/frameworks/install-tf-jetson-platform/index.html
+(Use python3.8 -m pip and sudo -H)
