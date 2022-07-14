@@ -21,7 +21,7 @@ Diagram:
       Port Forward Z Thurster PFZT ->  0===0 <- Starboard Forward Z Thurster SFZT
 Port Forward Vectored Thruster PFVT-> // | \\ <- Starboard Forward Vectored Thruster SFVT
                                       || | ||
-   Port Aaft Vectored Thruster PAVT-> \\ | // <- Starboard Aft Vectored Thruster SAVT
+   Port Aft Vectored Thruster PAVT-> \\ | // <- Starboard Aft Vectored Thruster SAVT
           Port Aft Z Thurster PAZT ->  0===0 <- Starboard Aft Z Thruster SAZT
                                      Stern/Aft
 
