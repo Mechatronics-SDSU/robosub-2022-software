@@ -5,8 +5,12 @@ https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#post-insta
 
 
 ### CUDNN
-https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html#installlinux-tar
+From: https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html#installlinux-tar
+Run the following commands (do not use above link):
 
+`sudo cp usr/include/cudnn*.h /usr/local/cuda/include`
+`sudo cp -P /usr/lib/aarch64-linux-gnu/libcudnn* /usr/local/cuda/lib64`
+`sudo chmod a+r /usr/local/cuda/include/cudnn*.h /usr/local/cuda/lib64/libcudnn*`
 
 ### Variables:
 
@@ -20,7 +24,7 @@ https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html#installlinux
 
 
 ### Clone Darknet Git
-https://github.com/pjreddie/darknet
+https://github.com/AlexeyAB/darknet
 
 
 ### Make Instructions 
@@ -31,4 +35,4 @@ https://pjreddie.com/darknet/yolo/
 
 ### Tensorflow
 https://docs.nvidia.com/deeplearning/frameworks/install-tf-jetson-platform/index.html
-(Use sudo -H python3 -m pip
+(Use sudo -H python3 -m pip)
