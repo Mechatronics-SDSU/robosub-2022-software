@@ -134,7 +134,7 @@ void switch_update(Switch *switch_type, uint8_t type)
     colorWipe(strip.Color(255, 0, 255), 0); // turn LED strip Pink
     serial_send(type, AUTO_ON);             // Serial print AI mode enable
   }
-  else if (switch_type->getState() == HIGH && switch_type->_pin_num == KILL_PIN)
+  else if (switch_type->getState() == LOW && switch_type->_pin_num == KILL_PIN)
   {
     digitalWrite(LED_BUILTIN, HIGH);      // turn builtin LED on
     digitalWrite(MOSFET_PIN, HIGH);       // turn Relay on
@@ -142,7 +142,7 @@ void switch_update(Switch *switch_type, uint8_t type)
     serial_send(type, KILL_OFF);          // Serial print KILL mode disable
   }
 
-  else if (switch_type->getState() == LOW && switch_type->_pin_num == KILL_PIN)
+  else if (switch_type->getState() == HIGH && switch_type->_pin_num == KILL_PIN)
   {
     digitalWrite(LED_BUILTIN, LOW);       // turn builtin LED off
     digitalWrite(MOSFET_PIN, LOW);        // turn Relay off
