@@ -71,12 +71,22 @@ class MissionSystem:
     """Scion's mission system is managed through a tree in this class. This includes transversal and building methods
     for iterating through missions.
     """
-    def __init__(self, base_mission_name: str) -> None:
-        self.mission_str = base_mission_name
+    def __init__(self, base_mission_name: str, load_from_file=None) -> None:
+        if load_from_file is None:
+            self.strs = None
+            self.mission_str = base_mission_name
+        else:
+            self.strs = self.load_from_file()
+            self.mission_str = self.strs[0]
         # Build a new root node w/ mission string
         self.root_mission_node = Node(node_name=self.mission_str, parent=None)
         # Node becomes root of new tree
         self.tree = Tree(self.root_mission_node)
+
+    def load_from_file(self) -> list:
+        ret = []
+
+        return ret
 
 
 def run_test_mission():
