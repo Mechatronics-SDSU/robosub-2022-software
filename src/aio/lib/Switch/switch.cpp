@@ -1,9 +1,9 @@
 #include "Arduino.h"
 #include "switch.h"
 
-Switch::Switch(uint8_t pin, uint16_t sensitivity)
+Switch::Switch(uint8_t pin, uint16_t sensitivity, bool start_state)
 {
-	_switch_state = LOW;
+	_switch_state = start_state;
 	_pin_num = pin;
 	_button_sensitivity = sensitivity;
 	_debounce_delay = 200;

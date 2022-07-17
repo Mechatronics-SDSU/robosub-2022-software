@@ -15,9 +15,9 @@ The all in one PCB is a centralized PCB for SDSU Mechatronics' event based senso
 - [x] Kill Switch
 - [x] Autonomous Switch
 - [x] Leak Detection
-- [x] Battery Undervoltage Monitor
-- [ ] Servo Based Torpedo Launcher
-- [ ] Netwon Gripper
+- [ ] Battery Undervoltage Monitor
+- [x] Servo Based Torpedo Launcher
+- [x] Netwon Gripper
 - [ ] System LED Strip
 
 ## Packet Frame
