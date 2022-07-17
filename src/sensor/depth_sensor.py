@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """Depth sensor driver.
 Handles automatic USB discovery similar to the kill switch.
 Running as main will run some test code to validate connection, importing will allow a generic sensor driver to
@@ -12,10 +13,10 @@ import sys
 class Depth:
     """Handles all functionality related to serial communication with the depth sensor.
     """
-    def __init__(self) -> None:
-        self.device_name = '/dev/ttyUSB0'
-        self.device = None
-        self.set_device()
+    def __init__(self, dev_name: str) -> None:
+        self.device_name = dev_name
+        self.device = dev_name
+        #self.set_device()
         self.com_test()
 
     def set_device(self) -> None:
@@ -31,6 +32,7 @@ class Depth:
         """
         try:
             self.device = serial.Serial(self.device_name, 9600)
+            str(self.device.readline())
             time.sleep(1)
         except serial.serialutil.SerialException as e:
             print("Error: Failed to locate depth sensor")
@@ -48,7 +50,7 @@ class Depth:
             try:
                 self.device.write(b'g\n')  # g\n = get state
                 resp = self.device.readline()
-                # print(f"resp: {resp}")
+                #print(f"resp: {resp}")
                 if "None" in str(resp):
                     return 0.0
                 if resp[0] == ord('r'):
@@ -57,6 +59,8 @@ class Depth:
                 print("Error: Serial communication error when attempting to get state, attempting to re-establish...")
                 # self.com_test()
                 # self.get_state()
+        else:
+            return 0.0
 
     def close(self) -> None:
         """Close connection to the device properly.
@@ -72,9 +76,10 @@ class Depth:
 
 if __name__ == "__main__":
     print("Testing Depth Sensor.")
-    DP = Depth()
+    DP = Depth(dev_name='/dev/ttyUSB1')
     while True:
-        print(f'Depth Sensor Test Reading: {DP.get_state()}')
+        s = DP.get_state()
+        print(f'Depth Sensor Test Reading: {s} {type(s)}')
         time.sleep(0.01)
 else:
     print('Imported Depth Sensor module.')

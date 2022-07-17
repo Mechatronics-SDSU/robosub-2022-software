@@ -40,7 +40,7 @@ def match_from_port() -> None:
     f_1_entries = f_1.readlines()
     f_1.close()
     for name in f_1_entries:
-        f_1_entries[f_1_entries.index(name)] = f_1_entries[f_1_entries.index(name)].rstrip('\n')
+    	f_1_entries[f_1_entries.index(name)] = f_1_entries[f_1_entries.index(name)].rstrip('\n')
     ind = 0
     dev_names = []
     for i in range(len(devs)):

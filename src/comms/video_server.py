@@ -10,7 +10,7 @@ import time
 import multiprocessing as mp
 from multiprocessing import shared_memory as shm
 
-thread_sleep_s = 0.25
+thread_sleep_s = 0.01
 
 
 def main(host: str, port: int, ind: bool, write_pipe=None, context=None, camera_num=0) -> None:
