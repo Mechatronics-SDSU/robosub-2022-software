@@ -53,19 +53,16 @@
 #include <Servo.h>
 #include "aio.h"
 
-const uint16_t button_sensitivity = 150; // adjust for how sensitive the button is
+const uint16_t button_sensitivity = 200; // adjust for how sensitive the button is
 
 unsigned long time_now = 0;
 
 unsigned long servo_delay = 500;
 
-// bool battery_1_flag = LOW;
-// bool battery_2_flag = LOW;
-
 Adafruit_NeoPixel strip(LED_COUNT, LED_STRIP_PIN, NEO_GRB + NEO_KHZ800);
 
-Switch kill_switch(KILL_PIN, button_sensitivity); // creates kill_switch object/variable that holds the boolean ON OFF
-Switch auto_switch(AUTO_PIN, button_sensitivity); // creates auto_switch object/variable that holds the boolean ON OFF
+Switch kill_switch(KILL_PIN, button_sensitivity, HIGH); // creates kill_switch object/variable that holds the boolean ON OFF
+Switch auto_switch(AUTO_PIN, button_sensitivity, LOW); // creates auto_switch object/variable that holds the boolean ON OFF
 
 Switch *kill_ptr = &kill_switch;
 Switch *auto_ptr = &auto_switch;
@@ -77,8 +74,6 @@ uint8_t arm_state = ARM_CLOSE;
 
 Servo torpedo;
 Servo arm;
-
-// Arm gripper(ARM_PIN);
 
 void colorWipe(uint32_t color, int wait)
 {
@@ -131,29 +126,29 @@ void switch_update(Switch *switch_type, uint8_t type)
    */
   if (switch_type->getState() == HIGH && switch_type->_pin_num == AUTO_PIN)
   {
-    colorWipe(strip.Color(255, 0, 255), 0); // turn LED strip Pink
     serial_send(type, AUTO_ON);             // Serial print AI mode enable
+    colorWipe(strip.Color(255, 0, 255), 0); // turn LED strip Pink
   }
   else if (switch_type->getState() == LOW && switch_type->_pin_num == KILL_PIN)
   {
+    serial_send(type, KILL_OFF);          // Serial print KILL mode disable
     digitalWrite(LED_BUILTIN, HIGH);      // turn builtin LED on
     digitalWrite(MOSFET_PIN, HIGH);       // turn Relay on
     colorWipe(strip.Color(0, 255, 0), 0); // turn LED strip Green
-    serial_send(type, KILL_OFF);          // Serial print KILL mode disable
   }
 
   else if (switch_type->getState() == HIGH && switch_type->_pin_num == KILL_PIN)
   {
+    serial_send(type, KILL_ON);           // Serial print KILL mode enable
     digitalWrite(LED_BUILTIN, LOW);       // turn builtin LED off
     digitalWrite(MOSFET_PIN, LOW);        // turn Relay off
     colorWipe(strip.Color(255, 0, 0), 0); // turn LED strip Red
-    serial_send(type, KILL_ON);           // Serial print KILL mode enable
   }
 
   else if (switch_type->getState() == LOW && switch_type->_pin_num == AUTO_PIN)
   {
+    serial_send(type, AUTO_OFF);          // Serial print AI mode enable
     colorWipe(strip.Color(255, 0, 0), 0); // turn LED strip Red
-    serial_send(type, AUTO_OFF);          // Serial print KILL mode enable
   }
 }
 
@@ -193,30 +188,6 @@ void serial_check()
         }
       }
     }
-
-    // else if (!((serial_buf & 0xF0) ^ BAT_MASK))
-    // {
-    //   // Battery related tasks
-    //   if (serial_buf == BAT_GET)
-    //   {
-    //     if (digitalRead(BAT_1_PIN) == LOW && digitalRead(BAT_2_PIN) == LOW)
-    //     {
-    //       serial_send('o', BAT_STABLE);
-    //     }
-    //     else if (digitalRead(BAT_1_PIN) == HIGH && digitalRead(BAT_2_PIN) == LOW)
-    //     {
-    //       serial_send('o', BAT_WARN_1);
-    //     }
-    //     else if (digitalRead(BAT_1_PIN) == LOW && digitalRead(BAT_2_PIN) == HIGH)
-    //     {
-    //       serial_send('o', BAT_WARN_2);
-    //     }
-    //     else if (digitalRead(BAT_1_PIN) == HIGH && digitalRead(BAT_2_PIN) == HIGH)
-    //     {
-    //       serial_send('o', BAT_WARN_BOTH);
-    //     }
-    //   }
-    // }
 
     else if (!((serial_buf & 0xF0) ^ KILL_MASK))
     {
@@ -274,6 +245,8 @@ void serial_check()
 
       else if(serial_buf == TORPEDO_FIRE_1)
       {
+        serial_send('o', TORPEDO_EMPTY_1);
+
         torpedo.writeMicroseconds(LEFT);           // Move Servo to left
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
@@ -282,12 +255,13 @@ void serial_check()
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
 
-        serial_send('o', TORPEDO_EMPTY_1);
         torpedo_state = TORPEDO_EMPTY_1;
       }
 
       else if(serial_buf == TORPEDO_FIRE_2)
       {
+        serial_send('o', TORPEDO_EMPTY_2);
+
         torpedo.writeMicroseconds(RIGHT);          // Move Servo to right
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
@@ -296,12 +270,13 @@ void serial_check()
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
         
-        serial_send('o', TORPEDO_EMPTY_2);
         torpedo_state = TORPEDO_EMPTY_2;
       }
 
       else if(serial_buf == TORPEDO_FIRE_BOTH)
       {
+        serial_send('o', TORPEDO_EMPTY_BOTH);
+
         torpedo.writeMicroseconds(LEFT);           // Move Servo to left
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
@@ -314,7 +289,6 @@ void serial_check()
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
 
-        serial_send('o', TORPEDO_EMPTY_BOTH);
         torpedo_state = TORPEDO_EMPTY_BOTH;
       }
     }
@@ -328,33 +302,21 @@ void serial_check()
       }
       else if(serial_buf == ARM_CLOSE)
       {
+        serial_send('o', ARM_CLOSE);
+
         arm.writeMicroseconds(CLOSE);
         arm_state = ARM_CLOSE;
-        serial_send('o', ARM_CLOSE);
       }
       else if(serial_buf == ARM_OPEN)
       {
+        serial_send('o', ARM_OPEN);
+
         arm.writeMicroseconds(OPEN);
         arm_state = ARM_OPEN;
-        serial_send('o', ARM_OPEN);
       }
     }
    }
 }
-
-// void battery_1_undervoltage()
-// {
-//   // Interrupt Service Routine for toggling battery 1 state flag
-
-//   battery_1_flag = HIGH;
-// }
-
-// void battery_2_undervoltage()
-// {
-//   // Interrupt Service Routine for toggling battery 2 state flag
-
-//   battery_2_flag = HIGH;
-// }
 
 void setup()
 {
@@ -362,13 +324,8 @@ void setup()
   pinMode(MOSFET_PIN, OUTPUT);
   pinMode(LEAK_1_PIN, INPUT);
   pinMode(LEAK_2_PIN, INPUT);
-  // pinMode(BAT_1_PIN, INPUT);
-  // pinMode(BAT_2_PIN, INPUT);
 
   digitalWrite(MOSFET_PIN, LOW);
-
-  // attachInterrupt(digitalPinToInterrupt(BAT_1_PIN), battery_1_undervoltage, HIGH);
-  // attachInterrupt(digitalPinToInterrupt(BAT_2_PIN), battery_2_undervoltage, HIGH);
 
   torpedo.attach(TORPEDO_2_PIN);
   arm.attach(ARM_PIN);
@@ -379,8 +336,6 @@ void setup()
   rainbow(0);               // Flowing rainbow cycle along the whole strip for boot animation
 
   colorWipe(strip.Color(255, 0, 0), 0); // turn LED strip Red
-
-  // gripper.setState(HIGH);    // Initialize the arm in closed state
 
   arm.writeMicroseconds(OPEN);    // open arm
   torpedo.writeMicroseconds(CENTER); // Center torpedo servo
@@ -415,44 +370,13 @@ void loop()
     colorWipe(strip.Color(0, 0, 255), 0); // turn LED strip Blue
 
     // Enable Kill Mode
+    serial_send('i', KILL_ON);
     kill_switch.setState(HIGH);
     digitalWrite(MOSFET_PIN, LOW); 
-    serial_send('i', KILL_ON);
 
     // Disable AI Mode   
-    auto_switch.setState(LOW);
     serial_send('i', AUTO_OFF);
+
+    auto_switch.setState(LOW);
   }
-
-  // // Battery Block
-  // if (battery_1_flag)
-  // {
-  //   serial_send('i', BAT_WARN_1);
-  //   battery_1_flag = LOW;
-  //   colorWipe(strip.Color(255, 255, 0), 0); // Turn LED strip Yellow
-
-  //   // Enable Kill Mode
-  //   kill_switch.setState(HIGH);
-  //   digitalWrite(MOSFET_PIN, LOW); 
-  //   serial_send('i', KILL_ON);
-
-  //   // Disable AI Mode
-  //   auto_switch.setState(LOW);
-  //   serial_send('i', AUTO_OFF);
-  // }
-  // if (battery_2_flag)
-  // {
-  //   serial_send('i', BAT_WARN_2);
-  //   battery_2_flag = LOW;
-  //   colorWipe(strip.Color(255, 255, 0), 0); // Turn LED strip Yellow
-
-  //   // Enable Kill Mode
-  //   kill_switch.setState(HIGH);
-  //   digitalWrite(MOSFET_PIN, LOW); 
-  //   serial_send('i', KILL_ON);
-
-  //   // Disable AI Mode
-  //   auto_switch.setState(LOW);
-  //   serial_send('i', AUTO_OFF);
-  // }
 }
