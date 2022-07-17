@@ -2,6 +2,7 @@
 import sys
 import struct
 from multiprocessing import shared_memory as shm
+import datetime as dt
 
 import sensor.telemetry_linker as scion_tl
 
@@ -107,28 +108,17 @@ class DVLDataWrapper(DataWrapper):
         self.dvl_y = scion_tl.TELEMETRY_DEFAULT_DATA[5]
         self.dvl_z = scion_tl.TELEMETRY_DEFAULT_DATA[6]
         self.dvl_mean = scion_tl.TELEMETRY_DEFAULT_DATA[7]
-
-    def callback(self, data) -> None:
-        if self.debug:
-            print(data)
-        self.dvl_x = struct.pack('>1f', data[0])
-        self.dvl_y = struct.pack('>1f', data[1])
-        self.dvl_z = struct.pack('>1f', data[2])
-        self.dvl_mean = struct.pack('>1f', data[3])
-
-
-class DVLTimeWrapper(DataWrapper):
-    """Specific wrapper for the DVL timestamps.
-    """
-    def __init__(self, debug: bool):
-        super().__init__(debug)
         self.dvl_time = scion_tl.TELEMETRY_DEFAULT_DATA[8]
 
     def callback(self, data) -> None:
         if self.debug:
             print(data)
-        self.dvl_time = float(data)
-
+        self.dvl_x = struct.pack('>1f', data[7])
+        self.dvl_y = struct.pack('>1f', data[8])
+        self.dvl_z = struct.pack('>1f', data[9])
+        self.dvl_mean = struct.pack('>1f', data[10])
+        self.dvl_time = float(dt.datetime(data[0],data[1],
+            data[2],data[3],data[4],data[5],data[6]))
 
 class DepthDataWrapper(DataWrapper):
     """Specific wrapper for the Depth data packets.
