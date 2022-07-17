@@ -36,6 +36,7 @@ char *devstrs[] = {
 	"AIO",
 	"AHRS",
 	"Depth",
+	"DVL",
 	"Maestro"
 };
 
@@ -73,8 +74,11 @@ char *ahrsSensor[] = {
 char *depthSensor[] = {
     "rosrun", "scion_ros", "depth_sensor.py", NULL, NULL /*devs[2]*/
 };
+char *dvlSensor[] = {
+    "rosrun", "scion_ros", "dvl_sensor.py", NULL, NULL, /*devs[3]*/
+};
 char *thrusterSubsystem[] = {
-	"python3", "comms/controller_server.py", NULL, NULL  /*devs[3]*/
+	"python3", "comms/controller_server.py", NULL, NULL  /*devs[4]*/
 };
 char *cameraDriver[] = {
 	"python3", "comms/camera_scion.py", NULL
@@ -86,6 +90,7 @@ char **syswdev[] = {
 	aioBoard,
 	ahrsSensor,
 	depthSensor,
+	dvlSensor,
 	thrusterSubsystem
 };
  
@@ -94,6 +99,7 @@ int syswdevloc[] = {
 	3, /*aio*/
 	3, /*ahrs*/
 	3, /*depth*/
+	3, /*DVL*/
 	2 /*maestro*/
 };
 
@@ -111,7 +117,8 @@ char **programStartup[] = {
 	cameraDriver, /*32*/
 	aioForward, /*64*/
 	aioListener, /*128*/
-	lsCommand /*256*/
+	dvlSensor, /*256*/
+	lsCommand /*512*/
 };
 
 int helpcommand();

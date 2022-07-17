@@ -50,6 +50,8 @@ def load_cameras() -> list:
     dev = 0
     while dev < dev_max:
         cam = cv2.VideoCapture(dev)
+        cam.set(3, 640)
+        cam.set(4, 480)
         cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
         if cam.isOpened():  # Camera exists on port
             read, img = cam.read()
@@ -104,6 +106,6 @@ def start_video_servers(cameras: list) -> None:
 if __name__ == '__main__':
     # cams = load_cameras()
     # start_video_servers(cameras=cams)
-    video_server(50001, 0, write_frame=True)
+    video_server(50001, 0, write_frame=False)
 
 

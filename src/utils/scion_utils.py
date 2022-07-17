@@ -140,7 +140,7 @@ class DepthDataWrapper(DataWrapper):
     def callback(self, data) -> None:
         """Get Depth data. It should be already a float.
         """
-        self.depth = data
+        self.depth = data.data
 
 
 class AHRSDataWrapper(DataWrapper):
