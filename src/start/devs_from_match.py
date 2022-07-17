@@ -67,5 +67,6 @@ def match_from_port() -> None:
         f_1.write(f'{dev_name}\n')
     f_1.close()
 
+
 if __name__ == '__main__':
     match_from_port()
