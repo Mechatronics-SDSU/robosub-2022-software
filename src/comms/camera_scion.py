@@ -70,6 +70,8 @@ def video_server(port: int, cap: int, write_frame: bool) -> None:
     # CV
     cam = cv2.VideoCapture(cap)
     cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+    cam.set(3, 640)
+    cam.set(4, 480)
     img_counter = 0
     encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
     # Socket
@@ -89,7 +91,10 @@ def video_server(port: int, cap: int, write_frame: bool) -> None:
                 result, frame = cv2.imencode('.jpg', frame, encode_param)
                 data = pickle.dumps(frame, 0)
                 size = len(data)
-                conn.sendall(struct.pack(">L", size) + data)
+                try:
+                    conn.sendall(struct.pack(">L", size) + data)
+                except e:
+                    print('Couldn\'t send frame')
                 img_counter += 1
 
 

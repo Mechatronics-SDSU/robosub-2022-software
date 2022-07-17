@@ -4,7 +4,7 @@
 import copy
 import pickle
 
-AIO_DEFAULT_DATA = (0,  # Kill switch
+AIO_DEFAULT_DATA = (1,  # Kill switch
                     0,  # Auto switch
                     0,  # Battery State
                     0,  # Leak Detection
