@@ -18,7 +18,10 @@ if __name__ == '__main__':
 
         while True:
             command = input("Enter a command in bytes: ")
-            value = write_read(b'i\x3F\n') # Hard coded message sent to AIO, currently set as "get kill status" 
+            command = int('0x' + command, 16).to_bytes(1, 'big')
+            wr = b'i' + command + b'\n'
+            print(wr)
+            value = write_read(wr) # Hard coded message sent to AIO, currently set as "get kill status" 
             print(value)
     else:
         print('AIO Utils Error, sys.argv less than 2. (Did you add the device name?)')
