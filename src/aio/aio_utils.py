@@ -128,15 +128,22 @@ class AIOWrapper:
         out = self.dev.readline()
         if out == b'':
             return None
+        print(f'{out}')
+        print(f'{out[0:3]}')
+        print(f'{str(out[0:3])[2:-1]}')
+        print(f'{chr(int(str(out[0:3])[2:-1]))}')
         result = chr(int(f'{out[0:3]}'[2:-1]))
-        if out is not None:
+        if out is not None or len(out) > 1:
             sep = ''
             res = ''
-            i = 3
+            i = 0
             while sep != ord('\n'):
                 res = res + chr(out[i])
                 i += 1
-                sep = out[i]
+                try:
+                    sep = out[i]
+                except IndexError:
+                    return None
             result += hex(int(res))[2:]
             out = str(result)
             self.last_line = out

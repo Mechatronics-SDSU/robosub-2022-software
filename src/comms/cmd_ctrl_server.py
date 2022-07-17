@@ -25,6 +25,7 @@ def cmd_ctrl_server():
             print('Host closed from connection abort')
         if data is not None:
             data = int.from_bytes(data, 'big')
+            sys.stderr.write(str(data))
             sys.stdout.write(str(data) + '\0')
 
 
