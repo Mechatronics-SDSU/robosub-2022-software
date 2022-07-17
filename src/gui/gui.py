@@ -109,9 +109,9 @@ class GuiWindow(tk.Frame):
         self.top_bar_fr = tk.Frame(master=self.tk_master, width=top_bar_resolution[0], height=top_bar_resolution[1],
                                    bg='black')
         self.buttons_fr = tk.Frame(master=self.tk_master, width=button_display_resolution[0],
-                                   height=button_display_resolution[1], bg='white')
+                                   height=button_display_resolution[1], bg='red')
         self.weapons_fr = tk.Frame(master=self.tk_master, width=weapons_status_resolution[0],
-                                   height=weapons_status_resolution[1], bg='red')
+                                   height=weapons_status_resolution[1], bg='black')
         self.thrusters_fr = tk.Frame(master=self.tk_master, width=thruster_status_resolution[0],
                                      height=thruster_status_resolution[1], bg='green')
         self.logging_fr = tk.Frame(master=self.tk_master, width=logging_resolution[0], height=logging_resolution[1],
@@ -185,25 +185,25 @@ class GuiWindow(tk.Frame):
         self.aio_command_shm = shm.SharedMemory(name='aio_command_shm')
         self.aio_listener_shm = shm.SharedMemory(name='aio_listener_shm')
         self.aio_current_vals = shm.SharedMemory(name='aio_shared_vals_shm')
-        self.aio_enable_btn = Button(master=self.buttons_fr, text='Enable AIO', justify=LEFT, anchor='w',
+        self.aio_enable_btn = Button(master=self.weapons_fr, text='Enable AIO', justify=LEFT, anchor='w',
                                      command=self.start_aio)
-        self.aio_kill_disable_btn = Button(master=self.buttons_fr, text='UNKILL', justify=LEFT, anchor='w',
+        self.aio_kill_disable_btn = Button(master=self.weapons_fr, text='UNKILL', justify=LEFT, anchor='w',
                                            command=partial(self.update_aio_state, 0, 0))
-        self.aio_kill_enable_btn = Button(master=self.buttons_fr, text='KILL', justify=LEFT, anchor='w',
+        self.aio_kill_enable_btn = Button(master=self.weapons_fr, text='KILL', justify=LEFT, anchor='w',
                                           command=partial(self.update_aio_state, 0, 1))
-        self.aio_auto_disable_btn = Button(master=self.buttons_fr, text='MANUAL', justify=LEFT, anchor='w',
+        self.aio_auto_disable_btn = Button(master=self.weapons_fr, text='MANUAL', justify=LEFT, anchor='w',
                                            command=partial(self.update_aio_state, 1, 0))
-        self.aio_auto_enable_btn = Button(master=self.buttons_fr, text='AUTO', justify=LEFT, anchor='w',
+        self.aio_auto_enable_btn = Button(master=self.weapons_fr, text='AUTO', justify=LEFT, anchor='w',
                                           command=partial(self.update_aio_state, 1, 1))
-        self.aio_torpedo_fire_1_btn = Button(master=self.buttons_fr, text='FIRE TORPEDO 1', justify=LEFT, anchor='w',
+        self.aio_torpedo_fire_1_btn = Button(master=self.weapons_fr, text='FIRE TORPEDO 1', justify=LEFT, anchor='w',
                                              command=partial(self.update_aio_state, 4, 5))
-        self.aio_torpedo_fire_2_btn = Button(master=self.buttons_fr, text='FIRE TORPEDO 2', justify=LEFT, anchor='w',
+        self.aio_torpedo_fire_2_btn = Button(master=self.weapons_fr, text='FIRE TORPEDO 2', justify=LEFT, anchor='w',
                                              command=partial(self.update_aio_state, 4, 6))
-        self.aio_torpedo_fire_both_btn = Button(master=self.buttons_fr, text='FIRE EVERYTHING', justify=LEFT, anchor='w',
+        self.aio_torpedo_fire_both_btn = Button(master=self.weapons_fr, text='FIRE EVERYTHING', justify=LEFT, anchor='w',
                                                 command=partial(self.update_aio_state, 4, 7))
-        self.aio_arm_close_btn = Button(master=self.buttons_fr, text='CLOSE', justify=LEFT, anchor='w',
+        self.aio_arm_close_btn = Button(master=self.weapons_fr, text='CLOSE', justify=LEFT, anchor='w',
                                         command=partial(self.update_aio_state, 5, 1))
-        self.aio_arm_open_btn = Button(master=self.buttons_fr, text='OPEN', justify=LEFT, anchor='w',
+        self.aio_arm_open_btn = Button(master=self.weapons_fr, text='OPEN', justify=LEFT, anchor='w',
                                        command=partial(self.update_aio_state, 5, 0))
 
         # Master process
@@ -553,9 +553,9 @@ def run_aio_listener_client(scion_ip: str, server_port: int) -> None:
     aiol = scion_aiol.AIOLinker()
     print('Started Listener Client')
     aio_listener_shm = shm.SharedMemory(name='aio_listener_shm')
-    aio_shared_vals_shm = shm.SharedMemory(name='aio_listener_shm')
+    aio_shared_vals_shm = shm.SharedMemory(name='aio_shared_vals_shm')
     while True:
-        if aio_listener_shm.buf[0] > 1:  # Turned on from GUI
+        if aio_listener_shm.buf[0] > 0:  # Turned on from GUI
             aio_listener_shm.buf[0] = 2
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Reuse the address to bypass errno 98
@@ -575,8 +575,11 @@ def run_aio_listener_client(scion_ip: str, server_port: int) -> None:
                         break
                     ret = aiol.from_serial_with_diff(data)
                     if len(ret[0]) > 0:
+                        print(aiol.data)
                         for i in range(6):
                             aio_shared_vals_shm.buf[i] = aiol.data[i]
+                        print(f'RECV: {aiol.data}')
+                    time.sleep(sleep_thread_s)
         time.sleep(sleep_thread_s)
 
 
@@ -679,7 +682,7 @@ def init_gui(host_context: mp.context) -> None:
         aio_current_vals = shm.SharedMemory(name='aio_shared_vals_shm')
         aio_current_vals.unlink()
         aio_current_vals = shm.SharedMemory(create=True, size=6, name='aio_shared_vals_shm')
-
+    aio_current_vals.buf[0] = 1
     # Start AIO Listener client
     try:
         aio_listener_shm = shm.SharedMemory(create=True, size=1, name='aio_listener_shm')

@@ -87,13 +87,15 @@ class AIODataWrapperListener(DataWrapper):
         super().__init__(debug)
         self.data = None
         self.shm_index = shm_index
+        print(f'SHM_INDEX: {shm_index}')
         self.aio_state_shm = shm.SharedMemory(name='aio_state_shm')
         self.state_send_shm = shm.SharedMemory(name='state_send_shm')
 
     def callback(self, data) -> None:
         self.data = data.data
+        print(f'INDEX: {self.shm_index} DATA: {data.data} | {ord(data.data[1])} {type(data.data)}')
         self.state_send_shm.buf[0] = 1
-        self.aio_state_shm.buf[self.shm_index] = data.data
+        self.aio_state_shm.buf[self.shm_index] = ord(data.data[1])
         if self.debug:
             print(f'AIODataWrapperListener sees: {data.data}')
 
