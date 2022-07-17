@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""ROS-connected AHRS sensor driver
+"""ROS-connected pid driver
 """
 from calendar import THURSDAY
 import rospy
 import sys
-from std_msgs.msg import ByteMultiArray, Float64, String, Float32MultiArray
+from std_msgs.msg import Float64, String, Float32MultiArray, MultiArrayDimension
 import control.scion_pid_controller as scion_pid
 import utils.scion_utils as scion_ut
 import json
 import logging
 import time
 import numpy as np
+from utils.maestro_driver import MaestroDriver
 
 PID_FETCH_HERTZ = 100
 
@@ -18,9 +19,8 @@ def target_depth_callback(data, args) -> None:
     """Get targeted depth value. It should be already a float.
     """
     args = data
-        
 
-def _angle_wrapped_error(self, angle_1, angle_2):
+def _angle_wrapped_error(angle_1, angle_2):
     
     error = angle_1 - angle_2
     
@@ -32,21 +32,23 @@ def _angle_wrapped_error(self, angle_1, angle_2):
     return(error)
 
 def pid_driver(pid_name: str) -> None:
+    maestro = MaestroDriver(com_port=pid_name)
+
     # ROS
     dw_ahrs = scion_ut.AHRSDataWrapper(debug=False)
     dw_depth = scion_ut.DepthDataWrapper(debug=False)
     dw_dvl = scion_ut.DVLDataWrapper(debug=False)
 
-    pid_pub = rospy.Publisher('pid_thrusts', ByteMultiArray, queue_size=10)
+    pid_pub = rospy.Publisher('pid_thrusts', Float32MultiArray, queue_size=8)
     rospy.init_node('pid_driver', anonymous=True)
 
     # Listen to all sensors
     rospy.Subscriber('ahrs_state', String, dw_ahrs.callback)
     rospy.Subscriber('depth_state', Float64, dw_depth.callback)
-    rospy.Subscriber('dvl_data', Float32MultiArray, dw_dvl.callback)
-    rospy.Subscriber('target_depth', Float64, target_depth_callback, desired_depth)
+    #rospy.Subscriber('dvl_data', Float32MultiArray, dw_dvl.callback)
+    #rospy.Subscriber('target_depth', Float64, target_depth_callback, desired_depth)
     
-    desired_depth = 0.0 #1.0m depth
+    desired_depth = 0.3 #1.0m depth
     desired_roll = 0.0 #rad
     desired_pitch = 0.0 #rad
     desired_yaw = 0.0 #rad
@@ -57,15 +59,19 @@ def pid_driver(pid_name: str) -> None:
     desired_state[1] = desired_pitch
     desired_state[2] = desired_yaw
     desired_state[5] = desired_depth
-    
+
+
+    thrusts = Float32MultiArray()
+    thrusts.data = []
+
     #update rate of control system
     f = 100.0 #Hz
     dt = 1/f
 
-    max_run_time = 20.0 #Time to run control system before exiting
+    max_run_time = 20 #Time to run control system before exiting
 
     #load the pid_controller  parameters from a formatted json file
-    with open("control/pid_params_1.json") as pid_param_file:
+    with open(r'pid_params_1.json') as pid_param_file:
         pid_params = json.load(pid_param_file)
 
     # Init the controller 
@@ -97,10 +103,13 @@ def pid_driver(pid_name: str) -> None:
 
         prev_state = np.copy(curr_state)
 
-        thrusts, errors = controller.update(desired_state, curr_state, dt)
+        thrusts.data, errors = controller.update(desired_state, curr_state, dt)
 
-        pid_pub.Publish(thrusts) 
-        
+        print(thrusts.data)
+
+        pid_pub.publish(thrusts)
+#        maestro.set_thrusts(thrusts)
+
         time.sleep(dt)
         curr_time = (time.time() - start_time)
         rate.sleep()
@@ -110,7 +119,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         dev = sys.argv[1].replace(' ', '')
         # Init pid controller 
-        pid_driver()
+        pid_driver(dev)
 
     else:
         print('Error, argc not > 1. (Did you add the AHRS name when running this program?)')

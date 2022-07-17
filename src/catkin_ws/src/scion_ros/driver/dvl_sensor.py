@@ -41,7 +41,7 @@ def dvl_driver(dvl_name: str) -> None:
         # Trigger DVL data capture
         data_arr.data = dvl_sample.get_data()
 
-        print(f'Update: {data_arr.data}')
+        #print(f'Update: {data_arr.data}')
         pub_data.publish(data_arr)
 
         rate.sleep()

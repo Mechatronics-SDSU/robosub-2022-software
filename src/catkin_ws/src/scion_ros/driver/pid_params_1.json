@@ -1,0 +1,68 @@
+{
+
+   "roll": {
+      "kp" : 0.0,
+      "ki" : 0.0,
+      "kd" : 0.0,
+      "cmd_offset" : 0.0,
+      "cmd_max" : -1.0,
+      "cmd_min" : 1.0,
+      "i_max" : -1.0,
+      "i_min" : 1.0
+   },
+
+   "pitch": {
+      "kp" : 0.0,
+      "ki" : 0.0,
+      "kd" : 0.0,
+      "cmd_offset" : 0.0,
+      "cmd_max" : -1.0,
+      "cmd_min" : 1.0,
+      "i_max" : -1.0,
+      "i_min" : 1.0
+   },
+
+   "yaw": {
+      "kp" : 0.0,
+      "ki" : 0.0,
+      "kd" : 0.0,
+      "cmd_offset" : 0.0,
+      "cmd_max" : 15.0,
+      "cmd_min" : -15.0,
+      "i_max" : 0.05,
+      "i_min" : -0.05       
+   },
+
+   "x": {
+      "kp" : 0.0,
+      "ki" : 0.0,
+      "kd" : 0.0,
+      "cmd_offset" : 0.0,
+      "cmd_max" : 100.0,
+      "cmd_min" : -100.0,
+      "i_max" : -1.0,
+      "i_min" : 1.0       
+   },
+
+   "y": {
+     "kp" : 0.0,
+     "ki" : 0.0,
+     "kd" : 0.0,
+     "cmd_offset" : 0.0,
+     "cmd_max" : 100.0,
+     "cmd_min" : -100.0,
+     "i_max" : -1.0,
+     "i_min" : 1.0       
+  },
+
+   "z": {
+      "kp" : 12.0,
+      "ki" : 0.0,
+      "kd" : 17.0,
+      "cmd_offset" : 13.0,
+      "cmd_max" : 25.0,
+      "cmd_min" : -25.0,
+      "i_max" : -1.0,
+      "i_min" : 1.0
+   }
+}

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from pid_controller import PID_Controller
-from state_estimator import State_Estimator
+from control.pid_controller import PID_Controller
+from control.state_estimator import State_Estimator
 from utils.maestro_driver import MaestroDriver
 import numpy as np
 import time
@@ -10,11 +10,8 @@ import matplotlib.pyplot as plt
 #(roll, pitch, yaw, x, z). These are the DOFs controllable by the actuator.
 
 class Scion_PID_Controller:
-    
+
     def __init__(self, pid_params=None):
-        '''
-        '''
-        
         #Initialize pid controllers
         self.z_pid = PID_Controller(0.0, 0.0, 0.0)
         self.roll_pid = PID_Controller(0.0, 0.0, 0.0, angle_wrap=True)
@@ -32,7 +29,7 @@ class Scion_PID_Controller:
 
         #load pid parameter values from dictionary
         if(pid_params != None):
-            
+
             for ctrl_type in self._controllers.keys():
                 self._controllers[ctrl_type].k_p = pid_params[ctrl_type]["kp"]
                 self._controllers[ctrl_type].k_i = pid_params[ctrl_type]["ki"]
@@ -65,7 +62,6 @@ class Scion_PID_Controller:
                                            [ 0,  0, -1,  1, -1,  0]])
         
         
-    
     def update(self, set_point=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]), 
                      process_point=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
                      dt=0.010):
@@ -78,7 +74,22 @@ class Scion_PID_Controller:
         
         :return thrusts - A list of length 6 of the thrusts to apply to each motor: Range [-100, 100] (np.array)
         '''
-        
+
+        # Initial z pid only 7/16
+        z_cmd, z_error = self.z_pid.update(set_point[5], process_point[5], dt)
+
+        errors = np.array([0.0, 0.0, 0.0, 0.0, 0.0, z_error])
+
+        cmds = np.array([
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            z_cmd
+        ])
+
+        '''        
         roll_cmd, roll_error = self.roll_pid.update(set_point[0], process_point[0], dt)
         pitch_cmd, pitch_error = self.pitch_pid.update(set_point[1], process_point[1], dt)
         yaw_cmd, yaw_error = self.yaw_pid.update(set_point[2], process_point[2], dt)
@@ -86,6 +97,7 @@ class Scion_PID_Controller:
         
         errors = np.array([roll_error, pitch_error, yaw_error, 0.0, 0.0, z_error])
         
+
         cmds = np.array([
             roll_cmd,
             pitch_cmd,
@@ -94,10 +106,10 @@ class Scion_PID_Controller:
             0.0,
             z_cmd
         ])
-
+        '''
         #map the individual controller outputs to each thruster.
         thrusts = np.matmul(self.pid_thrust_mapper, cmds)
-        return(thrusts, errors, z_cmd)
+        return(thrusts, errors)
 
 '''
 The code below shows an example of using the Scion_PID_Controller(). The controller

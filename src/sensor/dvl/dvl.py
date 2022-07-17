@@ -503,7 +503,7 @@ class Dvl_sample:
         """Initializes variables for last dvl sample
         """
         self.data = []
-    
+
     def set_data(self, _data:list):
         self.data = _data
 
@@ -511,7 +511,7 @@ class Dvl_sample:
         return self.data
 
 
-def dvl_data_callback(self, output_data: OutputData, obj: Dvl_sample):
+def dvl_data_callback(output_data: OutputData, obj: Dvl_sample):
     """Enters upon each software triggered ping to organize time, velocity,
     and range data.
     Returns:
@@ -522,12 +522,12 @@ def dvl_data_callback(self, output_data: OutputData, obj: Dvl_sample):
         data = [
             output_data.year, output_data.month, output_data.day,
             output_data.hour, output_data.minute, output_data.second, output_data.millisecond,
-            output_data.vel_x, output_data.vel_y, output_data.vel_z,  
+            output_data.vel_x, output_data.vel_y, output_data.vel_z,
             output_data.mean_range]
         obj.set_data(data)
 
-    print("No output data connection")
-        
+    #print("No output data connection")
+
 def print_data_callback(output_data: OutputData, obj):
     """Prints velocity, floor range, and time data to screen
     """
