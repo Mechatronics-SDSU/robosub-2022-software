@@ -28,14 +28,15 @@ def detector(cfg_file: str, weights_file: str, data_file: str) -> None:
         while True:
             ret, img = cap.read()
             if ret is True:
-                #img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                 img = cv2.flip(img, 1)
                 img = cv2.flip(img, 0)
                 img = img.astype(np.float32)
                 img2 = Image(img)
                 results = net.detect(img2)
                 results_label = [x[0] for x in results]
-                print(results_label)
+                if len(results_label) > 0:
+
+                    print(results_label)
                 result, frame = cv2.imencode('.jpg', img, encode_param)
                 data = pickle.dumps(frame, 0)
                 size = len(data)
