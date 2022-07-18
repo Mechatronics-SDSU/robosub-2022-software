@@ -36,3 +36,8 @@ https://pjreddie.com/darknet/yolo/
 ### Tensorflow
 https://docs.nvidia.com/deeplearning/frameworks/install-tf-jetson-platform/index.html
 (Use sudo -H python3 -m pip)
+
+
+### Python interpreter 
+https://github.com/madhawav/YOLO3-4-Py
+
