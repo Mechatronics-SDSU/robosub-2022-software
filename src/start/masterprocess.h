@@ -82,6 +82,7 @@ char *thrusterSubsystem[] = {
 };
 char *cameraDriver[] = {
 	"python3", "comms/camera_scion.py", NULL
+//	"python3", "ml/webcam_out.py", "~/scion_final.weights", NULL
 };
 
 
