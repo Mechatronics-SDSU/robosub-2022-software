@@ -490,7 +490,7 @@ def run_telemetry_client(scion_ip: str, server_port: int) -> None:
                         break
                     # Parse into telemetry linker
                     linker.unpack_data(loading_pickle=data)
-        time.sleep(sleep_thread_s)
+            time.sleep(sleep_thread_s)
 
 
 def run_pilot_client() -> None:
