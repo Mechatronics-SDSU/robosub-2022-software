@@ -88,8 +88,12 @@ class PID_Controller():
         d = self.k_d * (error - self.previous_error) / dt
         self.previous_error = error
 
-        cmd = p + i + d + self.cmd_offset
-                  
+        pre_cmd = p + i + d
+        if(pre_cmd >= 0):
+            cmd = pre_cmd + self.cmd_offset
+        else:
+            cmd = pre_cmd - self.cmd_offset
+
         if(self.cmd_min < self.cmd_max):
             if(cmd < self.cmd_min):
                 cmd = self.cmd_min
