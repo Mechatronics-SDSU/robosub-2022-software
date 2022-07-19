@@ -1,5 +1,5 @@
 classes= 2
 train  = data/train.txt
 valid  = data/valid.txt
-names = scion.names
+names = ml/scion.names
 backup = /home/ian/backup

@@ -20,6 +20,7 @@ def detector(cfg_file: str, weights_file: str, data_file: str) -> None:
     net = Detector(bytes(cfg_file, encoding="utf-8"), bytes(weights_file, encoding="utf-8"), 0, bytes(data_file,
                                                                                                       encoding="utf-8"))
     # Socket
+    print('Cameras ready for connection...')
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_sock:
         server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server_sock.bind(('', 50001))
@@ -29,15 +30,28 @@ def detector(cfg_file: str, weights_file: str, data_file: str) -> None:
             ret, img = cap.read()
             if ret is True:
                 img = cv2.flip(img, 1)
-                img = cv2.flip(img, 0)
-                img = img.astype(np.float32)
-                img2 = Image(img)
-                results = net.detect(img2)
+                img2 = cv2.flip(img, 0)
+                img3 = img2.astype(np.float32)
+                img3 = Image(img3)
+                results = net.detect(img3)
+                print(results)
                 results_label = [x[0] for x in results]
                 if len(results_label) > 0:
-
-                    print(results_label)
-                result, frame = cv2.imencode('.jpg', img, encode_param)
+                    c_y = results[0][2][0]
+                    c_x = results[0][2][1]
+                    h = results[0][2][2]
+                    w = results[0][2][3]
+                    print(c_x)
+                    print(c_y)
+                    print(h)
+                    print(w)
+                    x_1 = int(c_x - w / 2)
+                    y_1 = int(c_y - h / 2)
+                    x_2 = int(c_x + w / 2)
+                    y_2 = int(c_y + h / 2)
+                    img2 = cv2.rectangle(img2, (x_1, y_1), (x_2, y_2), (0, 0, 255), 2)
+                    #img2 = cv2.rectangle(img=img2, pt1=(x_1, y_1), pt2=(x_2, y_2), color=(0, 0, 255), thickness=2)
+                result, frame = cv2.imencode('.jpg', img2, encode_param)
                 data = pickle.dumps(frame, 0)
                 size = len(data)
                 try:

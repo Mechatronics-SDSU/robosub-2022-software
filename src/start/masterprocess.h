@@ -81,10 +81,9 @@ char *thrusterSubsystem[] = {
 	"python3", "comms/controller_server.py", NULL, NULL  /*devs[4]*/
 };
 char *cameraDriver[] = {
-	"python3", "comms/camera_scion.py", NULL
-//	"python3", "ml/webcam_out.py", "~/scion_final.weights", NULL
+//	"python3", "comms/camera_scion.py", NULL
+	"python3", "ml/webcam_out.py", "ml/scion_runtime.cfg", "/mnt/SD-scion/scion_final.weights", "ml/scion.data", NULL
 };
-
 
 /*List of programs to change nullptrs for to device names.*/
 char **syswdev[] = {
