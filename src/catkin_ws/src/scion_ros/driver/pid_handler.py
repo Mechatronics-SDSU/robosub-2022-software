@@ -4,7 +4,7 @@
 from calendar import THURSDAY
 import rospy
 import sys
-from std_msgs.msg import Float64, String, Float32MultiArray, MultiArrayDimension
+from std_msgs.msg import Float64, String, ByteMultiArray
 import control.scion_pid_controller as scion_pid
 import utils.scion_utils as scion_ut
 import json
@@ -39,17 +39,17 @@ def pid_driver(pid_name: str) -> None:
     dw_depth = scion_ut.DepthDataWrapper(debug=False)
     dw_dvl = scion_ut.DVLDataWrapper(debug=False)
 
-    pid_pub = rospy.Publisher('pid_thrusts', Float32MultiArray, queue_size=8)
+    pid_pub = rospy.Publisher('pid_thrusts', ByteMultiArray, queue_size=8)
     rospy.init_node('pid_driver', anonymous=True)
 
     # Listen to all sensors
     rospy.Subscriber('ahrs_state', String, dw_ahrs.callback)
     rospy.Subscriber('depth_state', Float64, dw_depth.callback)
     #rospy.Subscriber('dvl_data', Float32MultiArray, dw_dvl.callback)
-    #rospy.Subscriber('target_depth', Float64, target_depth_callback, desired_depth)
+    rospy.Subscriber('target_depth', Float64, target_depth_callback, desired_depth)
     
-    desired_depth = 0.3 #1.0m depth
-    desired_roll = 0.0 #rad
+    desired_depth = 1.0 #1.0m depth
+    desired_roll = 0.0 #rad 
     desired_pitch = 0.0 #rad
     desired_yaw = 0.0 #rad
 
@@ -61,7 +61,7 @@ def pid_driver(pid_name: str) -> None:
     desired_state[5] = desired_depth
 
 
-    thrusts = Float32MultiArray()
+    thrusts = ByteMultiArray()
     thrusts.data = []
 
     #update rate of control system
@@ -105,10 +105,8 @@ def pid_driver(pid_name: str) -> None:
 
         thrusts.data, errors = controller.update(desired_state, curr_state, dt)
 
-        print(thrusts.data)
-
-        pid_pub.publish(thrusts)
-#        maestro.set_thrusts(thrusts)
+        #pid_pub.publish(thrusts)
+        maestro.set_thrusts(thrusts.data)
 
         time.sleep(dt)
         curr_time = (time.time() - start_time)

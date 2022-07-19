@@ -52,13 +52,13 @@ class Scion_PID_Controller:
         #| T6
         #| T7
         
-        self.pid_thrust_mapper = np.array([[-1, -1,  0,  0,  0,  1],
+        self.pid_thrust_mapper = np.array([[-1,  1,  0,  0,  0,  1],
                                            [ 0,  0,  1,  1,  1,  0],
-                                           [-1,  1,  0,  0,  0,  1],
+                                           [-1, -1,  0,  0,  0,  1],
                                            [ 0,  0,  1,  1, -1,  0],
-                                           [ 1,  1,  0,  0,  0,  1],
-                                           [ 0,  0, -1,  1,  1,  0],
                                            [ 1, -1,  0,  0,  0,  1],
+                                           [ 0,  0, -1,  1,  1,  0],
+                                           [ 1,  1,  0,  0,  0,  1],
                                            [ 0,  0, -1,  1, -1,  0]])
         
         
@@ -170,7 +170,7 @@ if __name__ == "__main__":
     z_cmds = []
     
     curr_time = 0.0
-    start_time = time.time()
+    start_time = time.time
     while(curr_time < max_run_time):
             
         #Get the state of the vehicle
