@@ -71,11 +71,12 @@ class MissionSystem:
     """Scion's mission system is managed through a tree in this class. This includes transversal and building methods
     for iterating through missions.
     """
-    def __init__(self, base_mission_name='Mission Name', load_from_file=None, build_tree=True) -> None:
+    def __init__(self, base_mission_name='Mission Name', load_from_file='None', build_tree=True) -> None:
         if load_from_file is None:
             self.strs = None
             self.mission_str = base_mission_name
         else:
+            self.mission_file_name = load_from_file
             self.strs = self.load_from_file()
             self.mission_str = self.strs[0][2:]
         # Build a new root node w/ mission string
@@ -103,9 +104,8 @@ class MissionSystem:
                     node_path.append(n)
                     j = level
 
-    @staticmethod
-    def load_from_file() -> list:
-        with open('mission.cfg', 'r') as f:
+    def load_from_file(self) -> list:
+        with open(self.mission_file_name, 'r') as f:
             ret = f.readlines()
             ret = [i.rstrip('\n') for i in ret]
         return ret
@@ -122,7 +122,7 @@ def run_test_mission():
     We must locate the green box and then establish target lock. This is repeated for following boxes.
     """
 
-    ms = MissionSystem(base_mission_name='', load_from_file=True, build_tree=True)
+    ms = MissionSystem(base_mission_name='', load_from_file='ai/mission.cfg', build_tree=True)
     print(ms.tree)
     """
     ms = MissionSystem(base_mission_name='test_mission', build_tree=False)
