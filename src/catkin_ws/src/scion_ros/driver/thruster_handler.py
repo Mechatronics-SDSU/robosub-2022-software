@@ -12,6 +12,8 @@ import utils.maestro_driver as scion_thrusters
 THRSUTER_FETCH_HERTZ = 10
 
 def thruster_callback(thrusts, maestro: scion_thrusters.MaestroDriver):
+    thrusts[3].data = -1 * thrusts[3].data
+    thrusts[5].data = -1 * thrusts[5].data
     maestro.set_thrusts(thrusts)
 
 def thruster_driver(maestro_port: str) -> None:
