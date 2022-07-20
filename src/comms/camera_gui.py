@@ -41,7 +41,7 @@ def run_camera_client(write_pipe: multiprocessing.Queue, server_ip: str, port: i
             try:
                 write_pipe.put_nowait(frame_data)
             except q.Full:
-                # print('QUEUE IS FULL!')
+                print('QUEUE IS FULL!')
 
             # Old pipe data
             # write_pipe.send(frame_data)
