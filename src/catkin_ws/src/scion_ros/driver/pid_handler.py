@@ -46,9 +46,9 @@ def pid_driver(pid_name: str) -> None:
     rospy.Subscriber('ahrs_state', String, dw_ahrs.callback)
     rospy.Subscriber('depth_state', Float64, dw_depth.callback)
     #rospy.Subscriber('dvl_data', Float32MultiArray, dw_dvl.callback)
-    rospy.Subscriber('target_depth', Float64, target_depth_callback, desired_depth)
+    #rospy.Subscriber('target_depth', Float64, target_depth_callback, desired_depth)
     
-    desired_depth = 1.0 #1.0m depth
+    desired_depth = 2.0 #1.0m depth
     desired_roll = 0.0 #rad 
     desired_pitch = 0.0 #rad
     desired_yaw = 0.0 #rad
@@ -60,9 +60,10 @@ def pid_driver(pid_name: str) -> None:
     desired_state[2] = desired_yaw
     desired_state[5] = desired_depth
 
-
     thrusts = ByteMultiArray()
     thrusts.data = []
+
+    pre_thrusts = []
 
     #update rate of control system
     f = 100.0 #Hz
@@ -103,15 +104,19 @@ def pid_driver(pid_name: str) -> None:
 
         prev_state = np.copy(curr_state)
 
-        thrusts.data, errors = controller.update(desired_state, curr_state, dt)
+        pre_thrusts, errors = controller.update(desired_state, curr_state, dt)
+        pre_thrusts = [int(i*1.0) for i in pre_thrusts]
+        thrusts.data = pre_thrusts
+        print(pre_thrusts)
 
         #pid_pub.publish(thrusts)
-        maestro.set_thrusts(thrusts.data)
+        maestro.set_thrusts(pre_thrusts)
 
         time.sleep(dt)
         curr_time = (time.time() - start_time)
         rate.sleep()
 
+    maestro.set_thrusts([0,0,0,0,0,0,0,0])
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
