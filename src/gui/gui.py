@@ -23,6 +23,7 @@ Latest verification test:
 
 from __future__ import print_function
 import multiprocessing as mp
+import queue as q
 import sys
 from multiprocessing import shared_memory as shm
 import os
@@ -34,7 +35,7 @@ import socket
 # from datetime import datetime
 import time
 from functools import partial
-# import pickle
+import pickle
 import struct
 
 import tkinter as tk
@@ -68,7 +69,7 @@ logging_resolution = (640, 690)
 sensor_resolution = (320, 960)
 
 gui_update_ms = 10  # Update time for all GUI elements
-sleep_thread_s = 0.05  # Time to check for new threads to be enabled
+sleep_thread_s = 0.01  # Time to check for new threads to be enabled
 color_term_green = (74, 246, 38)
 color_error_red = (255, 0, 3)
 
@@ -102,7 +103,7 @@ class GuiWindow(tk.Frame):
     """GUI management class
     Contains methods related to GUI functionality; calls to other functions in this file.
     """
-    def __init__(self, master, camera_0_pipe: mp.Pipe, camera_1_pipe: mp.Pipe, logging_pipe: mp.Pipe,
+    def __init__(self, master, camera_0_pipe: mp.Queue, camera_1_pipe: mp.Queue, logging_pipe: mp.Pipe,
                  host_context: mp.context):
         self.tk_master = master
         self.context = host_context
@@ -359,10 +360,44 @@ class GuiWindow(tk.Frame):
         Newest frame in the camera thread is loaded into either pillow frame 1 or 2 depending on what frame counter we
         are at. The new frame is checked with a modulus 2 to see which pillow frame to display in the window.
         """
+        cont = 0
+        conn_0 = None
+        conn_1 = None
         if self.camera_0_shm.buf[0] == 2:  # Camera 0 has frames
-            conn_0 = mp.connection.wait([self.camera_0_pipe], timeout=-1)
-            if len(conn_0) > 0:  # Frame in pipe
-                frame_0 = conn_0[0].recv()
+            # conn_0 = mp.connection.wait([self.camera_0_pipe], timeout=0.005)
+            """
+            if self.camera_0_pipe.empty():
+                print('EMPTY QUEUE!')
+            while not self.camera_0_pipe.empty():  # Clear queue, get last item
+                conn_0 = self.camera_0_pipe.get_nowait()
+                print(f'CONN_0 RECV SIZE: {len(conn_0)}')
+                cont = 1
+            """
+            attempt = 0
+            try:
+                while True:
+                    conn_0 = self.camera_0_pipe.get_nowait()
+                    # print(f'CONN_0 RECV SIZE: {len(conn_0)}')
+                    cont = 1
+                    attempt = 1
+            except q.Empty:
+                if attempt == 0:
+                    time.sleep(0.001)
+                    try:
+                        conn_0 = self.camera_0_pipe.get_nowait()
+                        # print(f'CONN_0 RECV SIZE: {len(conn_0)}')
+                        cont = 1
+                    except q.Empty:
+                        if cont == 0:
+                            # print('Queue is EMPTY! (Check no 2)')
+                            pass
+                if cont == 0:
+                    # print('Queue is EMPTY!')
+                    pass
+            if cont == 1:  # Frame in pipe
+                # Recieve as pickle, convert to opencv
+                frame_0 = pickle.loads(conn_0, fix_imports=True, encoding="bytes")
+                frame_0 = cv2.imdecode(frame_0, cv2.IMREAD_COLOR)
                 # Convert from opencv BGR to Pillow RGB
                 b, g, r = cv2.split(frame_0)
                 image_0 = cv2.merge((r, g, b))
@@ -375,11 +410,15 @@ class GuiWindow(tk.Frame):
                 else:
                     self.camera_0_img_1 = ImageTk.PhotoImage(PILImage.fromarray(image_0))
                     self.camera_0_cv.itemconfig(self.video_window_img_cv_0, image=self.camera_0_img_1)
-
+        cont = 0
         if self.camera_1_shm.buf[0] == 2:  # Camera 1 has frames
-            conn_1 = mp.connection.wait([self.camera_1_pipe], timeout=-1)
-            if len(conn_1) > 0:  # Frame in pipe
-                frame_1 = conn_1[0].recv()
+            while not self.camera_1_pipe.empty():  # Clear queue, get last item
+                conn_1 = self.camera_1_pipe.get_nowait()[0]
+                cont = 1
+            if cont == 1:  # Frame in pipe
+                # Recieve as pickle, convert to opencv
+                frame_1 = pickle.loads(conn_1, fix_imports=True, encoding="bytes")
+                frame_1 = cv2.imdecode(frame_1, cv2.IMREAD_COLOR)
                 # Convert from opencv BGR to Pillow RGB
                 b, g, r = cv2.split(frame_1)
                 image_1 = cv2.merge((r, g, b))
@@ -445,7 +484,7 @@ def run_cnc_server() -> None:
         time.sleep(sleep_thread_s)
 
 
-def run_video_client(wvc: mp.Pipe, server_port: int, start_context: mp.context, camera_num: int) -> None:
+def run_video_client(wvc: mp.Queue, server_port: int, start_context: mp.context, camera_num: int) -> None:
     """Run the imported video server from comms, passing the pipe as an argument
     """
     camera_0_shm = shm.SharedMemory(name='video_server_0_shm')
@@ -453,8 +492,8 @@ def run_video_client(wvc: mp.Pipe, server_port: int, start_context: mp.context, 
         if camera_0_shm.buf[0] == 1:
             camera_0_shm.buf[0] = 2
             print('Running camera client.')
-            scion_cam.run_camera_client(server_ip=SCION_DEFAULT_IPV4, port=50001, write_pipe=wvc,
-                                        camera_num=camera_num)
+            scion_cam.run_camera_client(write_pipe=wvc, server_ip=SCION_DEFAULT_IPV4, port=50001,
+                                        camera_num=camera_num, context=start_context)
         time.sleep(sleep_thread_s)
 
 
@@ -588,9 +627,11 @@ def run_aio_listener_client(scion_ip: str, server_port: int) -> None:
 def init_gui(host_context: mp.context) -> None:
     """Starts up GUI window and all related programs
     """
+    cam_queue_0 = host_context.Queue(100)
+    cam_queue_1 = host_context.Queue(100)
     # Set up UNIX Pipes for communication between processes. w = write end, r = read end
-    wvs_pipe_0, rvs_pipe_0 = host_context.Pipe()  # Camera 0 (write end) -> | -> GUI (read end)
-    wvs_pipe_1, rvs_pipe_1 = host_context.Pipe()  # Camera 1 (write end) -> | -> GUI (read end)
+    # rvs_pipe_0, wvs_pipe_0 = host_context.Pipe(duplex=False)  # Camera 0 (write end) -> | -> GUI (read end)
+    # rvs_pipe_1, wvs_pipe_1 = host_context.Pipe(duplex=False)  # Camera 1 (write end) -> | -> GUI (read end)
 
     # Shared start integers
     # CNC
@@ -627,12 +668,15 @@ def init_gui(host_context: mp.context) -> None:
         shm_vs_1 = shm.SharedMemory(create=True, size=1, name='video_server_1_shm')
     shm_vs_1.buf[0] = 0
     # Start video server(s)
-    camera_0_proc = host_context.Process(target=run_video_client, args=(wvs_pipe_0, SCION_CAMERA_0_PORT, host_context,
+    camera_0_proc = host_context.Process(target=run_video_client, args=(cam_queue_0, SCION_CAMERA_0_PORT, host_context,
                                                                         0))
-    camera_1_proc = host_context.Process(target=run_video_client, args=(wvs_pipe_1, SCION_CAMERA_1_PORT, host_context,
+    camera_1_proc = host_context.Process(target=run_video_client, args=(cam_queue_1, SCION_CAMERA_1_PORT, host_context,
                                                                         1))
     camera_0_proc.start()
     camera_1_proc.start()
+    # Close pipes to make sure only the camera processes have a handle to it
+    # wvs_pipe_0.close()
+    # wvs_pipe_1.close()
 
     # Start telemetry client
     try:
@@ -699,8 +743,8 @@ def init_gui(host_context: mp.context) -> None:
     # Start GUI
     gui_window = tk.Tk()
     gui_window.geometry(str(gui_resolution[0]) + "x" + str(gui_resolution[1]))
-    gui_application = GuiWindow(gui_window, camera_0_pipe=rvs_pipe_0, camera_1_pipe=rvs_pipe_1, logging_pipe=rls_pipe_0,
-                                host_context=host_context)
+    gui_application = GuiWindow(gui_window, camera_0_pipe=cam_queue_0, camera_1_pipe=cam_queue_1,
+                                logging_pipe=rls_pipe_0, host_context=host_context)
     gui_window.mainloop()
 
 
