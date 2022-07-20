@@ -91,8 +91,10 @@ SCION_CONFIG_MENU_STRINGS = [  # Enumerated for consistency with start/masterpro
     'Depth Sensor',
     'Thrusters',
     'Cameras',
+    'Cameras w/ ML',
     'AIO Forward',
-    'AIO Listener'
+    'AIO Listener',
+    'DVL'
 ]
 
 
