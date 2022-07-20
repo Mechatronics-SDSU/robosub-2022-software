@@ -1,57 +1,42 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
-// Data wire is plugged into port 2 on the Arduino
+// Data wire is plugged into digital pin 2 on the Arduino
 #define ONE_WIRE_BUS 2
 
-// Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
-OneWire oneWire(ONE_WIRE_BUS);
+// Setup a oneWire instance to communicate with any OneWire device
+OneWire oneWire(ONE_WIRE_BUS);  
 
-// Pass our oneWire reference to Dallas Temperature.
+// Pass oneWire reference to DallasTemperature library
 DallasTemperature sensors(&oneWire);
 
-// arrays to hold device address
-DeviceAddress insideThermometer;
-
-/*
- * Setup function. Here we do the basics
- */
+ unsigned long currentMillis = millis();
+  unsigned long previousMillis=0;
+  int period = 5000;
 void setup(void)
 {
-  // start serial port
+  sensors.begin();  // Start up the library
   Serial.begin(9600);
-  sensors.begin();
-  if (!sensors.getAddress(insideThermometer, 0)) 
-  printAddress(insideThermometer);
-  sensors.setResolution(insideThermometer, 9);
-}
-
-void printTemperature(DeviceAddress deviceAddress)
-{
-  float tempC = sensors.getTempC(deviceAddress);
-  if (tempC == DEVICE_DISCONNECTED_C)
-  {
-    Serial.println("Error: Could not read temperature data");
-    return;
-  }
-  Serial.print("Temp C: ");
-  Serial.print(tempC);
-  Serial.print(" Temp F: ");
-  Serial.println(DallasTemperature::toFahrenheit(tempC)); // Converts tempC to Fahrenheit
 }
 
 void loop(void)
-{
-  sensors.requestTemperatures(); // Send the command to get temperatures
-  printTemperature(insideThermometer); // Use a simple function to print out the data
-}
-
-// function to print a device address
-void printAddress(DeviceAddress deviceAddress)
-{
-  for (uint8_t i = 0; i < 8; i++)
-  {
-    if (deviceAddress[i] < 16) Serial.print("");
-    
+{ 
+  //unsigned long currentMillis = millis();
+  //unsigned long previousMillis=0;
+ // int period = 5000;
+  // Send the command to get temperatures
+  if (millis()>= period + previousMillis){
+     previousMillis += period;
+     sensors.requestTemperatures(); 
+   
+  Serial.print("Temperature: ");
+  Serial.print(sensors.getTempCByIndex(0));
+  Serial.print((char)176);//shows degrees character
+  Serial.print("C  |  ");
+  
+  //print the temperature in Fahrenheit
+  Serial.print((sensors.getTempCByIndex(0) * 9.0) / 5.0 + 32.0);
+  Serial.print((char)176);//shows degrees character
+  Serial.println("F");
   }
 }
