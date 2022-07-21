@@ -364,15 +364,6 @@ class GuiWindow(tk.Frame):
         conn_0 = None
         conn_1 = None
         if self.camera_0_shm.buf[0] == 2:  # Camera 0 has frames
-            # conn_0 = mp.connection.wait([self.camera_0_pipe], timeout=0.005)
-            """
-            if self.camera_0_pipe.empty():
-                print('EMPTY QUEUE!')
-            while not self.camera_0_pipe.empty():  # Clear queue, get last item
-                conn_0 = self.camera_0_pipe.get_nowait()
-                print(f'CONN_0 RECV SIZE: {len(conn_0)}')
-                cont = 1
-            """
             frame_in = 0
             try:
                 while True:
@@ -397,31 +388,32 @@ class GuiWindow(tk.Frame):
                 else:
                     self.camera_0_img_1 = ImageTk.PhotoImage(PILImage.fromarray(image_0))
                     self.camera_0_cv.itemconfig(self.video_window_img_cv_0, image=self.camera_0_img_1)
-        cont = 0
-        frame_in = 0
-        try:
-            while True:
-                conn_1 = self.camera_1_pipe.get_nowait()
-                # print(f'CONN_0 RECV SIZE: {len(conn_0)}')
-                frame_in = 1
-        except q.Empty:
-            cont = 1
-        if frame_in == 1:  # Frame in pipe
-            # Recieve as pickle, convert to opencv
-            frame_1 = pickle.loads(conn_1, fix_imports=True, encoding="bytes")
-            frame_1 = cv2.imdecode(frame_1, cv2.IMREAD_COLOR)
-            # Convert from opencv BGR to Pillow RGB
-            b, g, r = cv2.split(frame_1)
-            image_1 = cv2.merge((r, g, b))
-            # Alternate between frames. Calling ImageTk then video_window itemconfig garbage collects the old frame
-            self.camera_1_frame_counter += 1
-            # Set the frame to pillow canvas
-            if self.camera_1_frame_counter % 2 == 1:
-                self.camera_1_img_2 = ImageTk.PhotoImage(PILImage.fromarray(image_1))
-                self.camera_1_cv.itemconfig(self.video_window_img_cv_1, image=self.camera_1_img_2)
-            else:
-                self.camera_1_img_1 = ImageTk.PhotoImage(PILImage.fromarray(image_1))
-                self.camera_1_cv.itemconfig(self.video_window_img_cv_1, image=self.camera_1_img_1)
+        if self.camera_1_shm.buf[0] == 2:  # Camera 1 has frames
+            cont = 0
+            frame_in = 0
+            try:
+                while True:
+                    conn_1 = self.camera_1_pipe.get_nowait()
+                    # print(f'CONN_0 RECV SIZE: {len(conn_0)}')
+                    frame_in = 1
+            except q.Empty:
+                cont = 1
+            if frame_in == 1:  # Frame in pipe
+                # Recieve as pickle, convert to opencv
+                frame_1 = pickle.loads(conn_1, fix_imports=True, encoding="bytes")
+                frame_1 = cv2.imdecode(frame_1, cv2.IMREAD_COLOR)
+                # Convert from opencv BGR to Pillow RGB
+                b, g, r = cv2.split(frame_1)
+                image_1 = cv2.merge((r, g, b))
+                # Alternate between frames. Calling ImageTk then video_window itemconfig garbage collects the old frame
+                self.camera_1_frame_counter += 1
+                # Set the frame to pillow canvas
+                if self.camera_1_frame_counter % 2 == 1:
+                    self.camera_1_img_2 = ImageTk.PhotoImage(PILImage.fromarray(image_1))
+                    self.camera_1_cv.itemconfig(self.video_window_img_cv_1, image=self.camera_1_img_2)
+                else:
+                    self.camera_1_img_1 = ImageTk.PhotoImage(PILImage.fromarray(image_1))
+                    self.camera_1_cv.itemconfig(self.video_window_img_cv_1, image=self.camera_1_img_1)
 
     def update_aio_state(self, index: int, new_value: int) -> None:
         """Update AIO state for a particular index. Post to shm for command aio.
