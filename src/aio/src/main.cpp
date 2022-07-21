@@ -22,6 +22,8 @@
                              |                 E Response
                              |                 F Get
     Arm Gripper              |          0xAM - 0 Open, 1 Closed, F Get
+    Battery Temp Sensor      |          0xBM - 0 Get Temp   //"Ken was here"
+    Battery Volt Sensor      |          0xCM - 0 Get Volt  
 
   Data stream behavior:
     Interrupt Packet - A packet sent by either device indicating new alert
@@ -42,16 +44,15 @@
           0xN_ - Type of sensor making response message
           0x_M - Message value attached to sensor
         '\n' - newline end byte representing newline and end of packet
-        "Ken was here"
 */
 
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
-#include <switch.h>
-#include <serial.h>
-#include <leak.h>
-#include <Servo.h>
-#include "aio.h"
+#include <switch.h>   //class struc data type C++ object orientated code, for piezo switches
+#include <serial.h>   //aio serial line or monitor send and receieve
+#include <leak.h>     //leak 
+#include <Servo.h>    //servo lib to be replaced by TiCoServo
+#include "aio.h"      //all the defines and macros
 
 const uint16_t button_sensitivity = 150; // adjust for how sensitive the button is
 
