@@ -373,28 +373,15 @@ class GuiWindow(tk.Frame):
                 print(f'CONN_0 RECV SIZE: {len(conn_0)}')
                 cont = 1
             """
-            attempt = 0
+            frame_in = 0
             try:
                 while True:
                     conn_0 = self.camera_0_pipe.get_nowait()
                     # print(f'CONN_0 RECV SIZE: {len(conn_0)}')
-                    cont = 1
-                    attempt = 1
+                    frame_in = 1
             except q.Empty:
-                if attempt == 0:
-                    time.sleep(0.001)
-                    try:
-                        conn_0 = self.camera_0_pipe.get_nowait()
-                        # print(f'CONN_0 RECV SIZE: {len(conn_0)}')
-                        cont = 1
-                    except q.Empty:
-                        if cont == 0:
-                            # print('Queue is EMPTY! (Check no 2)')
-                            pass
-                if cont == 0:
-                    # print('Queue is EMPTY!')
-                    pass
-            if cont == 1:  # Frame in pipe
+                cont = 1
+            if frame_in == 1:  # Frame in pipe
                 # Recieve as pickle, convert to opencv
                 frame_0 = pickle.loads(conn_0, fix_imports=True, encoding="bytes")
                 frame_0 = cv2.imdecode(frame_0, cv2.IMREAD_COLOR)
@@ -411,26 +398,30 @@ class GuiWindow(tk.Frame):
                     self.camera_0_img_1 = ImageTk.PhotoImage(PILImage.fromarray(image_0))
                     self.camera_0_cv.itemconfig(self.video_window_img_cv_0, image=self.camera_0_img_1)
         cont = 0
-        if self.camera_1_shm.buf[0] == 2:  # Camera 1 has frames
-            while not self.camera_1_pipe.empty():  # Clear queue, get last item
-                conn_1 = self.camera_1_pipe.get_nowait()[0]
-                cont = 1
-            if cont == 1:  # Frame in pipe
-                # Recieve as pickle, convert to opencv
-                frame_1 = pickle.loads(conn_1, fix_imports=True, encoding="bytes")
-                frame_1 = cv2.imdecode(frame_1, cv2.IMREAD_COLOR)
-                # Convert from opencv BGR to Pillow RGB
-                b, g, r = cv2.split(frame_1)
-                image_1 = cv2.merge((r, g, b))
-                # Alternate between frames. Calling ImageTk then video_window itemconfig garbage collects the old frame
-                self.camera_1_frame_counter += 1
-                # Set the frame to pillow canvas
-                if self.camera_1_frame_counter % 2 == 1:
-                    self.camera_1_img_2 = ImageTk.PhotoImage(PILImage.fromarray(image_1))
-                    self.camera_1_cv.itemconfig(self.video_window_img_cv_1, image=self.camera_1_img_2)
-                else:
-                    self.camera_1_img_1 = ImageTk.PhotoImage(PILImage.fromarray(image_1))
-                    self.camera_1_cv.itemconfig(self.video_window_img_cv_1, image=self.camera_1_img_1)
+        frame_in = 0
+        try:
+            while True:
+                conn_1 = self.camera_1_pipe.get_nowait()
+                # print(f'CONN_0 RECV SIZE: {len(conn_0)}')
+                frame_in = 1
+        except q.Empty:
+            cont = 1
+        if frame_in == 1:  # Frame in pipe
+            # Recieve as pickle, convert to opencv
+            frame_1 = pickle.loads(conn_1, fix_imports=True, encoding="bytes")
+            frame_1 = cv2.imdecode(frame_1, cv2.IMREAD_COLOR)
+            # Convert from opencv BGR to Pillow RGB
+            b, g, r = cv2.split(frame_1)
+            image_1 = cv2.merge((r, g, b))
+            # Alternate between frames. Calling ImageTk then video_window itemconfig garbage collects the old frame
+            self.camera_1_frame_counter += 1
+            # Set the frame to pillow canvas
+            if self.camera_1_frame_counter % 2 == 1:
+                self.camera_1_img_2 = ImageTk.PhotoImage(PILImage.fromarray(image_1))
+                self.camera_1_cv.itemconfig(self.video_window_img_cv_1, image=self.camera_1_img_2)
+            else:
+                self.camera_1_img_1 = ImageTk.PhotoImage(PILImage.fromarray(image_1))
+                self.camera_1_cv.itemconfig(self.video_window_img_cv_1, image=self.camera_1_img_1)
 
     def update_aio_state(self, index: int, new_value: int) -> None:
         """Update AIO state for a particular index. Post to shm for command aio.
@@ -487,12 +478,12 @@ def run_cnc_server() -> None:
 def run_video_client(wvc: mp.Queue, server_port: int, start_context: mp.context, camera_num: int) -> None:
     """Run the imported video server from comms, passing the pipe as an argument
     """
-    camera_0_shm = shm.SharedMemory(name='video_server_0_shm')
+    camera_shm = shm.SharedMemory(name=f'video_server_{camera_num}_shm')
     while True:
-        if camera_0_shm.buf[0] == 1:
-            camera_0_shm.buf[0] = 2
-            print('Running camera client.')
-            scion_cam.run_camera_client(write_pipe=wvc, server_ip=SCION_DEFAULT_IPV4, port=50001,
+        if camera_shm.buf[0] == 1:
+            camera_shm.buf[0] = 2
+            print(f'Running camera {camera_num} client.')
+            scion_cam.run_camera_client(write_pipe=wvc, server_ip=SCION_DEFAULT_IPV4, port=server_port,
                                         camera_num=camera_num, context=start_context)
         time.sleep(sleep_thread_s)
 
