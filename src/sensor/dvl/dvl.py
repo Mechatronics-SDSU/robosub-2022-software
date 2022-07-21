@@ -522,7 +522,7 @@ def dvl_data_callback(output_data: OutputData, obj: Dvl_sample):
         data = [
             output_data.year, output_data.month, output_data.day,
             output_data.hour, output_data.minute, output_data.second, output_data.millisecond,
-            output_data.vel_x, output_data.vel_y, output_data.vel_z,
+            -1.0*output_data.vel_x, -1.0*output_data.vel_y, -1.0*output_data.vel_z,
             output_data.mean_range]
         obj.set_data(data)
 
