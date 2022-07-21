@@ -4,7 +4,7 @@
 from calendar import THURSDAY
 import rospy
 import sys
-from std_msgs.msg import Float64, String, ByteMultiArray
+from std_msgs.msg import Float64, String, ByteMultiArray, Float32MultiArray
 import control.scion_pid_controller as scion_pid
 import utils.scion_utils as scion_ut
 import json
@@ -14,6 +14,22 @@ import numpy as np
 from utils.maestro_driver import MaestroDriver
 
 PID_FETCH_HERTZ = 100
+
+
+def target_roll_callback(data, args) -> None:
+    """Get targeted depth value. It should be already a float.
+    """
+    args = data
+
+def target_pitch_callback(data, args) -> None:
+    """Get targeted depth value. It should be already a float.
+    """
+    args = data
+
+def target_yaw_callback(data, args) -> None:
+    """Get targeted depth value. It should be already a float.
+    """
+    args = data
 
 def target_depth_callback(data, args) -> None:
     """Get targeted depth value. It should be already a float.
@@ -47,21 +63,24 @@ def pid_driver(pid_name: str) -> None:
     pid_pub = rospy.Publisher('pid_thrusts', ByteMultiArray, queue_size=8)
     rospy.init_node('pid_driver', anonymous=True)
 
-    # Listen to all sensors
-    rospy.Subscriber('ahrs_state', String, dw_ahrs.callback)
-    rospy.Subscriber('depth_state', Float64, dw_depth.callback)
-    #rospy.Subscriber('dvl_data', Float32MultiArray, dw_dvl.callback)
-    #rospy.Subscriber('target_depth', Float64, target_depth_callback, desired_depth)
-    #rospy.Subscriber('target_vel_x', Float64, target_vel_x_callback, desired_vel_x)
-    
-    desired_depth = 2.0 #1.0m depth
+    desired_depth = 2.0 #m
     desired_roll = 0.0 #rad 
     desired_pitch = 0.0 #rad
     desired_yaw = 0.0 #rad
 
-    desired_vel_x = 0.0
-    desired_vel_y = 0.0
-    desired_vel_z = 0.0
+    desired_vel_x = 0.0 #m/s
+    desired_vel_y = 0.0 #m/s
+    desired_vel_z = 0.0 #m/s
+
+    # Listen to all sensors
+    rospy.Subscriber('ahrs_state', String, dw_ahrs.callback)
+    rospy.Subscriber('depth_state', Float64, dw_depth.callback)
+    rospy.Subscriber('dvl_data', Float32MultiArray, dw_dvl.callback)
+    rospy.Subscriber('target_depth', Float64, target_depth_callback, desired_depth)
+    rospy.Subscriber('target_vel_x', Float64, target_vel_x_callback, desired_vel_x)
+    rospy.Subscriber('target_roll', Float64, target_yaw_callback, desired_yaw)
+    rospy.Subscriber('target_pitch', Float64, target_yaw_callback, desired_yaw)
+    rospy.Subscriber('target_yaw', Float64, target_yaw_callback, desired_yaw)
 
     #desired state for the control system to reach
     desired_pos_state = np.zeros(12)
@@ -140,7 +159,7 @@ def pid_driver(pid_name: str) -> None:
 
         prev_vel_state = np.copy(curr_vel_state)
 
-        pos_thrusts, pos_errors, vel_errors = pos_controller.update(desired_pos_state, curr_pos_state, curr_vel_state, dt)
+        pos_thrusts, pos_errors, p_vel_errors = pos_controller.update(desired_pos_state, curr_pos_state, curr_vel_state, dt)
         vel_thrusts, vel_errors = vel_controller.update(desired_vel_state, curr_vel_state, dt)
 
         pos_thrusts = [int(i*1.0) for i in pos_thrusts]
