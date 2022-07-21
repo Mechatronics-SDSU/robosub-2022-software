@@ -37,8 +37,8 @@
       "ki" : 0.0,
       "kd" : 0.0,
       "cmd_offset" : 0.0,
-      "cmd_max" : 100.0,
-      "cmd_min" : -100.0,
+      "cmd_max" : 60.0,
+      "cmd_min" : -60.0,
       "i_max" : -1.0,
       "i_min" : 1.0       
    },
@@ -55,12 +55,12 @@
   },
 
    "z_pos": {
-      "kp" : 22.0,
+      "kp" : 1.0,
       "ki" : 0.0,
-      "kd" : 1.0,
-      "cmd_offset" : 16.0,
-      "cmd_max" : 60.0,
-      "cmd_min" : -60.0,
+      "kd" : 0.0,
+      "cmd_offset" : 0.0,
+      "cmd_max" : 100.0,
+      "cmd_min" : -100.0,
       "i_max" : -1.0,
       "i_min" : 1.0
    },
@@ -70,8 +70,8 @@
       "ki" : 0.0,
       "kd" : 0.0,
       "cmd_offset" : 0.0,
-      "cmd_max" : 100.0,
-      "cmd_min" : -100.0,
+      "cmd_max" : 60.0,
+      "cmd_min" : -60.0,
       "i_max" : -1.0,
       "i_min" : 1.0       
    },
@@ -81,14 +81,14 @@
      "ki" : 0.0,
      "kd" : 0.0,
      "cmd_offset" : 0.0,
-     "cmd_max" : 100.0,
-     "cmd_min" : -100.0,
+     "cmd_max" : 60.0,
+     "cmd_min" : -60.0,
      "i_max" : -1.0,
      "i_min" : 1.0       
   },
 
    "z_vel": {
-      "kp" : 1.0,
+      "kp" : 2.0,
       "ki" : 0.0,
       "kd" : 0.0,
       "cmd_offset" : 16.0,

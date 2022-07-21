@@ -15,7 +15,6 @@ from utils.maestro_driver import MaestroDriver
 
 PID_FETCH_HERTZ = 100
 
-
 def target_roll_callback(data, args) -> None:
     """Get targeted depth value. It should be already a float.
     """
@@ -63,7 +62,7 @@ def pid_driver(pid_name: str) -> None:
     pid_pub = rospy.Publisher('pid_thrusts', ByteMultiArray, queue_size=8)
     rospy.init_node('pid_driver', anonymous=True)
 
-    desired_depth = 2.0 #m
+    desired_depth = 0.0 #m
     desired_roll = 0.0 #rad 
     desired_pitch = 0.0 #rad
     desired_yaw = 0.0 #rad
@@ -147,8 +146,8 @@ def pid_driver(pid_name: str) -> None:
         curr_vel_state[1] = 0.0
         curr_vel_state[2] = 0.0
         curr_vel_state[3] = dw_dvl.dvl_x
-        curr_vel_state[4] = dw_dvl.dvl_y
-        curr_vel_state[5] = dw_dvl.dvl_z
+        curr_vel_state[4] = 0.0 #dw_dvl.dvl_y
+        curr_vel_state[5] = 0.0 #dw_dvl.dvl_z
 
         curr_vel_state[6] = _angle_wrapped_error(curr_vel_state[0], prev_vel_state[0]) / dt
         curr_vel_state[7] = _angle_wrapped_error(curr_vel_state[1], prev_vel_state[1]) / dt
