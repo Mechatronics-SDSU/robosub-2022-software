@@ -2,6 +2,7 @@
 import sys
 import struct
 from multiprocessing import shared_memory as shm
+import datetime as dt
 
 import sensor.telemetry_linker as scion_tl
 
@@ -87,15 +88,13 @@ class AIODataWrapperListener(DataWrapper):
         super().__init__(debug)
         self.data = None
         self.shm_index = shm_index
-        print(f'SHM_INDEX: {shm_index}')
         self.aio_state_shm = shm.SharedMemory(name='aio_state_shm')
         self.state_send_shm = shm.SharedMemory(name='state_send_shm')
 
     def callback(self, data) -> None:
         self.data = data.data
-        print(f'INDEX: {self.shm_index} DATA: {data.data} | {ord(data.data[1])} {type(data.data)}')
         self.state_send_shm.buf[0] = 1
-        self.aio_state_shm.buf[self.shm_index] = ord(data.data[1])
+        self.aio_state_shm.buf[self.shm_index] = data.data
         if self.debug:
             print(f'AIODataWrapperListener sees: {data.data}')
 
@@ -109,28 +108,17 @@ class DVLDataWrapper(DataWrapper):
         self.dvl_y = scion_tl.TELEMETRY_DEFAULT_DATA[5]
         self.dvl_z = scion_tl.TELEMETRY_DEFAULT_DATA[6]
         self.dvl_mean = scion_tl.TELEMETRY_DEFAULT_DATA[7]
-
-    def callback(self, data) -> None:
-        if self.debug:
-            print(data)
-        self.dvl_x = struct.pack('>1f', data[0])
-        self.dvl_y = struct.pack('>1f', data[1])
-        self.dvl_z = struct.pack('>1f', data[2])
-        self.dvl_mean = struct.pack('>1f', data[3])
-
-
-class DVLTimeWrapper(DataWrapper):
-    """Specific wrapper for the DVL timestamps.
-    """
-    def __init__(self, debug: bool):
-        super().__init__(debug)
         self.dvl_time = scion_tl.TELEMETRY_DEFAULT_DATA[8]
 
     def callback(self, data) -> None:
         if self.debug:
             print(data)
-        self.dvl_time = float(data)
-
+        self.dvl_x = data.data[7]
+        self.dvl_y = data.data[8]
+        self.dvl_z = data.data[9]
+        self.dvl_mean = data.data[10]
+        #self.dvl_time = dt.datetime(data.data[0],data.data[1],
+        #    data.data[2],data.data[3],data.data[4],data.data[5],data.data[6])
 
 class DepthDataWrapper(DataWrapper):
     """Specific wrapper for the Depth data packets.

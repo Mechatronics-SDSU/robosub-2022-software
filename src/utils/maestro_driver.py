@@ -76,7 +76,7 @@ if __name__ == '__main__':
     maestro_driver = MaestroDriver(com_port=device)
     # Demo the driver if we're running this file
     while True:
-        maestro_driver.set_thrusts([50, 50, 50, 50, 50, 50, 50, 50])
+        maestro_driver.set_thrusts([20, 0, 20, 0, 20, 0, 20, 0])
         time.sleep(2)
         maestro_driver.set_thrusts([0, 0, 0, 0, 0, 0, 0, 0])
         time.sleep(2)
