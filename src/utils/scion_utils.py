@@ -113,12 +113,12 @@ class DVLDataWrapper(DataWrapper):
     def callback(self, data) -> None:
         if self.debug:
             print(data)
-        self.dvl_x = struct.pack('>1f', data[7])
-        self.dvl_y = struct.pack('>1f', data[8])
-        self.dvl_z = struct.pack('>1f', data[9])
-        self.dvl_mean = struct.pack('>1f', data[10])
-        self.dvl_time = float(dt.datetime(data[0],data[1],
-            data[2],data[3],data[4],data[5],data[6]))
+        self.dvl_x = data.data[7]
+        self.dvl_y = data.data[8]
+        self.dvl_z = data.data[9]
+        self.dvl_mean = data.data[10]
+        self.dvl_time = float(dt.datetime(data.data[0],data.data[1],
+            data.data[2],data.data[3],data.data[4],data.data[5],data.data[6])) # NEED TO FIX : ERROR Expects INT but receives FLOAT
 
 class DepthDataWrapper(DataWrapper):
     """Specific wrapper for the Depth data packets.
