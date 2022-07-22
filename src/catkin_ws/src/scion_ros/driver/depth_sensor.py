@@ -9,7 +9,6 @@ import sensor.depth_sensor as scion_ds
 
 DEPTH_FETCH_HERTZ = 10
 
-
 def depth_driver(dev) -> None:
     print(f'DEPTH ON {dev}')
     depth = scion_ds.Depth(dev_name=dev)
@@ -18,7 +17,7 @@ def depth_driver(dev) -> None:
     rate = rospy.Rate(DEPTH_FETCH_HERTZ)
     while True:
         ds = depth.get_state()
-        # print(f'SENSOR DRIVER SEES: {ds}')
+        #print(f'SENSOR DRIVER SEES: {ds}')
         pub.publish(ds)
         rate.sleep()
 

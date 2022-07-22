@@ -14,6 +14,7 @@ class Scion_Position_PID_Controller:
     def __init__(self, pid_params=None):
         #Initialize pid controllers
         
+
         self.roll_pid = PID_Controller(0.0, 0.0, 0.0, angle_wrap=True)
         self.pitch_pid = PID_Controller(0.0, 0.0, 0.0, angle_wrap=True)
         self.yaw_pid = PID_Controller(0.0, 0.0, 0.0, angle_wrap=True)
@@ -58,13 +59,13 @@ class Scion_Position_PID_Controller:
         #| T6
         #| T7
         
-        self.pid_thrust_mapper = np.array([[ 1, -1,  0,  0,  0, -1],
+        self.pid_thrust_mapper = np.array([[-1,  1,  0,  0,  0,  1],
                                            [ 0,  0,  1,  1,  1,  0],
-                                           [ 1,  1,  0,  0,  0, -1],
+                                           [-1, -1,  0,  0,  0,  1],
                                            [ 0,  0,  1,  1, -1,  0],
-                                           [-1,  1,  0,  0,  0, -1],
+                                           [ 1, -1,  0,  0,  0,  1],
                                            [ 0,  0, -1,  1,  1,  0],
-                                           [-1, -1,  0,  0,  0, -1],
+                                           [ 1,  1,  0,  0,  0,  1],
                                            [ 0,  0, -1,  1, -1,  0]])
         
         
@@ -117,13 +118,16 @@ class Scion_Velocity_PID_Controller:
         self.x_pid = PID_Controller(0.0, 0.0, 0.0)
         self.y_pid = PID_Controller(0.0, 0.0, 0.0)
         self.z_pid = PID_Controller(0.0, 0.0, 0.0)
+
         
         self._controllers = {"roll" : self.roll_pid, 
                              "pitch" : self.pitch_pid,
                              "yaw" : self.yaw_pid,
+
                              "x_vel" : self.x_pid,
                              "y_vel" : self.y_pid,
                              "z_vel" : self.z_pid,}
+
 
         #load pid parameter values from dictionary
         if(pid_params != None):
@@ -160,6 +164,7 @@ class Scion_Velocity_PID_Controller:
 
     def update(self, set_point=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]), 
                      process_point=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+
                      dt=0.010):
         '''
         Perform PID controller update step and return the thrust to each of the 6 thrusters.
@@ -178,6 +183,9 @@ class Scion_Velocity_PID_Controller:
         vel_errors = np.array([0.0, 0.0, 0.0, x_error, y_error, z_error])
 
         cmds = np.array([
+            roll_cmd,
+            pitch_cmd,
+            yaw_cmd,
             0.0,
             0.0,
             0.0,
@@ -186,6 +194,7 @@ class Scion_Velocity_PID_Controller:
             z_cmd
         ])
         
+
         #map the individual controller outputs to each thruster.
         thrusts = np.matmul(self.pid_thrust_mapper, cmds)
         return(thrusts, vel_errors)

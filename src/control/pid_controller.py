@@ -20,7 +20,6 @@ class PID_Controller():
                 Setting cmd_max < cmd_min will mean no limits are set for the output cmd on update.
             cmd_offset: Offset to add to the command output on each update step.
             angle_wrap: if true, it assumes the input set point and process point are angles in range
-            
                         [-pi, pi]. Thus it will clamp the error in range [-pi, pi]
         Returns:
             N/A

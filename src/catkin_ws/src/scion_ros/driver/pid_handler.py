@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """ROS-connected pid driver
 """
+
 from calendar import THURSDAY
 import rospy
 import sys
@@ -62,7 +63,9 @@ def pid_driver(pid_name: str) -> None:
     pid_pub = rospy.Publisher('pid_thrusts', ByteMultiArray, queue_size=8)
     rospy.init_node('pid_driver', anonymous=True)
 
-    desired_depth = 0.0 #m
+
+    desired_depth = 0.5 #m
+
     desired_roll = 0.0 #rad 
     desired_pitch = 0.0 #rad
     desired_yaw = 0.0 #rad
@@ -75,11 +78,13 @@ def pid_driver(pid_name: str) -> None:
     rospy.Subscriber('ahrs_state', String, dw_ahrs.callback)
     rospy.Subscriber('depth_state', Float64, dw_depth.callback)
     rospy.Subscriber('dvl_data', Float32MultiArray, dw_dvl.callback)
-    rospy.Subscriber('target_depth', Float64, target_depth_callback, desired_depth)
-    rospy.Subscriber('target_vel_x', Float64, target_vel_x_callback, desired_vel_x)
-    rospy.Subscriber('target_roll', Float64, target_yaw_callback, desired_yaw)
-    rospy.Subscriber('target_pitch', Float64, target_yaw_callback, desired_yaw)
-    rospy.Subscriber('target_yaw', Float64, target_yaw_callback, desired_yaw)
+
+#    rospy.Subscriber('target_depth', Float64, target_depth_callback, desired_depth)
+#    rospy.Subscriber('target_vel_x', Float64, target_vel_x_callback, desired_vel_x)
+#    rospy.Subscriber('target_roll', Float64, target_yaw_callback, desired_yaw)
+#    rospy.Subscriber('target_pitch', Float64, target_yaw_callback, desired_yaw)
+#    rospy.Subscriber('target_yaw', Float64, target_yaw_callback, desired_yaw)
+
 
     #desired state for the control system to reach
     desired_pos_state = np.zeros(12)
@@ -163,7 +168,9 @@ def pid_driver(pid_name: str) -> None:
 
         pos_thrusts = [int(i*1.0) for i in pos_thrusts]
         vel_thrusts = [int(j*1.0) for j in vel_thrusts]
-        thrusts.data = pos_thrusts + vel_thrusts
+
+        thrusts.data = np.add(pos_thrusts, vel_thrusts)
+
         print(thrusts.data)
 
         #pid_pub.publish(thrusts)
