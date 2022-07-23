@@ -13,11 +13,12 @@ import sys
 class Depth:
     """Handles all functionality related to serial communication with the depth sensor.
     """
-    def __init__(self, dev_name: str) -> None:
+    def __init__(self, dev_name: str, cal_offset=0.0 ) -> None:
         self.device_name = dev_name
         self.device = dev_name
         #self.set_device()
         self.com_test()
+        self.cal_offset = cal_offset
 
     def set_device(self) -> None:
         """Grab the device by using serial tools to search for the Depth Sensor.
@@ -54,7 +55,7 @@ class Depth:
                 if "None" in str(resp):
                     return 0.0
                 if resp[0] == ord('r'):
-                    return float(resp[1:-1])
+                    return float(resp[1:-1])+self.cal_offset
             except serial.SerialException as e:
                 print("Error: Serial communication error when attempting to get state, attempting to re-establish...")
                 # self.com_test()

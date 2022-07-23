@@ -123,7 +123,6 @@ class Scion_Velocity_PID_Controller:
         self._controllers = {"roll" : self.roll_pid, 
                              "pitch" : self.pitch_pid,
                              "yaw" : self.yaw_pid,
-
                              "x_vel" : self.x_pid,
                              "y_vel" : self.y_pid,
                              "z_vel" : self.z_pid,}
@@ -153,13 +152,13 @@ class Scion_Velocity_PID_Controller:
         #| T6
         #| T7
         
-        self.pid_thrust_mapper = np.array([[ 1, -1,  0,  0,  0, -1],
+        self.pid_thrust_mapper = np.array([[-1,  1,  0,  0,  0,  1],
                                            [ 0,  0,  1,  1,  1,  0],
-                                           [ 1,  1,  0,  0,  0, -1],
+                                           [-1, -1,  0,  0,  0,  1],
                                            [ 0,  0,  1,  1, -1,  0],
-                                           [-1,  1,  0,  0,  0, -1],
+                                           [ 1, -1,  0,  0,  0,  1],
                                            [ 0,  0, -1,  1,  1,  0],
-                                           [-1, -1,  0,  0,  0, -1],
+                                           [ 1,  1,  0,  0,  0,  1],
                                            [ 0,  0, -1,  1, -1,  0]])
 
     def update(self, set_point=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]), 
@@ -183,9 +182,6 @@ class Scion_Velocity_PID_Controller:
         vel_errors = np.array([0.0, 0.0, 0.0, x_error, y_error, z_error])
 
         cmds = np.array([
-            roll_cmd,
-            pitch_cmd,
-            yaw_cmd,
             0.0,
             0.0,
             0.0,

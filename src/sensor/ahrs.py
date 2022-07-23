@@ -158,6 +158,7 @@ def main(com_port: str) -> None:
     """Test Driver for basic AHRS functionality.
     """
     ahrs = SpartonAHRSDataPackets(_com_port=com_port)
+    print('Post connect')
     while True:
         yaw = ahrs.get_true_heading()
         pitch, roll = ahrs.get_pitch_roll()

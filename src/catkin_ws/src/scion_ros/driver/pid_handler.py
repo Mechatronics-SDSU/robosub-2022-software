@@ -64,11 +64,11 @@ def pid_driver(pid_name: str) -> None:
     rospy.init_node('pid_driver', anonymous=True)
 
 
-    desired_depth = 0.5 #m
+    desired_depth = 2 #m
 
     desired_roll = 0.0 #rad 
     desired_pitch = 0.0 #rad
-    desired_yaw = 0.0 #rad
+    desired_yaw = np.pi/2 #rad
 
     desired_vel_x = 0.0 #m/s
     desired_vel_y = 0.0 #m/s
@@ -108,7 +108,7 @@ def pid_driver(pid_name: str) -> None:
     f = 100.0 #Hz
     dt = 1/f
 
-    max_run_time = 20 #Time to run control system before exiting
+    max_run_time = 30 #Time to run control system before exiting
 
     #load the pid_controller  parameters from a formatted json file
     with open(r'pid_params_1.json') as pid_param_file:
@@ -133,7 +133,7 @@ def pid_driver(pid_name: str) -> None:
         #Get the state of the vehicle
         curr_pos_state[0] = dw_ahrs.roll
         curr_pos_state[1] = dw_ahrs.pitch
-        curr_pos_state[2] = dw_ahrs.yaw
+        curr_pos_state[2] = (dw_ahrs.yaw-180.0)*(np.pi/180.0)
         curr_pos_state[3] = 0.0
         curr_pos_state[4] = 0.0
         curr_pos_state[5] = float(dw_depth.depth)

@@ -11,7 +11,7 @@ from pydarknet import Detector, Image
 
 def detector(cfg_file: str, weights_file: str, data_file: str) -> None:
     # OpenCV
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(2)
     cap.set(3, 640)
     cap.set(4, 480)
     img_counter = 0
@@ -25,6 +25,7 @@ def detector(cfg_file: str, weights_file: str, data_file: str) -> None:
         server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server_sock.bind(('', 50001))
         server_sock.listen(5)
+        print('SOCKET ONLINE FOR CAMERA...')
         conn, addr = server_sock.accept()
         while True:
             ret, img = cap.read()
@@ -33,6 +34,7 @@ def detector(cfg_file: str, weights_file: str, data_file: str) -> None:
                 img2 = cv2.flip(img, 0)
                 img3 = img2.astype(np.float32)
                 img3 = Image(img3)
+                print('Detecting...')
                 results = net.detect(img3)
                 print(results)
                 results_label = [x[0] for x in results]

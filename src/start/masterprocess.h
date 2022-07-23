@@ -82,7 +82,9 @@ char *thrusterSubsystem[] = {
 };
 char *cameraDriver[] = {
 	"python3", "comms/camera_scion.py", NULL
-//	"python3", "ml/webcam_out.py", "ml/scion_runtime.cfg", "/mnt/SD-scion/scion_final.weights", "ml/scion.data", NULL
+};
+char *cameraMLDriver[] = {
+	"python3", "ml/webcam_out.py", "ml/scion_runtime.cfg", "/mnt/SD-scion/badge.weights", "ml/scion.data", NULL
 };
 
 /*List of programs to change nullptrs for to device names.*/
@@ -115,10 +117,11 @@ char **programStartup[] = {
 	depthSensor, /*8*/
 	thrusterSubsystem, /*16*/
 	cameraDriver, /*32*/
-	aioForward, /*64*/
-	aioListener, /*128*/
-	dvlSensor, /*256*/
-	lsCommand /*512*/
+        cameraMLDriver, /*64*/
+	aioForward, /*128*/
+	aioListener, /*256*/
+	dvlSensor, /*512*/
+	lsCommand /*1024*/
 };
 
 int helpcommand();

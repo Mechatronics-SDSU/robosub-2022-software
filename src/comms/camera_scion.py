@@ -109,7 +109,7 @@ def start_video_servers(cameras: list) -> None:
     threads = []
     print(f'[CAM] THREADS: {cameras}')
     if len(cameras) >= 1:
-    	threads.append(CamThread(port_num=int(f'50001'), cap_num=cameras[0], write_frame=True))
+    	threads.append(CamThread(port_num=int(f'50001'), cap_num=cameras[0], write_frame=False))
     if len(cameras) >= 2:
         threads.append(CamThread(port_num=int(f'50002'), cap_num=cameras[1], write_frame=False))
     for thread in threads:
