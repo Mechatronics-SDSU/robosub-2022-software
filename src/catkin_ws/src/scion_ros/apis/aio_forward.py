@@ -56,12 +56,16 @@ def aio_forward_server() -> None:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(('', AIO_FORWARD_PORT))
         s.listen()
+        s.settimeout(30)
         conn, addr = s.accept()
-        if state_send_shm.buf[0] == 1:  # Something posted change, load into linker and send
-            for i in range(len(aiol.data)):
-                aiol.data[i] = aio_state_shm.buf[i]
-            conn.sendall(aiol.serialize())
-            state_send_shm.buf[0] = 0
+        s.settimeout(None)
+        while True:
+            if state_send_shm.buf[0] == 1:  # Something posted change, load into linker and send
+                for i in range(len(aiol.data)):
+                    aiol.data[i] = aio_state_shm.buf[i]
+                conn.sendall(aiol.serialize())
+                state_send_shm.buf[0] = 0
+            rate.sleep()
         rate.sleep()
 
 

@@ -6,11 +6,11 @@ import sys
 import utils.scion_utils as scion_ut
 import aio.aio_utils as scion_aio
 
-AIO_FETCH_DELAY = 50
-AIO_TIMEOUT_MS = 0.005
+AIO_FETCH_DELAY = 20
+AIO_TIMEOUT_MS = 0.05
 
 
-def aio_handler(aio_name: str, debug=False) -> None:
+def aio_handler(aio_name: str, debug=True) -> None:
     # Set up AIO
     aio = scion_aio.AIOWrapper(device_name=aio_name, timeout=AIO_TIMEOUT_MS)
     # ROS topics
@@ -53,6 +53,7 @@ def aio_handler(aio_name: str, debug=False) -> None:
                 aio_torp_pub.publish(ret)
             elif ret[1] == scion_ut.AIO_ARM_NMASK_ROS:
                 aio_arm_pub.publish(ret)
+            print(f'RET: {ret[1]}')
         rate.sleep()
         # Check for latest messages in callbacks
         '''

@@ -3,7 +3,7 @@
 
 class Switch {
     public:
-        Switch(uint8_t, uint16_t);
+        Switch(uint8_t, uint16_t, bool);
         bool getState();
         void setState(bool);
         bool readSwitch();

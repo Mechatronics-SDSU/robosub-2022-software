@@ -83,7 +83,8 @@ class SpartonAHRSDataPackets:
         """
         self.ahrs_serial.write(bytearray([0xA4, 0x02, 0xA0]))
         true_heading = self._unpack("true_heading")
-
+        if true_heading is None:
+            return None
         if len(true_heading) == 2:
             # convert the raw true heading data into degree
             true_heading = struct.pack('H', (true_heading[0] << 8) | (true_heading[1]))
@@ -106,7 +107,8 @@ class SpartonAHRSDataPackets:
         """
         self.ahrs_serial.write(bytearray([0xA4, 0x06, 0xA0]))
         pitch_roll = self._unpack("pitch_roll")
-
+        if pitch_roll is None:
+            return [None, None]
         if len(pitch_roll) == 4:
             # structs are used to make pitch signed
             pitch = struct.pack('H', (pitch_roll[0] << 8) | pitch_roll[1])
@@ -156,6 +158,7 @@ def main(com_port: str) -> None:
     """Test Driver for basic AHRS functionality.
     """
     ahrs = SpartonAHRSDataPackets(_com_port=com_port)
+    print('Post connect')
     while True:
         yaw = ahrs.get_true_heading()
         pitch, roll = ahrs.get_pitch_roll()

@@ -71,21 +71,43 @@ class MissionSystem:
     """Scion's mission system is managed through a tree in this class. This includes transversal and building methods
     for iterating through missions.
     """
-    def __init__(self, base_mission_name: str, load_from_file=None) -> None:
+    def __init__(self, base_mission_name='Mission Name', load_from_file='None', build_tree=True) -> None:
         if load_from_file is None:
             self.strs = None
             self.mission_str = base_mission_name
         else:
+            self.mission_file_name = load_from_file
             self.strs = self.load_from_file()
-            self.mission_str = self.strs[0]
+            self.mission_str = self.strs[0][2:]
         # Build a new root node w/ mission string
         self.root_mission_node = Node(node_name=self.mission_str, parent=None)
         # Node becomes root of new tree
         self.tree = Tree(self.root_mission_node)
+        if build_tree:
+            n_1 = Node(node_name=self.strs[1][2:], parent=self.root_mission_node)
+            node_path = [self.root_mission_node, n_1]
+            self.strs = self.strs[2:]
+            j = 1
+            for i in self.strs:
+                level = int(i[0])
+                if j == level:  # Same level
+                    node_path = node_path[:level]
+                    n = Node(node_name=i[2:], parent=node_path[level - 1])
+                    node_path.append(n)
+                elif j < level:  # Deeper recursion
+                    n = Node(node_name=i[2:], parent=node_path[level - 1])
+                    node_path.append(n)
+                    j = level
+                elif j > level:  # Go up levels
+                    node_path = node_path[:level]
+                    n = Node(node_name=i[2:], parent=node_path[level - 1])
+                    node_path.append(n)
+                    j = level
 
     def load_from_file(self) -> list:
-        ret = []
-
+        with open(self.mission_file_name, 'r') as f:
+            ret = f.readlines()
+            ret = [i.rstrip('\n') for i in ret]
         return ret
 
 
@@ -99,7 +121,11 @@ def run_test_mission():
     The order may be done in any way. Our theoretical sub in this example approaches green first.
     We must locate the green box and then establish target lock. This is repeated for following boxes.
     """
-    ms = MissionSystem(base_mission_name='test_mission')
+
+    ms = MissionSystem(base_mission_name='', load_from_file='ai/mission.cfg', build_tree=True)
+    print(ms.tree)
+    """
+    ms = MissionSystem(base_mission_name='test_mission', build_tree=False)
     # Build all nodes
     green_box = Node(node_name='green_box', parent=ms.tree.root)
     print(f"Mission green_box: {get_path(green_box)}")
@@ -130,6 +156,7 @@ def run_test_mission():
     est_target_lock = Node(node_name='est_target_lock', parent=green_box)
     print(f"Mission est_target_lock: {get_path(est_target_lock)}\n")
     print(ms.tree)
+    """
 
 
 if __name__ == '__main__':

@@ -23,6 +23,7 @@ Latest verification test:
 
 from __future__ import print_function
 import multiprocessing as mp
+import queue as q
 import sys
 from multiprocessing import shared_memory as shm
 import os
@@ -34,7 +35,7 @@ import socket
 # from datetime import datetime
 import time
 from functools import partial
-# import pickle
+import pickle
 import struct
 
 import tkinter as tk
@@ -68,7 +69,7 @@ logging_resolution = (640, 690)
 sensor_resolution = (320, 960)
 
 gui_update_ms = 10  # Update time for all GUI elements
-sleep_thread_s = 0.05  # Time to check for new threads to be enabled
+sleep_thread_s = 0.01  # Time to check for new threads to be enabled
 color_term_green = (74, 246, 38)
 color_error_red = (255, 0, 3)
 
@@ -91,8 +92,10 @@ SCION_CONFIG_MENU_STRINGS = [  # Enumerated for consistency with start/masterpro
     'Depth Sensor',
     'Thrusters',
     'Cameras',
+    'Cameras w/ ML',
     'AIO Forward',
-    'AIO Listener'
+    'AIO Listener',
+    'DVL'
 ]
 
 
@@ -100,7 +103,7 @@ class GuiWindow(tk.Frame):
     """GUI management class
     Contains methods related to GUI functionality; calls to other functions in this file.
     """
-    def __init__(self, master, camera_0_pipe: mp.Pipe, camera_1_pipe: mp.Pipe, logging_pipe: mp.Pipe,
+    def __init__(self, master, camera_0_pipe: mp.Queue, camera_1_pipe: mp.Queue, logging_pipe: mp.Pipe,
                  host_context: mp.context):
         self.tk_master = master
         self.context = host_context
@@ -109,9 +112,9 @@ class GuiWindow(tk.Frame):
         self.top_bar_fr = tk.Frame(master=self.tk_master, width=top_bar_resolution[0], height=top_bar_resolution[1],
                                    bg='black')
         self.buttons_fr = tk.Frame(master=self.tk_master, width=button_display_resolution[0],
-                                   height=button_display_resolution[1], bg='white')
+                                   height=button_display_resolution[1], bg='red')
         self.weapons_fr = tk.Frame(master=self.tk_master, width=weapons_status_resolution[0],
-                                   height=weapons_status_resolution[1], bg='red')
+                                   height=weapons_status_resolution[1], bg='black')
         self.thrusters_fr = tk.Frame(master=self.tk_master, width=thruster_status_resolution[0],
                                      height=thruster_status_resolution[1], bg='green')
         self.logging_fr = tk.Frame(master=self.tk_master, width=logging_resolution[0], height=logging_resolution[1],
@@ -185,25 +188,25 @@ class GuiWindow(tk.Frame):
         self.aio_command_shm = shm.SharedMemory(name='aio_command_shm')
         self.aio_listener_shm = shm.SharedMemory(name='aio_listener_shm')
         self.aio_current_vals = shm.SharedMemory(name='aio_shared_vals_shm')
-        self.aio_enable_btn = Button(master=self.buttons_fr, text='Enable AIO', justify=LEFT, anchor='w',
+        self.aio_enable_btn = Button(master=self.weapons_fr, text='Enable AIO', justify=LEFT, anchor='w',
                                      command=self.start_aio)
-        self.aio_kill_disable_btn = Button(master=self.buttons_fr, text='UNKILL', justify=LEFT, anchor='w',
+        self.aio_kill_disable_btn = Button(master=self.weapons_fr, text='UNKILL', justify=LEFT, anchor='w',
                                            command=partial(self.update_aio_state, 0, 0))
-        self.aio_kill_enable_btn = Button(master=self.buttons_fr, text='KILL', justify=LEFT, anchor='w',
+        self.aio_kill_enable_btn = Button(master=self.weapons_fr, text='KILL', justify=LEFT, anchor='w',
                                           command=partial(self.update_aio_state, 0, 1))
-        self.aio_auto_disable_btn = Button(master=self.buttons_fr, text='MANUAL', justify=LEFT, anchor='w',
+        self.aio_auto_disable_btn = Button(master=self.weapons_fr, text='MANUAL', justify=LEFT, anchor='w',
                                            command=partial(self.update_aio_state, 1, 0))
-        self.aio_auto_enable_btn = Button(master=self.buttons_fr, text='AUTO', justify=LEFT, anchor='w',
+        self.aio_auto_enable_btn = Button(master=self.weapons_fr, text='AUTO', justify=LEFT, anchor='w',
                                           command=partial(self.update_aio_state, 1, 1))
-        self.aio_torpedo_fire_1_btn = Button(master=self.buttons_fr, text='FIRE TORPEDO 1', justify=LEFT, anchor='w',
+        self.aio_torpedo_fire_1_btn = Button(master=self.weapons_fr, text='FIRE TORPEDO 1', justify=LEFT, anchor='w',
                                              command=partial(self.update_aio_state, 4, 5))
-        self.aio_torpedo_fire_2_btn = Button(master=self.buttons_fr, text='FIRE TORPEDO 2', justify=LEFT, anchor='w',
+        self.aio_torpedo_fire_2_btn = Button(master=self.weapons_fr, text='FIRE TORPEDO 2', justify=LEFT, anchor='w',
                                              command=partial(self.update_aio_state, 4, 6))
-        self.aio_torpedo_fire_both_btn = Button(master=self.buttons_fr, text='FIRE EVERYTHING', justify=LEFT, anchor='w',
+        self.aio_torpedo_fire_both_btn = Button(master=self.weapons_fr, text='FIRE EVERYTHING', justify=LEFT, anchor='w',
                                                 command=partial(self.update_aio_state, 4, 7))
-        self.aio_arm_close_btn = Button(master=self.buttons_fr, text='CLOSE', justify=LEFT, anchor='w',
+        self.aio_arm_close_btn = Button(master=self.weapons_fr, text='CLOSE', justify=LEFT, anchor='w',
                                         command=partial(self.update_aio_state, 5, 1))
-        self.aio_arm_open_btn = Button(master=self.buttons_fr, text='OPEN', justify=LEFT, anchor='w',
+        self.aio_arm_open_btn = Button(master=self.weapons_fr, text='OPEN', justify=LEFT, anchor='w',
                                        command=partial(self.update_aio_state, 5, 0))
 
         # Master process
@@ -357,10 +360,22 @@ class GuiWindow(tk.Frame):
         Newest frame in the camera thread is loaded into either pillow frame 1 or 2 depending on what frame counter we
         are at. The new frame is checked with a modulus 2 to see which pillow frame to display in the window.
         """
+        cont = 0
+        conn_0 = None
+        conn_1 = None
         if self.camera_0_shm.buf[0] == 2:  # Camera 0 has frames
-            conn_0 = mp.connection.wait([self.camera_0_pipe], timeout=-1)
-            if len(conn_0) > 0:  # Frame in pipe
-                frame_0 = conn_0[0].recv()
+            frame_in = 0
+            try:
+                while True:
+                    conn_0 = self.camera_0_pipe.get_nowait()
+                    # print(f'CONN_0 RECV SIZE: {len(conn_0)}')
+                    frame_in = 1
+            except q.Empty:
+                cont = 1
+            if frame_in == 1:  # Frame in pipe
+                # Recieve as pickle, convert to opencv
+                frame_0 = pickle.loads(conn_0, fix_imports=True, encoding="bytes")
+                frame_0 = cv2.imdecode(frame_0, cv2.IMREAD_COLOR)
                 # Convert from opencv BGR to Pillow RGB
                 b, g, r = cv2.split(frame_0)
                 image_0 = cv2.merge((r, g, b))
@@ -373,11 +388,20 @@ class GuiWindow(tk.Frame):
                 else:
                     self.camera_0_img_1 = ImageTk.PhotoImage(PILImage.fromarray(image_0))
                     self.camera_0_cv.itemconfig(self.video_window_img_cv_0, image=self.camera_0_img_1)
-
         if self.camera_1_shm.buf[0] == 2:  # Camera 1 has frames
-            conn_1 = mp.connection.wait([self.camera_1_pipe], timeout=-1)
-            if len(conn_1) > 0:  # Frame in pipe
-                frame_1 = conn_1[0].recv()
+            cont = 0
+            frame_in = 0
+            try:
+                while True:
+                    conn_1 = self.camera_1_pipe.get_nowait()
+                    # print(f'CONN_0 RECV SIZE: {len(conn_0)}')
+                    frame_in = 1
+            except q.Empty:
+                cont = 1
+            if frame_in == 1:  # Frame in pipe
+                # Recieve as pickle, convert to opencv
+                frame_1 = pickle.loads(conn_1, fix_imports=True, encoding="bytes")
+                frame_1 = cv2.imdecode(frame_1, cv2.IMREAD_COLOR)
                 # Convert from opencv BGR to Pillow RGB
                 b, g, r = cv2.split(frame_1)
                 image_1 = cv2.merge((r, g, b))
@@ -443,16 +467,16 @@ def run_cnc_server() -> None:
         time.sleep(sleep_thread_s)
 
 
-def run_video_client(wvc: mp.Pipe, server_port: int, start_context: mp.context, camera_num: int) -> None:
+def run_video_client(wvc: mp.Queue, server_port: int, start_context: mp.context, camera_num: int) -> None:
     """Run the imported video server from comms, passing the pipe as an argument
     """
-    camera_0_shm = shm.SharedMemory(name='video_server_0_shm')
+    camera_shm = shm.SharedMemory(name=f'video_server_{camera_num}_shm')
     while True:
-        if camera_0_shm.buf[0] == 1:
-            camera_0_shm.buf[0] = 2
-            print('Running camera client.')
-            scion_cam.run_camera_client(server_ip=SCION_DEFAULT_IPV4, port=50001, write_pipe=wvc,
-                                        camera_num=camera_num)
+        if camera_shm.buf[0] == 1:
+            camera_shm.buf[0] = 2
+            print(f'Running camera {camera_num} client.')
+            scion_cam.run_camera_client(write_pipe=wvc, server_ip=SCION_DEFAULT_IPV4, port=server_port,
+                                        camera_num=camera_num, context=start_context)
         time.sleep(sleep_thread_s)
 
 
@@ -490,7 +514,7 @@ def run_telemetry_client(scion_ip: str, server_port: int) -> None:
                         break
                     # Parse into telemetry linker
                     linker.unpack_data(loading_pickle=data)
-        time.sleep(sleep_thread_s)
+            time.sleep(sleep_thread_s)
 
 
 def run_pilot_client() -> None:
@@ -553,9 +577,9 @@ def run_aio_listener_client(scion_ip: str, server_port: int) -> None:
     aiol = scion_aiol.AIOLinker()
     print('Started Listener Client')
     aio_listener_shm = shm.SharedMemory(name='aio_listener_shm')
-    aio_shared_vals_shm = shm.SharedMemory(name='aio_listener_shm')
+    aio_shared_vals_shm = shm.SharedMemory(name='aio_shared_vals_shm')
     while True:
-        if aio_listener_shm.buf[0] > 1:  # Turned on from GUI
+        if aio_listener_shm.buf[0] > 0:  # Turned on from GUI
             aio_listener_shm.buf[0] = 2
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Reuse the address to bypass errno 98
@@ -575,17 +599,22 @@ def run_aio_listener_client(scion_ip: str, server_port: int) -> None:
                         break
                     ret = aiol.from_serial_with_diff(data)
                     if len(ret[0]) > 0:
+                        print(aiol.data)
                         for i in range(6):
                             aio_shared_vals_shm.buf[i] = aiol.data[i]
+                        print(f'RECV: {aiol.data}')
+                    time.sleep(sleep_thread_s)
         time.sleep(sleep_thread_s)
 
 
 def init_gui(host_context: mp.context) -> None:
     """Starts up GUI window and all related programs
     """
+    cam_queue_0 = host_context.Queue(100)
+    cam_queue_1 = host_context.Queue(100)
     # Set up UNIX Pipes for communication between processes. w = write end, r = read end
-    wvs_pipe_0, rvs_pipe_0 = host_context.Pipe()  # Camera 0 (write end) -> | -> GUI (read end)
-    wvs_pipe_1, rvs_pipe_1 = host_context.Pipe()  # Camera 1 (write end) -> | -> GUI (read end)
+    # rvs_pipe_0, wvs_pipe_0 = host_context.Pipe(duplex=False)  # Camera 0 (write end) -> | -> GUI (read end)
+    # rvs_pipe_1, wvs_pipe_1 = host_context.Pipe(duplex=False)  # Camera 1 (write end) -> | -> GUI (read end)
 
     # Shared start integers
     # CNC
@@ -622,12 +651,15 @@ def init_gui(host_context: mp.context) -> None:
         shm_vs_1 = shm.SharedMemory(create=True, size=1, name='video_server_1_shm')
     shm_vs_1.buf[0] = 0
     # Start video server(s)
-    camera_0_proc = host_context.Process(target=run_video_client, args=(wvs_pipe_0, SCION_CAMERA_0_PORT, host_context,
+    camera_0_proc = host_context.Process(target=run_video_client, args=(cam_queue_0, SCION_CAMERA_0_PORT, host_context,
                                                                         0))
-    camera_1_proc = host_context.Process(target=run_video_client, args=(wvs_pipe_1, SCION_CAMERA_1_PORT, host_context,
+    camera_1_proc = host_context.Process(target=run_video_client, args=(cam_queue_1, SCION_CAMERA_1_PORT, host_context,
                                                                         1))
     camera_0_proc.start()
     camera_1_proc.start()
+    # Close pipes to make sure only the camera processes have a handle to it
+    # wvs_pipe_0.close()
+    # wvs_pipe_1.close()
 
     # Start telemetry client
     try:
@@ -679,7 +711,7 @@ def init_gui(host_context: mp.context) -> None:
         aio_current_vals = shm.SharedMemory(name='aio_shared_vals_shm')
         aio_current_vals.unlink()
         aio_current_vals = shm.SharedMemory(create=True, size=6, name='aio_shared_vals_shm')
-
+    aio_current_vals.buf[0] = 1
     # Start AIO Listener client
     try:
         aio_listener_shm = shm.SharedMemory(create=True, size=1, name='aio_listener_shm')
@@ -694,8 +726,8 @@ def init_gui(host_context: mp.context) -> None:
     # Start GUI
     gui_window = tk.Tk()
     gui_window.geometry(str(gui_resolution[0]) + "x" + str(gui_resolution[1]))
-    gui_application = GuiWindow(gui_window, camera_0_pipe=rvs_pipe_0, camera_1_pipe=rvs_pipe_1, logging_pipe=rls_pipe_0,
-                                host_context=host_context)
+    gui_application = GuiWindow(gui_window, camera_0_pipe=cam_queue_0, camera_1_pipe=cam_queue_1,
+                                logging_pipe=rls_pipe_0, host_context=host_context)
     gui_window.mainloop()
 
 

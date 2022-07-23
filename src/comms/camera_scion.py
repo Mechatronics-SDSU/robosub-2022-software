@@ -10,7 +10,7 @@ import shutil
 import threading
 
 
-class CamThead(threading.Thread):
+class CamThread(threading.Thread):
     def __init__(self, port_num: int, cap_num: int, write_frame: bool):
         threading.Thread.__init__(self)
         self.port = port_num
@@ -18,6 +18,7 @@ class CamThead(threading.Thread):
         self.write_frame = write_frame
 
     def run(self) -> None:
+        print(f'[CAM] VIDEO SERVER RUNNING ON {self.port} for cam {self.cap}')
         video_server(port=self.port, cap=self.cap, write_frame=self.write_frame)
 
 
@@ -56,9 +57,11 @@ def load_cameras() -> list:
         if cam.isOpened():  # Camera exists on port
             read, img = cam.read()
             if read:  # Camera works and gets images
+                print(f'[CAM] {dev} WORKS!!!')
                 functional_ports.append(dev)
         cam.release()
         dev += 1
+    print(f'{functional_ports}')
     return functional_ports
 
 
@@ -70,6 +73,8 @@ def video_server(port: int, cap: int, write_frame: bool) -> None:
     # CV
     cam = cv2.VideoCapture(cap)
     cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+    cam.set(3, 640)
+    cam.set(4, 480)
     img_counter = 0
     encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
     # Socket
@@ -77,7 +82,9 @@ def video_server(port: int, cap: int, write_frame: bool) -> None:
         server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server_sock.bind(('', port))
         server_sock.listen(5)
+        print(f'[CAM] READY!!!!! WAITING ON SERVER FOR {cap}')
         conn, addr = server_sock.accept()
+        # print(f'[CAM] {cap} ON {addr}')
         while True:
             _, frame = cam.read()
             if _:
@@ -89,7 +96,10 @@ def video_server(port: int, cap: int, write_frame: bool) -> None:
                 result, frame = cv2.imencode('.jpg', frame, encode_param)
                 data = pickle.dumps(frame, 0)
                 size = len(data)
-                conn.sendall(struct.pack(">L", size) + data)
+                try:
+                    conn.sendall(struct.pack(">L", size) + data)
+                except e:
+                    print('Couldn\'t send frame')
                 img_counter += 1
 
 
@@ -97,15 +107,18 @@ def start_video_servers(cameras: list) -> None:
     """Run the video server using the cameras enumerated from the test_cameras function.
     """
     threads = []
-    for camera in range(len(cameras)):
-        threads.append(CamThead(port_num=int(f'5000{camera+1}'), cap_num=cameras[camera], write_frame=False))
+    print(f'[CAM] THREADS: {cameras}')
+    if len(cameras) >= 1:
+    	threads.append(CamThread(port_num=int(f'50001'), cap_num=cameras[0], write_frame=False))
+    if len(cameras) >= 2:
+        threads.append(CamThread(port_num=int(f'50002'), cap_num=cameras[1], write_frame=False))
     for thread in threads:
         thread.start()
 
 
 if __name__ == '__main__':
-    # cams = load_cameras()
-    # start_video_servers(cameras=cams)
-    video_server(50001, 0, write_frame=False)
+    cams = load_cameras()
+    start_video_servers(cameras=cams)
+    # video_server(50001, 0, write_frame=False)
 
 

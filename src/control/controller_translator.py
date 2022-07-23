@@ -21,7 +21,7 @@ Diagram:
       Port Forward Z Thurster PFZT ->  0===0 <- Starboard Forward Z Thurster SFZT
 Port Forward Vectored Thruster PFVT-> // | \\ <- Starboard Forward Vectored Thruster SFVT
                                       || | ||
-   Port Aft Vectored Thruster PAVT-> \\ | // <- Starboard Aft Vectored Thruster SAVT
+    Port Aft Vectored Thruster PAVT-> \\ | // <- Starboard Aft Vectored Thruster SAVT
           Port Aft Z Thurster PAZT ->  0===0 <- Starboard Aft Z Thruster SAZT
                                      Stern/Aft
 
@@ -237,7 +237,8 @@ class ControllerTranslator:
 
         #return [int(PFZT), int(SFZT), int(SAZT), int(PAZT),
         # int(PFVT), int(PAVT), int(SFVT), int(SAVT)]
-        return [int(PFZT), int(PFVT), int(PAZT), int(PAVT), int(SAZT), int(SAVT), int(SFZT), int(SFVT)]
+        return [int(PFZT), int(PFVT), int(PAZT), -1 * int(PAVT), int(SAZT), -1 * int(SAVT), int(SFZT), int(SFVT)]
+
 
 def _driver_test_code() -> None:
     """Test code using controller inputs directly. Don't run in other modules!"""

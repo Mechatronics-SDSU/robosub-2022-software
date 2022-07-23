@@ -21,8 +21,8 @@ class MaestroDriver:
         self.baud_rate = baud_rate
         self.lower_pulse_bound = lower_pulse_bound
         self.upper_pulse_bound = upper_pulse_bound
-
-        self.usb = serial.Serial(com_port)
+        self.com_port = com_port
+        self.usb = serial.Serial(self.com_port)
         self.most_recent_thrusts = most_recent_thrusts
 
     def set_thrusts(self, thrusts=None) -> None:
@@ -55,7 +55,12 @@ class MaestroDriver:
             upper_bits = (a >> 7) & 0x7f
             pulse_width_packed = struct.pack('>hh', lower_bits, upper_bits)
             message = bytearray([0x84, i, pulse_width_packed[1], pulse_width_packed[3]])
-            self.usb.write(message)
+            try: 
+                self.usb.write(message)
+            except serial.serialutil.SerialException:
+                print('Maestro Reset while running!')
+                time.sleep(0.02)
+                self.usb = serial.Serial(self.com_port)
 
 
 if __name__ == '__main__':
@@ -71,7 +76,7 @@ if __name__ == '__main__':
     maestro_driver = MaestroDriver(com_port=device)
     # Demo the driver if we're running this file
     while True:
-        maestro_driver.set_thrusts([50, 50, 50, 50, 50, 50, 50, 50])
+        maestro_driver.set_thrusts([20, 0, 20, 0, 20, 0, 20, 0])
         time.sleep(2)
         maestro_driver.set_thrusts([0, 0, 0, 0, 0, 0, 0, 0])
         time.sleep(2)
