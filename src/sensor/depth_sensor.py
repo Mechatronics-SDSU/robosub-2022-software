@@ -73,13 +73,20 @@ class Depth:
                 print(e)
                 sys.exit(1)
 
-
-if __name__ == "__main__":
+def main(com_port: str) -> None:
+    """Test Driver for basic Depth functionality.
+    """
     print("Testing Depth Sensor.")
-    DP = Depth(dev_name='/dev/ttyUSB1')
+    DP = Depth(dev_name=com_port)
     while True:
         s = DP.get_state()
         print(f'Depth Sensor Test Reading: {s} {type(s)}')
         time.sleep(0.01)
-else:
-    print('Imported Depth Sensor module.')
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        depth_dev_port = sys.argv[1].replace(' ', '')
+        main(com_port=depth_dev_port)
+    else:
+        print("Error: not enough arguments. (Was the depth dev port passed?)")
+        sys.exit(1)
