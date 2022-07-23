@@ -117,8 +117,8 @@ class DVLDataWrapper(DataWrapper):
         self.dvl_y = data.data[8]
         self.dvl_z = data.data[9]
         self.dvl_mean = data.data[10]
-        #self.dvl_time = dt.datetime(data.data[0],data.data[1],
-        #    data.data[2],data.data[3],data.data[4],data.data[5],data.data[6])
+        self.dvl_time = float(dt.datetime(data.data[0],data.data[1],
+            data.data[2],data.data[3],data.data[4],data.data[5],data.data[6])) # NEED TO FIX : ERROR Expects INT but receives FLOAT
 
 class DepthDataWrapper(DataWrapper):
     """Specific wrapper for the Depth data packets.
