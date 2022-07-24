@@ -84,7 +84,7 @@ char *cameraDriver[] = {
 	"python3", "comms/camera_scion.py", NULL
 };
 char *cameraMLDriver[] = {
-	"python3", "ml/webcam_out.py", "ml/scion_runtime.cfg", "/mnt/SD-scion/badge.weights", "ml/scion.data", NULL
+	"python3", "ml/webcam_out.py", "ml/scion_runtime.cfg", "/mnt/SD-scion/scion_train_final.weights", "ml/scion.data", NULL
 };
 
 /*List of programs to change nullptrs for to device names.*/

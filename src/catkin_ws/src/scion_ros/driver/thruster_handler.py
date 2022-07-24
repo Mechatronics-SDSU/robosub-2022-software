@@ -6,15 +6,17 @@ import sys
 from std_msgs.msg import ByteMultiArray
 import logging
 import time
+from functools import partial
 
 import utils.maestro_driver as scion_thrusters
 
 THRSUTER_FETCH_HERTZ = 10
 
+def shutdown_callback(maestro: scion_thrusters.MaestroDriver):
+    maestro.set_thrusts([0,0,0,0,0,0,0,0])
+
 def thruster_callback(thrusts, maestro: scion_thrusters.MaestroDriver):
-    thrusts[3].data = -1 * thrusts[3].data
-    thrusts[5].data = -1 * thrusts[5].data
-    maestro.set_thrusts(thrusts)
+    maestro.set_thrusts(thrusts.data)
 
 def thruster_driver(maestro_port: str) -> None:
 
@@ -23,9 +25,13 @@ def thruster_driver(maestro_port: str) -> None:
     rospy.init_node('thuster_handler', anonymous=True)
     rospy.Subscriber('thruster_output', ByteMultiArray, thruster_callback, thrusters)
 
+    rospy.on_shutdown(partial(shutdown_callback, thrusters))
+
     rate = rospy.Rate(THRSUTER_FETCH_HERTZ)
-    while True:
+
+    while not rospy.is_shutdown():
         rate.sleep()
+
 
 
 if __name__ == '__main__':

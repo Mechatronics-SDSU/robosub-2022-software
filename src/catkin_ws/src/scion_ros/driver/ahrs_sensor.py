@@ -18,7 +18,7 @@ def ahrs_driver(ahrs_name: str) -> None:
     pub = rospy.Publisher('ahrs_state', String, queue_size=10)
     rospy.init_node('ahrs_driver', anonymous=True)
     rate = rospy.Rate(AHRS_FETCH_HERTZ)
-    while True:
+    while not rospy.is_shutdown():
         yaw = ahrs.get_true_heading()
         pitch, roll = ahrs.get_pitch_roll()
         #print(f'{pitch} {roll} {yaw}')

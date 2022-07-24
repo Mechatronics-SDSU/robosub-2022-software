@@ -37,7 +37,7 @@ def dvl_driver(dvl_name: str) -> None:
     data_arr = Float32MultiArray()
     data_arr.data = []
 
-    while True:
+    while not rospy.is_shutdown():
         # Trigger DVL data capture
         data_arr.data = dvl_sample.get_data()
 

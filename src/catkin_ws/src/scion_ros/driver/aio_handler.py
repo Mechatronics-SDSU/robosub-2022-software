@@ -35,7 +35,7 @@ def aio_handler(aio_name: str, debug=True) -> None:
     rospy.init_node('aio_handler', anonymous=True)
     rate = rospy.Rate(AIO_FETCH_DELAY)
     # Main loop
-    while True:
+    while not rospy.is_shutdown():
         # Check for new messages
         ret = aio.read_device()
         if ret is not None:  # Recieved new packet

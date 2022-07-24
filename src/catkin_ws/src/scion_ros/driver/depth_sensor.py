@@ -15,7 +15,7 @@ def depth_driver(dev) -> None:
     pub = rospy.Publisher('depth_state', Float64, queue_size=10)
     rospy.init_node('depth_driver', anonymous=True)
     rate = rospy.Rate(DEPTH_FETCH_HERTZ)
-    while True:
+    while not rospy.is_shutdown():
         ds = depth.get_state()
         #print(f'SENSOR DRIVER SEES: {ds}')
         pub.publish(ds)
