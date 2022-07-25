@@ -11,7 +11,7 @@ DEPTH_FETCH_HERTZ = 10
 
 def depth_driver(dev) -> None:
     print(f'DEPTH ON {dev}')
-    depth = scion_ds.Depth(dev_name=dev, cal_offset=0.07)
+    depth = scion_ds.Depth(dev_name=dev, cal_offset=0.04)
     pub = rospy.Publisher('depth_state', Float64, queue_size=10)
     rospy.init_node('depth_driver', anonymous=True)
     rate = rospy.Rate(DEPTH_FETCH_HERTZ)

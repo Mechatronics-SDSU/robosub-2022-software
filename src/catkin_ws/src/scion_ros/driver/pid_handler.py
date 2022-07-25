@@ -37,10 +37,10 @@ def target_yaw_callback(data, args) -> None:
     """
     args = data
 
-def target_depth_callback(data, args) -> None:
+def target_depth_callback(data, args: float) -> None:
     """Get targeted depth value. It should be already a float.
     """
-    args = data
+    args = float(data)
 
 def target_vel_x_callback(data, args) -> None:
     """Get targeted velocity x value. It should be already a float.
@@ -58,8 +58,8 @@ def _angle_wrapped_error(angle_1, angle_2):
 
     return(error)
 
-def pid_driver(pid_name: str) -> None:
-    maestro = MaestroDriver(com_port=pid_name)
+def pid_driver(pid_name="str") -> None:
+    #maestro = MaestroDriver(com_port=pid_name)
 
     # ROS
     dw_ahrs = scion_ut.AHRSDataWrapper(debug=False)
@@ -84,7 +84,7 @@ def pid_driver(pid_name: str) -> None:
     rospy.Subscriber('depth_state', Float64, dw_depth.callback)
     rospy.Subscriber('dvl_data', Float32MultiArray, dw_dvl.callback)
 
-    rospy.Subscriber('target_depth', Float64, target_depth_callback, desired_depth)
+    rospy.Subscriber('target_depth', Float64, partial(target_depth_callback, desired_depth))
     rospy.Subscriber('target_vel_x', Float64, target_vel_x_callback, desired_vel_x)
     rospy.Subscriber('target_roll', Float64, target_yaw_callback, desired_yaw)
     rospy.Subscriber('target_pitch', Float64, target_yaw_callback, desired_yaw)
@@ -180,7 +180,7 @@ def pid_driver(pid_name: str) -> None:
 
             thrusts.data = np.add(pos_thrusts, vel_thrusts)
 
-            #print(thrusts.data)
+            print(thrusts.data)
 
             pid_pub.publish(thrusts)
             #maestro.set_thrusts(thrusts.data)

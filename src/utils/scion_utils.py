@@ -1,8 +1,10 @@
 #!/usr/bin/env python3.8
 import sys
+import os
 import struct
 from multiprocessing import shared_memory as shm
 import datetime as dt
+import time
 
 import sensor.telemetry_linker as scion_tl
 
@@ -111,14 +113,22 @@ class DVLDataWrapper(DataWrapper):
         self.dvl_time = scion_tl.TELEMETRY_DEFAULT_DATA[8]
 
     def callback(self, data) -> None:
-        if self.debug:
-            print(data)
+        #if self.debug:
+        #print(data)
+        f = open(os.devnull, "w")
+        sys.stderr = f
+        sys.stderr.write(str(data.data))
         self.dvl_x = data.data[7]
         self.dvl_y = data.data[8]
         self.dvl_z = data.data[9]
         self.dvl_mean = data.data[10]
-        self.dvl_time = float(dt.datetime(data.data[0],data.data[1],
-            data.data[2],data.data[3],data.data[4],data.data[5],data.data[6])) # NEED TO FIX : ERROR Expects INT but receives FLOAT
+        #dvl = [int(i) for i in data.data[0:7]]
+        #dvl_time = dt.datetime(dvl[0], dvl[1], dvl[2], dvl[3], dvl[4], dvl[5], dvl[6])
+        dvl_time = dt.datetime(int(data.data[0]),int(data.data[1]),
+            int(data.data[2]),int(data.data[3]),int(data.data[4]),int(data.data[5]),int(data.data[6])) # NEED TO FIX : ERROR Expects INT but receives FLOAT
+        self.dvl_time = time.mktime(dvl_time.timetuple())
+        # self.dvl_time = float(dt.datetime(data.data[0],data.data[1],
+            # data.data[2],data.data[3],data.data[4],data.data[5],data.data[6])) # NEED TO FIX : ERROR Expects INT but receives FLOAT
 
 class DepthDataWrapper(DataWrapper):
     """Specific wrapper for the Depth data packets.
