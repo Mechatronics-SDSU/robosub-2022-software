@@ -3,6 +3,7 @@
 """
 
 from calendar import THURSDAY
+from distutils.log import debug
 import rospy
 import sys
 from std_msgs.msg import Float64, String, ByteMultiArray, Float32MultiArray
@@ -22,30 +23,6 @@ def shutdown_callback(thrusts: ByteMultiArray, pub: rospy.Publisher):
     thrusts.data = [0,0,0,0,0,0,0,0]
     pub.publish(thrusts)
 
-def target_roll_callback(data, args) -> None:
-    """Get targeted roll value. It should be already a float.
-    """
-    args = data
-
-def target_pitch_callback(data, args) -> None:
-    """Get targeted pitch value. It should be already a float.
-    """
-    args = data
-
-def target_yaw_callback(data, args) -> None:
-    """Get targeted yaw value. It should be already a float.
-    """
-    args = data
-
-def target_depth_callback(data, args: float) -> None:
-    """Get targeted depth value. It should be already a float.
-    """
-    args = float(data)
-
-def target_vel_x_callback(data, args) -> None:
-    """Get targeted velocity x value. It should be already a float.
-    """
-    args = data
 
 def _angle_wrapped_error(angle_1, angle_2):
 
@@ -58,8 +35,8 @@ def _angle_wrapped_error(angle_1, angle_2):
 
     return(error)
 
-def pid_driver(pid_name="str") -> None:
-    #maestro = MaestroDriver(com_port=pid_name)
+def pid_driver(pid_name: str) -> None:
+    maestro = MaestroDriver(com_port=pid_name)
 
     # ROS
     dw_ahrs = scion_ut.AHRSDataWrapper(debug=False)
@@ -69,42 +46,38 @@ def pid_driver(pid_name="str") -> None:
     pid_pub = rospy.Publisher('pid_thrusts', ByteMultiArray, queue_size=8)
     rospy.init_node('pid_driver', anonymous=True)
 
-    desired_depth = 0.0 #m
+    dw_target_roll = scion_ut.DataWrapper(debug=False)
+    dw_target_pitch = scion_ut.DataWrapper(debug=False)
+    dw_target_yaw = scion_ut.DataWrapper(debug=False)
+    dw_target_depth = scion_ut.DataWrapper(debug=False)
+    dw_target_vel_x = scion_ut.DataWrapper(debug=False)
+    dw_target_vel_y = scion_ut.DataWrapper(debug=False)
+    dw_target_vel_z = scion_ut.DataWrapper(debug=False)
 
-    desired_roll = 0.0 #rad
-    desired_pitch = 0.0 #rad
-    desired_yaw = 0*np.pi #rad
+    
+    dw_target_roll.data = 0.0 #rad
+    dw_target_pitch.data = 0.0 #rad
+    dw_target_yaw.data = 0*np.pi #rad
+    dw_target_depth.data = 0.0 #m
 
-    desired_vel_x = 0.0 #m/s
-    desired_vel_y = 0.0 #m/s
-    desired_vel_z = 0.0 #m/s
+    dw_target_vel_x.data = 0.0 #m/s
+    dw_target_vel_y.data = 0.0 #m/s
+    dw_target_vel_z.data = 0.0 #m/s
 
     # Listen to all sensors
     rospy.Subscriber('ahrs_state', String, dw_ahrs.callback)
     rospy.Subscriber('depth_state', Float64, dw_depth.callback)
     rospy.Subscriber('dvl_data', Float32MultiArray, dw_dvl.callback)
 
-    rospy.Subscriber('target_depth', Float64, partial(target_depth_callback, desired_depth))
-    rospy.Subscriber('target_vel_x', Float64, target_vel_x_callback, desired_vel_x)
-    rospy.Subscriber('target_roll', Float64, target_yaw_callback, desired_yaw)
-    rospy.Subscriber('target_pitch', Float64, target_yaw_callback, desired_yaw)
-    rospy.Subscriber('target_yaw', Float64, target_yaw_callback, desired_yaw)
+    rospy.Subscriber('target_roll', Float64, dw_target_roll.callback)
+    rospy.Subscriber('target_pitch', Float64, dw_target_pitch.callback)
+    rospy.Subscriber('target_yaw', Float64, dw_target_yaw.callback)
+    rospy.Subscriber('target_depth', Float64, dw_target_depth.callback)
+    rospy.Subscriber('target_vel_x', Float64, dw_target_vel_x.callback)
 
     thrusts = ByteMultiArray()
 
     rospy.on_shutdown(partial(shutdown_callback, thrusts, pid_pub))
-
-    #desired state for the control system to reach
-    desired_pos_state = np.zeros(12)
-    desired_pos_state[0] = desired_roll
-    desired_pos_state[1] = desired_pitch
-    desired_pos_state[2] = desired_yaw
-    desired_pos_state[5] = desired_depth
-
-    desired_vel_state = np.zeros(12)
-    desired_vel_state[3] = desired_vel_x
-    desired_vel_state[4] = desired_vel_y
-    desired_vel_state[5] = desired_vel_z
 
     thrusts.data = [0, 0, 0, 0, 0, 0, 0, 0]
 
@@ -131,9 +104,23 @@ def pid_driver(pid_name="str") -> None:
     curr_vel_state = np.zeros(12)
     prev_vel_state = np.zeros(12)
 
+    desired_pos_state = np.zeros(12)
+    desired_vel_state = np.zeros(12)
+
     rate = rospy.Rate(PID_FETCH_HERTZ)
 
     while not rospy.is_shutdown():
+
+        #desired state for the control system to reach
+    
+        desired_pos_state[0] = dw_target_roll.data
+        desired_pos_state[1] = dw_target_pitch.data
+        desired_pos_state[2] = dw_target_yaw.data
+        desired_pos_state[5] = dw_target_depth.data
+
+        desired_vel_state[3] = dw_target_vel_x.data
+        desired_vel_state[4] = dw_target_vel_y.data
+        desired_vel_state[5] = dw_target_vel_z.data
 
         curr_time = 0.0
         start_time = time.time()
@@ -180,7 +167,7 @@ def pid_driver(pid_name="str") -> None:
 
             thrusts.data = np.add(pos_thrusts, vel_thrusts)
 
-            print(thrusts.data)
+            #print(thrusts.data)
 
             pid_pub.publish(thrusts)
             #maestro.set_thrusts(thrusts.data)
