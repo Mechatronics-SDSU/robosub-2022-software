@@ -153,13 +153,13 @@ class Scion_Velocity_PID_Controller:
         #| T7
         
         self.pid_thrust_mapper = np.array([[-1,  1,  0,  0,  0,  1],
-                                           [ 0,  0,  1,  1,  1,  0],
+                                           [ 0,  0,  1, -1,  1,  0],
                                            [-1, -1,  0,  0,  0,  1],
-                                           [ 0,  0,  1,  1, -1,  0],
+                                           [ 0,  0,  1, -1, -1,  0],
                                            [ 1, -1,  0,  0,  0,  1],
-                                           [ 0,  0, -1,  1,  1,  0],
+                                           [ 0,  0, -1, -1,  1,  0],
                                            [ 1,  1,  0,  0,  0,  1],
-                                           [ 0,  0, -1,  1, -1,  0]])
+                                           [ 0,  0, -1, -1, -1,  0]])
 
     def update(self, set_point=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]), 
                      process_point=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
@@ -174,7 +174,7 @@ class Scion_Velocity_PID_Controller:
         
         :return thrusts - A list of length 6 of the thrusts to apply to each motor: Range [-100, 100] (np.array)
         '''
-           
+        
         x_cmd, x_error = self.x_pid.update(set_point[3], process_point[3], dt)
         y_cmd, y_error = self.y_pid.update(set_point[4], process_point[4], dt)
         z_cmd, z_error = self.z_pid.update(set_point[5], process_point[5], dt)

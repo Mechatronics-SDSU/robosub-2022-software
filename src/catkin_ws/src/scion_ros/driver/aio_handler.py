@@ -40,6 +40,7 @@ def aio_handler(aio_name: str, debug=True) -> None:
         ret = aio.read_device()
         if ret is not None:  # Recieved new packet
             ret = aio.translate_recv_packet()
+            print(f'[AIO HANDLER ROS] RECV PACKET | {ret}')
             # Translate and send to relevant ROS topic
             if ret[1] == scion_ut.AIO_AUTO_NMASK_ROS:
                 aio_auto_pub.publish(ret)
@@ -53,7 +54,7 @@ def aio_handler(aio_name: str, debug=True) -> None:
                 aio_torp_pub.publish(ret)
             elif ret[1] == scion_ut.AIO_ARM_NMASK_ROS:
                 aio_arm_pub.publish(ret)
-            print(f'RET: {ret[1]}')
+            print(f'[AIO HANDLER ROS] RET: {ret}')
         rate.sleep()
         # Check for latest messages in callbacks
         '''

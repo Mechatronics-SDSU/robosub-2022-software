@@ -1,6 +1,16 @@
 """Scion's decision making process code.
 """
 import ai.mission_planner as scion_mis
+import rospy
+from std.msgs.msg import String, Float64, ByteMultiArray
+
+import utils.scion_utils as scion_ut
+
+HEURISTICS_UPDATE_HERTZ = 50
+DEPTH_TOLERANCE = 0.1  # meters
+PITCH_TOLERANCE = 2.0  # Degrees
+ROLL_TOLERANCE = 1.0  # Degrees
+YAW_TOLERANCE = 4.0  # Degrees
 
 # Parser instructions for the mission planner.
 COMMENT = '!'
@@ -35,8 +45,22 @@ class Heuristics:
     def parse_instructions(self) -> list:
         pass
 
+    @staticmethod
     def run_instruction(self, instruction: str) -> bool:
         return True
+
+
+class HeuristicsState:
+    def __init__(self):
+        self.last_roll_state = 0.0
+        self.last_pitch_state = 0.0
+        self.last_yaw_state = 0.0
+
+
+def shutdown_callback():
+    """Prints heuristics is shutting down to stdout.
+    """
+    print('[AI] Shutting Down.')
 
 
 def heuristics_test():
@@ -44,6 +68,33 @@ def heuristics_test():
     """
     h = Heuristics('ai/heuristics.cfg')
     print(h.missions.tree)
+
+
+def heuristics_test_hard_coded():
+    """Hard coded test to drive for 3 seconds while balanced on PID.
+    """
+    # Publisher topics
+    target_depth_pub = rospy.Publisher('target_depth', Float64, queue_size=1)
+    target_pitch_pub = rospy.Publisher('target_pitch', Float64, queue_size=1)
+    target_roll_pub = rospy.Publisher('target_roll', Float64, queue_size=1)
+    target_yaw_pub = rospy.Publisher('target_yaw', Float64, queue_size=1)
+    thruster_output = rospy.Publisher('thruster_output', ByteMultiArray, queue_size=1)
+    # Subscriber topics
+
+    rospy.init_node('heuristics', anonymous=True)
+    rospy.on_shutdown(shutdown_callback)
+    rate = rospy.Rate(HEURISTICS_UPDATE_HERTZ)
+    # START AI
+    # Desired results for initial balance
+    target_depth_pub.publish(0.75)
+    target_roll_pub.publish(0.0)
+    target_pitch_pub.publish(0.0)
+    target_yaw_pub.publish(0.0)  # CHANGE THIS DEPENDING ON SETUP
+    # Wait until within tolerance
+
+    while not rospy.is_shutdown():
+
+        rate.sleep()
 
 
 if __name__ == '__main__':

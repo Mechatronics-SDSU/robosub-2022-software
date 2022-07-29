@@ -128,11 +128,12 @@ class AIOWrapper:
         out = self.dev.readline()
         if out == b'':
             return None
-        print(f'{out}')
-        print(f'{out[0:3]}')
-        print(f'{str(out[0:3])[2:-1]}')
-        print(f'{chr(int(str(out[0:3])[2:-1]))}')
+        print(f'[AIO UTILS] {out}')
+        print(f'[AIO UTILS] {out[0:3]}')
+        print(f'[AIO UTILS] {str(out[0:3])[2:-1]}')
+        print(f'[AIO UTILS] {chr(int(str(out[0:3])[2:-1]))}')
         result = chr(int(f'{out[0:3]}'[2:-1]))
+        print(f'[AIO UTILS] result | {result}')
         if out is not None or len(out) > 1:
             sep = ''
             res = ''
@@ -144,9 +145,11 @@ class AIOWrapper:
                     sep = out[i]
                 except IndexError:
                     return None
-            result += hex(int(res))[2:]
+            print(f'[AIO UTILS] res | {res}')
+            result += res[:2] + hex(int(res))[2:]
             out = str(result)
             self.last_line = out
+            print(f'[AIO UTILS] OUT | {out}')
             return out
         return None
 

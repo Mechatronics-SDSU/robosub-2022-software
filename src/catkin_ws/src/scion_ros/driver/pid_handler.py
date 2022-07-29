@@ -57,10 +57,10 @@ def pid_driver(pid_name: str) -> None:
     
     dw_target_roll.data = 0.0 #rad
     dw_target_pitch.data = 0.0 #rad
-    dw_target_yaw.data = 0*np.pi #rad
+    dw_target_yaw.data = 13.0 * (np.pi/180) #rad
     dw_target_depth.data = 0.0 #m
 
-    dw_target_vel_x.data = 0.0 #m/s
+    dw_target_vel_x.data = 1.0 #m/s
     dw_target_vel_y.data = 0.0 #m/s
     dw_target_vel_z.data = 0.0 #m/s
 
@@ -161,7 +161,7 @@ def pid_driver(pid_name: str) -> None:
 
             pos_thrusts, pos_errors, p_vel_errors = pos_controller.update(desired_pos_state, curr_pos_state, curr_vel_state, dt)
             vel_thrusts, vel_errors = vel_controller.update(desired_vel_state, curr_vel_state, dt)
-
+            print(f'[PID HANDLER] | {vel_thrusts}')
             pos_thrusts = [int(i*1.0) for i in pos_thrusts]
             vel_thrusts = [int(j*1.0) for j in vel_thrusts]
 

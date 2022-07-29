@@ -96,7 +96,8 @@ class AIODataWrapperListener(DataWrapper):
     def callback(self, data) -> None:
         self.data = data.data
         self.state_send_shm.buf[0] = 1
-        self.aio_state_shm.buf[self.shm_index] = data.data
+        print(f'[SCION UTILS] {data.data} type: {type(data.data)}')
+        self.aio_state_shm.buf[self.shm_index] = ord(data.data[1])
         if self.debug:
             print(f'AIODataWrapperListener sees: {data.data}')
 
