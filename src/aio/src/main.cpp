@@ -1,4 +1,4 @@
-/*Firmware for All Input Output (AIO) PCB - Rev A
+/*Firmware for All Input Output (AIO) PCB - Rev A - Last update 7/29/22 1:45AM
 
   This board interfaces the following sensors for the 2022 robosub vehicle:
             Sensor           |        Packet - Message
@@ -22,8 +22,12 @@
                              |                 E Response
                              |                 F Get
     Arm Gripper              |          0xAM - 0 Open, 1 Closed, F Get
-    Battery Temp Sensor      |          0xBM - 0 Get Temp   //"Ken was here"
-    Battery Volt Sensor      |          0xCM - 0 Get Volt  
+    Battery Temp 1 Sensor    |          0xBM - 0 Get Temp
+    Battery Temp 2 Sensor    |          0xCM - 0 Get Temp
+    Battery Temp 3 Sensor    |          0xDM - 0 Get Temp
+    Battery Volt 1 Sensor    |          0xEM - 0 Get Volt 
+    Battery Volt 2 Sensor    |          0xFM - 0 Get Volt 
+    Battery Volt 3 Sensor    |          0x M - 0 Get Volt  
 
   Data stream behavior:
     Interrupt Packet - A packet sent by either device indicating new alert
@@ -51,7 +55,8 @@
 #include <switch.h>   //class struc data type C++ object orientated code, for piezo switches
 #include <serial.h>   //aio serial line or monitor send and receieve
 #include <leak.h>     //leak 
-#include <Servo.h>    //servo lib to be replaced by TiCoServo
+//#include <Servo.h>    //servo lib to be replaced by TiCoServo
+#include <Adafruit_TiCoServo.h> //replacement for servo to use with neopixels.
 #include "aio.h"      //all the defines and macros
 
 const uint16_t button_sensitivity = 150; // adjust for how sensitive the button is
@@ -59,9 +64,6 @@ const uint16_t button_sensitivity = 150; // adjust for how sensitive the button 
 unsigned long time_now = 0;
 
 unsigned long servo_delay = 500;
-
-// bool battery_1_flag = LOW;
-// bool battery_2_flag = LOW;
 
 Adafruit_NeoPixel strip(LED_COUNT, LED_STRIP_PIN, NEO_GRB + NEO_KHZ800);
 
@@ -76,10 +78,9 @@ Leak leak;
 uint8_t torpedo_state = TORPEDO_FULL;
 uint8_t arm_state = ARM_CLOSE;
 
-Servo torpedo;
-Servo arm;
+Adafruit_TiCoServo torpedo;
+Adafruit_TiCoServo arm;
 
-// Arm gripper(ARM_PIN);
 
 void colorWipe(uint32_t color, int wait)
 {
@@ -135,7 +136,7 @@ void switch_update(Switch *switch_type, uint8_t type)
     colorWipe(strip.Color(255, 0, 255), 0); // turn LED strip Pink
     serial_send(type, AUTO_ON);             // Serial print AI mode enable
   }
-  else if (switch_type->getState() == HIGH && switch_type->_pin_num == KILL_PIN)
+  else if (switch_type->getState() == LOW && switch_type->_pin_num == KILL_PIN)
   {
     digitalWrite(LED_BUILTIN, HIGH);      // turn builtin LED on
     digitalWrite(MOSFET_PIN, HIGH);       // turn Relay on
@@ -143,7 +144,7 @@ void switch_update(Switch *switch_type, uint8_t type)
     serial_send(type, KILL_OFF);          // Serial print KILL mode disable
   }
 
-  else if (switch_type->getState() == LOW && switch_type->_pin_num == KILL_PIN)
+  else if (switch_type->getState() == HIGH && switch_type->_pin_num == KILL_PIN)
   {
     digitalWrite(LED_BUILTIN, LOW);       // turn builtin LED off
     digitalWrite(MOSFET_PIN, LOW);        // turn Relay off
@@ -275,11 +276,11 @@ void serial_check()
 
       else if(serial_buf == TORPEDO_FIRE_1)
       {
-        torpedo.writeMicroseconds(LEFT);           // Move Servo to left
+        torpedo.write(LEFT);           // Move Servo to left
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
        
-        torpedo.writeMicroseconds(CENTER);           // Move Servo to center
+        torpedo.write(CENTER);           // Move Servo to center
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
 
@@ -289,11 +290,11 @@ void serial_check()
 
       else if(serial_buf == TORPEDO_FIRE_2)
       {
-        torpedo.writeMicroseconds(RIGHT);          // Move Servo to right
+        torpedo.write(RIGHT);          // Move Servo to right
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
 
-        torpedo.writeMicroseconds(CENTER);         // Move Servo to center
+        torpedo.write(CENTER);         // Move Servo to center
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
         
@@ -303,15 +304,15 @@ void serial_check()
 
       else if(serial_buf == TORPEDO_FIRE_BOTH)
       {
-        torpedo.writeMicroseconds(LEFT);           // Move Servo to left
+        torpedo.write(LEFT);           // Move Servo to left
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
         
-        torpedo.writeMicroseconds(RIGHT);           // Move Servo to right
+        torpedo.write(RIGHT);           // Move Servo to right
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
 
-        torpedo.writeMicroseconds(CENTER);           // Move Servo to center
+        torpedo.write(CENTER);           // Move Servo to center
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
 
@@ -329,13 +330,13 @@ void serial_check()
       }
       else if(serial_buf == ARM_CLOSE)
       {
-        arm.writeMicroseconds(CLOSE);
+        arm.write(CLOSE);
         arm_state = ARM_CLOSE;
         serial_send('o', ARM_CLOSE);
       }
       else if(serial_buf == ARM_OPEN)
       {
-        arm.writeMicroseconds(OPEN);
+        arm.write(OPEN);
         arm_state = ARM_OPEN;
         serial_send('o', ARM_OPEN);
       }
@@ -363,28 +364,23 @@ void setup()
   pinMode(MOSFET_PIN, OUTPUT);
   pinMode(LEAK_1_PIN, INPUT);
   pinMode(LEAK_2_PIN, INPUT);
-  // pinMode(BAT_1_PIN, INPUT);
-  // pinMode(BAT_2_PIN, INPUT);
 
   digitalWrite(MOSFET_PIN, LOW);
 
-  // attachInterrupt(digitalPinToInterrupt(BAT_1_PIN), battery_1_undervoltage, HIGH);
-  // attachInterrupt(digitalPinToInterrupt(BAT_2_PIN), battery_2_undervoltage, HIGH);
-
-  torpedo.attach(TORPEDO_2_PIN);
   arm.attach(ARM_PIN);
+  torpedo.attach(TORPEDO_1_PIN); //was this already done? added by ken
 
   strip.begin();            // INITIALIZE NeoPixel strip object (REQUIRED)
   strip.show();             // Turn OFF all pixels ASAP, Send the updated pixel colors to the hardware.
-  strip.setBrightness(100); // Set BRIGHTNESS to about 1/5 (max = 255)
+  strip.setBrightness(255); // Set BRIGHTNESS to about 1/5 (max = 255)
   rainbow(0);               // Flowing rainbow cycle along the whole strip for boot animation
 
   colorWipe(strip.Color(255, 0, 0), 0); // turn LED strip Red
 
   // gripper.setState(HIGH);    // Initialize the arm in closed state
 
-  arm.writeMicroseconds(OPEN);    // open arm
-  torpedo.writeMicroseconds(CENTER); // Center torpedo servo
+  arm.write(OPEN);    // open arm
+  torpedo.write(CENTER); // Center torpedo servo
 
   Serial.begin(9600);
 }

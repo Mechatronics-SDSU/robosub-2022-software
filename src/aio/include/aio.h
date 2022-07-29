@@ -2,24 +2,27 @@
 #define AIO_PACKETS_h
 
 /////////////////// PINS /////////////////////
-
-#define BAT_1_PIN         2
-#define BAT_2_PIN         3      
+      
 #define MOSFET_PIN        4
-#define TORPEDO_1_PIN     5
-#define ARM_PIN           6
+#define TORPEDO_1_PIN     10
+#define ARM_PIN           9
 #define LEAK_1_PIN        7
 #define LEAK_2_PIN        8
-#define TORPEDO_2_PIN     9
 #define LED_STRIP_PIN     11  
-#define AUTO_PIN          A0          
-#define KILL_PIN          A1
+#define AUTO_PIN          A0
+#define KILL_PIN          A1  
+#define BAT_VOLT_1_PIN    A2
+#define BAT_VOLT_2_PIN    A3
+#define BAT_VOLT_3_PIN    A4
+#define BAT_TEMP_1_PIN    2
+#define BAT_TEMP_1_PIN    12
+#define BAT_TEMP_1_PIN    13
 
 /////////////////// MACROS ///////////////////
 
 #define LED_COUNT         60          // Number of NeoPixel cells on LED strip
 #define LEFT              1000
-#define CENTER            1500
+#define CENTER            1500          //between 1000 and 2000, orginally 1500
 #define RIGHT             2000
 #define CLOSE             1100
 #define STOP              1500
