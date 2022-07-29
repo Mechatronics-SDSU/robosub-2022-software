@@ -1,8 +1,13 @@
 """Scion's decision making process code.
 """
+from turtle import forward
+from xmlrpc.client import Boolean
 import ai.mission_planner as scion_mis
 import rospy
 from std.msgs.msg import String, Float64, ByteMultiArray
+import time
+import sys
+from functools import partial
 
 import utils.scion_utils as scion_ut
 
@@ -56,6 +61,15 @@ class HeuristicsState:
         self.last_pitch_state = 0.0
         self.last_yaw_state = 0.0
 
+def pid_callback(data, pub: rospy.Publisher, run: Boolean):
+    """Callback of thruster outputs from PID system, contains a
+    boolean to determine to forward to the pid thruster values to 
+    the maestro subscriber
+    """
+    if run:
+        pub.publish(data)
+    else:
+        pub.publish([0,0,0,0,0,0,0,0])
 
 def shutdown_callback():
     """Prints heuristics is shutting down to stdout.
@@ -78,24 +92,60 @@ def heuristics_test_hard_coded():
     target_pitch_pub = rospy.Publisher('target_pitch', Float64, queue_size=1)
     target_roll_pub = rospy.Publisher('target_roll', Float64, queue_size=1)
     target_yaw_pub = rospy.Publisher('target_yaw', Float64, queue_size=1)
+    target_vel_x_pub = rospy.Publisher('target_vel_x', Float64, queue_size=1)
     thruster_output = rospy.Publisher('thruster_output', ByteMultiArray, queue_size=1)
+
+    accept_pid = True
+
     # Subscriber topics
+    rospy.Subscriber('pid_thrusts', ByteMultiArray, partial(pid_callback, thruster_output, accept_pid))
 
     rospy.init_node('heuristics', anonymous=True)
     rospy.on_shutdown(shutdown_callback)
     rate = rospy.Rate(HEURISTICS_UPDATE_HERTZ)
-    # START AI
-    # Desired results for initial balance
-    target_depth_pub.publish(0.75)
-    target_roll_pub.publish(0.0)
-    target_pitch_pub.publish(0.0)
-    target_yaw_pub.publish(0.0)  # CHANGE THIS DEPENDING ON SETUP
-    # Wait until within tolerance
+
+    # Initialize state variable to describe mission planner
+    state = 0
+    
+    curr_time = 0.0
+    start_time = time.time()
 
     while not rospy.is_shutdown():
+        if state == 0 & curr_time < 3:
+            # Desired results for initial balance
+            print("Initial state")
+            target_depth_pub.publish(0.75)
+            target_roll_pub.publish(0.0)
+            target_pitch_pub.publish(0.0)
+            target_yaw_pub.publish(0.0)  # CHANGE THIS DEPENDING ON SETUP
+        
+        elif state == 0:
+            state = 1
+            target_vel_x_pub.publish(0.5)
+        
+        elif state == 1 & curr_time >= 3 & curr_time < 6:
+            print("Moving forward")
+        
+        elif state == 1:
+            state = 2
+            target_vel_x_pub.publish(0.0)
+            target_depth_pub.publish(0.0)
 
+        elif state == 2 & curr_time >= 6 & curr_time < 9:
+            print("Rising to surface")
+
+        elif state == 2:
+            state = 3
+            accept_pid = False
+
+        elif state == 3:
+            print("Task complete")
+            sys.exit(1)
+
+        curr_time = (time.time() - start_time)
         rate.sleep()
 
 
 if __name__ == '__main__':
-    heuristics_test()
+    #heuristics_test()
+    heuristics_test_hard_coded()

@@ -15,14 +15,11 @@ import time
 import numpy as np
 from functools import partial
 
-from utils.maestro_driver import MaestroDriver
-
 PID_FETCH_HERTZ = 100
 
 def shutdown_callback(thrusts: ByteMultiArray, pub: rospy.Publisher):
     thrusts.data = [0,0,0,0,0,0,0,0]
     pub.publish(thrusts)
-
 
 def _angle_wrapped_error(angle_1, angle_2):
 
@@ -35,8 +32,7 @@ def _angle_wrapped_error(angle_1, angle_2):
 
     return(error)
 
-def pid_driver(pid_name: str) -> None:
-    maestro = MaestroDriver(com_port=pid_name)
+def pid_driver() -> None:
 
     # ROS
     dw_ahrs = scion_ut.AHRSDataWrapper(debug=False)
@@ -161,29 +157,19 @@ def pid_driver(pid_name: str) -> None:
 
             pos_thrusts, pos_errors, p_vel_errors = pos_controller.update(desired_pos_state, curr_pos_state, curr_vel_state, dt)
             vel_thrusts, vel_errors = vel_controller.update(desired_vel_state, curr_vel_state, dt)
-            print(f'[PID HANDLER] | {vel_thrusts}')
+
             pos_thrusts = [int(i*1.0) for i in pos_thrusts]
             vel_thrusts = [int(j*1.0) for j in vel_thrusts]
 
             thrusts.data = np.add(pos_thrusts, vel_thrusts)
 
-            #print(thrusts.data)
-
             pid_pub.publish(thrusts)
-            #maestro.set_thrusts(thrusts.data)
 
             time.sleep(dt)
             curr_time = (time.time() - start_time)
             rate.sleep()
 
-        #maestro.set_thrusts([0,0,0,0,0,0,0,0])
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        dev = sys.argv[1].replace(' ', '')
-        # Init pid controller
-        pid_driver(dev)
-
-    else:
-        print('Error, argc not > 1. (Did you add the AHRS name when running this program?)')
-        sys.exit(1)
+    # Init pid controller
+    pid_driver()
