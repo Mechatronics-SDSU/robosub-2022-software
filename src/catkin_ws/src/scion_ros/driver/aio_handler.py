@@ -10,7 +10,8 @@ AIO_FETCH_DELAY = 20
 AIO_TIMEOUT_MS = 0.05
 
 
-def aio_handler(aio_name: str, debug=True) -> None:
+def aio_handler(aio_name: str, debug=True, autonomous=0) -> None:
+    auto = autonomous
     # Set up AIO
     aio = scion_aio.AIOWrapper(device_name=aio_name, timeout=AIO_TIMEOUT_MS)
     # ROS topics
@@ -40,10 +41,13 @@ def aio_handler(aio_name: str, debug=True) -> None:
         ret = aio.read_device()
         if ret is not None:  # Recieved new packet
             ret = aio.translate_recv_packet()
-            print(f'[AIO HANDLER ROS] RECV PACKET | {ret}')
+            sys.stderr.write(f'[AIO HANDLER ROS] RECV PACKET | {ret}')
             # Translate and send to relevant ROS topic
             if ret[1] == scion_ut.AIO_AUTO_NMASK_ROS:
                 aio_auto_pub.publish(ret)
+                if autonomous > 0:
+                    with os.fdopen(auto, 'w') as fd:
+                        print('1', file=fd)
             elif ret[1] == scion_ut.AIO_BAT_NMASK_ROS:
                 aio_bat_pub.publish(ret)
             elif ret[1] == scion_ut.AIO_KILL_NMASK_ROS:
@@ -54,7 +58,7 @@ def aio_handler(aio_name: str, debug=True) -> None:
                 aio_torp_pub.publish(ret)
             elif ret[1] == scion_ut.AIO_ARM_NMASK_ROS:
                 aio_arm_pub.publish(ret)
-            print(f'[AIO HANDLER ROS] RET: {ret}')
+            sys.stderr.write(f'[AIO HANDLER ROS] RET: {ret}')
         rate.sleep()
         # Check for latest messages in callbacks
         '''
@@ -71,7 +75,7 @@ def aio_handler(aio_name: str, debug=True) -> None:
             nmask = data[1]
             val = int(data[2], 16)
             if debug:
-                print(f'AIO kill sees: callback_data={data} | nmask={nmask} | val={val}')
+                sys.stderr.write(f'AIO kill sees: callback_data={data} | nmask={nmask} | val={val}')
             aio.send_input_packet(nmask=nmask, value=val)
             aio_kill_dw.data = None
         elif aio_leak_dw.data is not None:
@@ -79,7 +83,7 @@ def aio_handler(aio_name: str, debug=True) -> None:
             nmask = data[1]
             val = int(data[2], 16)
             if debug:
-                print(f'AIO leak sees: callback_data={data} | nmask={nmask} | val={val}')
+                sys.stderr.write(f'AIO leak sees: callback_data={data} | nmask={nmask} | val={val}')
             aio.send_input_packet(nmask=nmask, value=val)
             aio_leak_dw.data = None
         elif aio_bat_dw.data is not None:
@@ -87,7 +91,7 @@ def aio_handler(aio_name: str, debug=True) -> None:
             nmask = data[1]
             val = int(data[2], 16)
             if debug:
-                print(f'AIO bat sees: callback_data={data} | nmask={nmask} | val={val}')
+                sys.stderr.write(f'AIO bat sees: callback_data={data} | nmask={nmask} | val={val}')
             aio.send_input_packet(nmask=nmask, value=val)
             aio_bat_dw.data = None
         elif aio_auto_dw.data is not None:
@@ -95,7 +99,7 @@ def aio_handler(aio_name: str, debug=True) -> None:
             nmask = data[1]
             val = int(data[2], 16)
             if debug:
-                print(f'AIO auto sees: callback_data={data} | nmask={nmask} | val={val}')
+                sys.stderr.write(f'AIO auto sees: callback_data={data} | nmask={nmask} | val={val}')
             aio.send_input_packet(nmask=nmask, value=val)
             aio_auto_dw.data = None
         elif aio_torp_dw.data is not None:
@@ -103,7 +107,7 @@ def aio_handler(aio_name: str, debug=True) -> None:
             nmask = data[1]
             val = int(data[2], 16)
             if debug:
-                print(f'AIO torp sees: callback_data={data} | nmask={nmask} | val={val}')
+                sys.stderr.write(f'AIO torp sees: callback_data={data} | nmask={nmask} | val={val}')
             aio.send_input_packet(nmask=nmask, value=val)
             aio_torp_dw.data = None
         elif aio_arm_dw.data is not None:
@@ -111,15 +115,16 @@ def aio_handler(aio_name: str, debug=True) -> None:
             nmask = data[1]
             val = int(data[2], 16)
             if debug:
-                print(f'AIO arm sees: callback_data={data} | nmask={nmask} | val={val}')
+                sys.stderr.write(f'AIO arm sees: callback_data={data} | nmask={nmask} | val={val}')
             aio.send_input_packet(nmask=nmask, value=val)
             aio_arm_dw.data = None
         rate.sleep()
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
+    if len(sys.argv) > 2:
         dev = sys.argv[1].replace(' ', '')
-        aio_handler(aio_name=dev, debug=True)
+        auto = int(sys.argv[2].replace(' ', ''))
+        aio_handler(aio_name=dev, debug=True, autonomous=auto)
     else:
-        print('Error: argc not > 1. ')
+        sys.stderr.write('Error: argc not > 2.')

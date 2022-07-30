@@ -224,8 +224,53 @@ int main(int argc, char *argv[]) {
 	if (argstruct.setaarg)
 		s = 31; /*Every other arg added together*/
 	/*Test to see if we only start without API*/
-	if (argstruct.setiarg)
-		s = 27; /*Every arg for full autonomous without APIs*/
+	if (argstruct.setiarg) {
+		/*Turn on and wait for AIO*/
+		/*Make a pipe*/
+		int autopipes[2];
+		if (-1 == pipe(autopipes)) { /*Pipe messed up*/
+			if (argstruct.setdarg) {
+				printf("cnc pipe creation failure\n");
+				exit(EXIT_FAILURE);
+			}
+		}
+		/*Fork*/
+		pid_t myPid3, childPid3;
+		fflush(NULL);
+		if (-1 == (childPid3 = fork())) { /*Fork messed up*/
+			if (argstruct.setdarg) {
+				printf("Fork to cnc failure\n");
+				exit(EXIT_FAILURE);
+			}
+		} else if (0 == childPid3) { /*Successful fork to child*/
+			if (argstruct.setdarg) {
+				printf("Forked to aio child.\n");
+			}
+                        //aioBoard[3] = "/dev/ttyACM0";
+                        autoprog[3] = aioBoard[3];
+                        //printf("AUTOPROG AND DEVS %s %s\n", autoprog[3], aioBoard[3]);
+			char b[3];
+                        snprintf(b, 2, "%d", autopipes[1]);
+			autoprog[4] = b;
+			/*Child execvps the AIO program*/
+			execvp(autoprog[0], autoprog);
+		}
+		char cbuf2[255];
+                cbuf2[0] = '\0';
+		int start;
+		/*Wait on pipe for auto signal*/
+ 		while (1) {
+			read(autopipes[0], cbuf2, 255);
+			start = atoi(cbuf2);
+			break;
+		}
+		if (start == 1) {
+			s = AUTONOMOUS_PROG; /*Every arg for full autonomous without APIs AND no AIO
+						(AIO already started)*/
+		} else {
+			s = 0;
+		}
+	}
 	if (argstruct.setdarg)
 		printf("Calculated sarg=[%d]\n", s);
 
