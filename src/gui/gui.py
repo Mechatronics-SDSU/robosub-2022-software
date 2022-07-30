@@ -86,6 +86,7 @@ SCION_AIO_L_PORT = 50007
 
 # Master process
 SCION_CONFIG_MENU_STRINGS = [  # Enumerated for consistency with start/masterprocess.h
+    'AIO Autonomous'
     'AIO',
     'Sensor API',
     'AHRS Sensor',
