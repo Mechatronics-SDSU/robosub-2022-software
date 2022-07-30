@@ -1,5 +1,4 @@
-/*Firmware for All Input Output (AIO) PCB - Rev A
-
+ /*Firmware for All Input Output (AIO) PCB - Rev A - Last update 7/29/22 1:45AM
   This board interfaces the following sensors for the 2022 robosub vehicle:
             Sensor           |        Packet - Message
     -------------------------|----------------------------
@@ -22,7 +21,12 @@
                              |                 E Response
                              |                 F Get
     Arm Gripper              |          0xAM - 0 Open, 1 Closed, F Get
-
+    Battery Temp 1 Sensor    |          0xBM - 0 Get Temp
+    Battery Temp 2 Sensor    |          0xCM - 0 Get Temp
+    Battery Temp 3 Sensor    |          0xDM - 0 Get Temp
+    Battery Volt 1 Sensor    |          0xEM - 0 Get Volt 
+    Battery Volt 2 Sensor    |          0xFM - 0 Get Volt 
+    Battery Volt 3 Sensor    |          0x M - 0 Get Volt  
   Data stream behavior:
     Interrupt Packet - A packet sent by either device indicating new alert
     ----------------------------------------------------------------------
@@ -32,7 +36,6 @@
           0xN_ - Type of sensor making interrupt message
           0x_M - Message value attached to sensor
         '\n' - newline byte representing newline and end of packet
-
     Output Packet - A packet sent by either device as a response to the most
                     recent interrupt packet
     ----------------------------------------------------------------------
@@ -42,18 +45,18 @@
           0xN_ - Type of sensor making response message
           0x_M - Message value attached to sensor
         '\n' - newline end byte representing newline and end of packet
-        "Ken was here"
 */
 
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
-#include <switch.h>
-#include <serial.h>
-#include <leak.h>
-#include <Servo.h>
-#include "aio.h"
+#include <switch.h>   //class struc data type C++ object orientated code, for piezo switches
+#include <serial.h>   //aio serial line or monitor send and receieve
+#include <leak.h>     //leak 
+//#include <Servo.h>    //servo lib to be replaced by TiCoServo
+#include <Adafruit_TiCoServo.h> //replacement for servo to use with neopixels.
+#include "aio.h"      //all the defines and macros
 
-const uint16_t button_sensitivity = 200; // adjust for how sensitive the button is
+const uint16_t button_sensitivity = 150; // adjust for how sensitive the button is
 
 unsigned long time_now = 0;
 
@@ -72,8 +75,9 @@ Leak leak;
 uint8_t torpedo_state = TORPEDO_FULL;
 uint8_t arm_state = ARM_CLOSE;
 
-Servo torpedo;
-Servo arm;
+Adafruit_TiCoServo torpedo;
+Adafruit_TiCoServo arm;
+
 
 void colorWipe(uint32_t color, int wait)
 {
@@ -126,29 +130,31 @@ void switch_update(Switch *switch_type, uint8_t type)
    */
   if (switch_type->getState() == HIGH && switch_type->_pin_num == AUTO_PIN)
   {
-    serial_send(type, AUTO_ON);             // Serial print AI mode enable
     colorWipe(strip.Color(255, 0, 255), 0); // turn LED strip Pink
+    digitalWrite(MOSFET_PIN, HIGH);
+    serial_send(type, AUTO_ON);             // Serial print AI mode enable
   }
   else if (switch_type->getState() == LOW && switch_type->_pin_num == KILL_PIN)
   {
-    serial_send(type, KILL_OFF);          // Serial print KILL mode disable
     digitalWrite(LED_BUILTIN, HIGH);      // turn builtin LED on
     digitalWrite(MOSFET_PIN, HIGH);       // turn Relay on
     colorWipe(strip.Color(0, 255, 0), 0); // turn LED strip Green
+    serial_send(type, KILL_OFF);          // Serial print KILL mode disable
   }
 
   else if (switch_type->getState() == HIGH && switch_type->_pin_num == KILL_PIN)
   {
-    serial_send(type, KILL_ON);           // Serial print KILL mode enable
     digitalWrite(LED_BUILTIN, LOW);       // turn builtin LED off
     digitalWrite(MOSFET_PIN, LOW);        // turn Relay off
     colorWipe(strip.Color(255, 0, 0), 0); // turn LED strip Red
+    serial_send(type, KILL_ON);           // Serial print KILL mode enable
   }
 
   else if (switch_type->getState() == LOW && switch_type->_pin_num == AUTO_PIN)
   {
-    serial_send(type, AUTO_OFF);          // Serial print AI mode enable
     colorWipe(strip.Color(255, 0, 0), 0); // turn LED strip Red
+    digitalWrite(MOSFET_PIN, LOW);
+    serial_send(type, AUTO_OFF);          // Serial print KILL mode enable
   }
 }
 
@@ -188,6 +194,30 @@ void serial_check()
         }
       }
     }
+
+    // else if (!((serial_buf & 0xF0) ^ BAT_MASK))
+    // {
+    //   // Battery related tasks
+    //   if (serial_buf == BAT_GET)
+    //   {
+    //     if (digitalRead(BAT_1_PIN) == LOW && digitalRead(BAT_2_PIN) == LOW)
+    //     {
+    //       serial_send('o', BAT_STABLE);
+    //     }
+    //     else if (digitalRead(BAT_1_PIN) == HIGH && digitalRead(BAT_2_PIN) == LOW)
+    //     {
+    //       serial_send('o', BAT_WARN_1);
+    //     }
+    //     else if (digitalRead(BAT_1_PIN) == LOW && digitalRead(BAT_2_PIN) == HIGH)
+    //     {
+    //       serial_send('o', BAT_WARN_2);
+    //     }
+    //     else if (digitalRead(BAT_1_PIN) == HIGH && digitalRead(BAT_2_PIN) == HIGH)
+    //     {
+    //       serial_send('o', BAT_WARN_BOTH);
+    //     }
+    //   }
+    // }
 
     else if (!((serial_buf & 0xF0) ^ KILL_MASK))
     {
@@ -245,50 +275,47 @@ void serial_check()
 
       else if(serial_buf == TORPEDO_FIRE_1)
       {
-        serial_send('o', TORPEDO_EMPTY_1);
-
-        torpedo.writeMicroseconds(LEFT);           // Move Servo to left
+        torpedo.write(LEFT);           // Move Servo to left
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
        
-        torpedo.writeMicroseconds(CENTER);           // Move Servo to center
+        torpedo.write(CENTER);           // Move Servo to center
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
 
+        serial_send('o', TORPEDO_EMPTY_1);
         torpedo_state = TORPEDO_EMPTY_1;
       }
 
       else if(serial_buf == TORPEDO_FIRE_2)
       {
-        serial_send('o', TORPEDO_EMPTY_2);
-
-        torpedo.writeMicroseconds(RIGHT);          // Move Servo to right
+        torpedo.write(RIGHT);          // Move Servo to right
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
 
-        torpedo.writeMicroseconds(CENTER);         // Move Servo to center
+        torpedo.write(CENTER);         // Move Servo to center
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
         
+        serial_send('o', TORPEDO_EMPTY_2);
         torpedo_state = TORPEDO_EMPTY_2;
       }
 
       else if(serial_buf == TORPEDO_FIRE_BOTH)
       {
-        serial_send('o', TORPEDO_EMPTY_BOTH);
-
-        torpedo.writeMicroseconds(LEFT);           // Move Servo to left
+        torpedo.write(LEFT);           // Move Servo to left
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
         
-        torpedo.writeMicroseconds(RIGHT);           // Move Servo to right
+        torpedo.write(RIGHT);           // Move Servo to right
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
 
-        torpedo.writeMicroseconds(CENTER);           // Move Servo to center
+        torpedo.write(CENTER);           // Move Servo to center
         time_now = millis();                       // Gather current time
         while (millis() < time_now + servo_delay); // Delay for wait milliseconds
 
+        serial_send('o', TORPEDO_EMPTY_BOTH);
         torpedo_state = TORPEDO_EMPTY_BOTH;
       }
     }
@@ -302,21 +329,33 @@ void serial_check()
       }
       else if(serial_buf == ARM_CLOSE)
       {
-        serial_send('o', ARM_CLOSE);
-
-        arm.writeMicroseconds(CLOSE);
+        arm.write(CLOSE);
         arm_state = ARM_CLOSE;
+        serial_send('o', ARM_CLOSE);
       }
       else if(serial_buf == ARM_OPEN)
       {
-        serial_send('o', ARM_OPEN);
-
-        arm.writeMicroseconds(OPEN);
+        arm.write(OPEN);
         arm_state = ARM_OPEN;
+        serial_send('o', ARM_OPEN);
       }
     }
    }
 }
+
+// void battery_1_undervoltage()
+// {
+//   // Interrupt Service Routine for toggling battery 1 state flag
+
+//   battery_1_flag = HIGH;
+// }
+
+// void battery_2_undervoltage()
+// {
+//   // Interrupt Service Routine for toggling battery 2 state flag
+
+//   battery_2_flag = HIGH;
+// }
 
 void setup()
 {
@@ -327,18 +366,20 @@ void setup()
 
   digitalWrite(MOSFET_PIN, LOW);
 
-  torpedo.attach(TORPEDO_2_PIN);
   arm.attach(ARM_PIN);
+  torpedo.attach(TORPEDO_1_PIN); //was this already done? added by ken
 
   strip.begin();            // INITIALIZE NeoPixel strip object (REQUIRED)
   strip.show();             // Turn OFF all pixels ASAP, Send the updated pixel colors to the hardware.
-  strip.setBrightness(100); // Set BRIGHTNESS to about 1/5 (max = 255)
+  strip.setBrightness(255); // Set BRIGHTNESS to about 1/5 (max = 255)
   rainbow(0);               // Flowing rainbow cycle along the whole strip for boot animation
 
   colorWipe(strip.Color(255, 0, 0), 0); // turn LED strip Red
 
-  arm.writeMicroseconds(OPEN);    // open arm
-  torpedo.writeMicroseconds(CENTER); // Center torpedo servo
+  // gripper.setState(HIGH);    // Initialize the arm in closed state
+
+  arm.write(OPEN);    // open arm
+  torpedo.write(CENTER); // Center torpedo servo
 
   Serial.begin(9600);
 }
@@ -370,13 +411,45 @@ void loop()
     colorWipe(strip.Color(0, 0, 255), 0); // turn LED strip Blue
 
     // Enable Kill Mode
-    serial_send('i', KILL_ON);
     kill_switch.setState(HIGH);
     digitalWrite(MOSFET_PIN, LOW); 
+    serial_send('i', KILL_ON);
 
     // Disable AI Mode   
-    serial_send('i', AUTO_OFF);
-
     auto_switch.setState(LOW);
+    serial_send('i', AUTO_OFF);
   }
+
+  // // Battery Block
+  // if (battery_1_flag)
+  // {
+  //   serial_send('i', BAT_WARN_1);
+  //   battery_1_flag = LOW;
+  //   colorWipe(strip.Color(255, 255, 0), 0); // Turn LED strip Yellow
+
+  //   // Enable Kill Mode
+  //   kill_switch.setState(HIGH);
+  //   digitalWrite(MOSFET_PIN, LOW); 
+  //   serial_send('i', KILL_ON);
+
+  //   // Disable AI Mode
+  //   auto_switch.setState(LOW);
+  //   serial_send('i', AUTO_OFF);
+  // }
+  // if (battery_2_flag)
+  // {
+  //   serial_send('i', BAT_WARN_2);
+  //   battery_2_flag = LOW;
+  //   colorWipe(strip.Color(255, 255, 0), 0); // Turn LED strip Yellow
+
+  //   // Enable Kill Mode
+  //   kill_switch.setState(HIGH);
+  //   digitalWrite(MOSFET_PIN, LOW); 
+  //   serial_send('i', KILL_ON);
+
+  //   // Disable AI Mode
+  //   auto_switch.setState(LOW);
+  //   serial_send('i', AUTO_OFF);
+  // }
 }
+

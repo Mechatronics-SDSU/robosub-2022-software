@@ -53,7 +53,7 @@ class MaestroDriver:
             a = int(pulse_width[i] * 4)
             lower_bits = a & 0x7f
             upper_bits = (a >> 7) & 0x7f
-            pulse_width_packed = struct.pack('>hh', lower_bits, upper_bits)
+            pulse_width_packed = struct.pack('>2h', lower_bits, upper_bits)
             message = bytearray([0x84, i, pulse_width_packed[1], pulse_width_packed[3]])
             try: 
                 self.usb.write(message)

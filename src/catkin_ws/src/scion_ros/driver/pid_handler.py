@@ -49,7 +49,6 @@ def pid_driver() -> None:
     dw_target_vel_x = scion_ut.DataWrapper(debug=False)
     dw_target_vel_y = scion_ut.DataWrapper(debug=False)
     dw_target_vel_z = scion_ut.DataWrapper(debug=False)
-
     
     dw_target_roll.data = 0.0 #rad
     dw_target_pitch.data = 0.0 #rad
