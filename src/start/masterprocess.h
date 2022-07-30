@@ -18,6 +18,8 @@ typedef struct {
 	char *sptr;
 }argdef;
 
+int AUTONOMOUS_PROG = 4;
+
 /* Help command printout */
 char *helparguments[] = {
 	"Scion Master Process",
@@ -47,6 +49,13 @@ char devnamebuf[sizeof(devstrs)/sizeof(devstrs[0])][255]; /*unmatched current de
 
 char *wdprog[] =  {"python3", "start/watchdog.py"}; /*Watchdog program*/
 char *cncprog[] = {"python3", "comms/cmd_ctrl_server.py"}; /*CNC program*/
+/*char autoprog[5][255];
+autoprog[0] = "rosrun";
+autoprog[1] = "scion_ros";
+autoprog[2] = "test.py";
+autoprog[3][0] = '\0';
+autoprog[4] = NULL;*/
+char *autoprog[] = {"rosrun", "scion_ros", "aio_handler.py", NULL, NULL, NULL};/*autoprog*/
 
 /* All commands are defined here in comma separated string consts for execvp 
 Commands with 2 NULL pointers will have string pointers set for device names.*/
@@ -57,7 +66,7 @@ char *lsCommand[] = {
 	"ls", ".", NULL
 };
 char *aioBoard[] = {
-	"rosrun", "scion_ros", "aio_handler.py", NULL, NULL /*devs[0]*/
+	"rosrun", "scion_ros", "aio_handler.py", NULL, "0", NULL /*devs[0]*/
 };
 char *aioListener[] = {
 	"rosrun", "scion_ros", "aio_listener.py", NULL	
@@ -111,17 +120,18 @@ int syswdevloc[] = {
 */
 char **programStartup[] = {
 	noop, /*Remains at start*/
-	aioBoard, /*1*/
-	sensorApi, /*2*/
-	ahrsSensor, /*4*/
-	depthSensor, /*8*/
-	thrusterSubsystem, /*16*/
-	cameraDriver, /*32*/
-        cameraMLDriver, /*64*/
-	aioForward, /*128*/
-	aioListener, /*256*/
-	dvlSensor, /*512*/
-	lsCommand /*1024*/
+	autoprog, /*1*/
+	aioBoard, /*2*/
+	sensorApi, /*4*/
+	ahrsSensor, /*8*/
+	depthSensor, /*16*/
+	thrusterSubsystem, /*32*/
+	cameraDriver, /*64*/
+    	cameraMLDriver, /*128*/
+	aioForward, /*256*/
+	aioListener, /*512*/
+	dvlSensor, /*1024*/
+	lsCommand /*2048*/
 };
 
 int helpcommand();
