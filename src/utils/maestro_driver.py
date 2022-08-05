@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """Thruster control code for the maestro.
 This is a port of Blake's 2020 Maestro code with minor changes from Ian for Pico, refacoted by Ian for Scion.
 This code manually talks to the Pololu maestro driver, giving it instructions for how to set Scion's ESCs.
@@ -21,14 +22,17 @@ class MaestroDriver:
         self.baud_rate = baud_rate
         self.lower_pulse_bound = lower_pulse_bound
         self.upper_pulse_bound = upper_pulse_bound
-
-        self.usb = serial.Serial(com_port)
+        self.com_port = com_port
+        self.usb = serial.Serial(self.com_port)
         self.most_recent_thrusts = most_recent_thrusts
+        
+        print('[MAESTRO] Initialized Class.')
 
     def set_thrusts(self, thrusts=None) -> None:
         """Sets thrusters.
         :param thrusts: Integer thruster values from -100 - 100.
         """
+        print(f'[MAESTRO] Setting thrusts to {thrusts}')
         if thrusts is None:
             thrusts = [0, 0, 0, 0, 0, 0, 0, 0]
         for i in range(8):
@@ -53,9 +57,13 @@ class MaestroDriver:
             a = int(pulse_width[i] * 4)
             lower_bits = a & 0x7f
             upper_bits = (a >> 7) & 0x7f
-            pulse_width_packed = struct.pack('>hh', lower_bits, upper_bits)
+            pulse_width_packed = struct.pack('>2h', lower_bits, upper_bits)
             message = bytearray([0x84, i, pulse_width_packed[1], pulse_width_packed[3]])
-            self.usb.write(message)
+            try: 
+                self.usb.write(message)
+            except serial.serialutil.SerialException:
+                time.sleep(0.02)
+                self.usb = serial.Serial(self.com_port)
 
 
 if __name__ == '__main__':
@@ -69,9 +77,20 @@ if __name__ == '__main__':
         print('Exiting maestro driver demo...')
         sys.exit(1)
     maestro_driver = MaestroDriver(com_port=device)
-    # Demo the driver if we're running this file
-    while True:
-        maestro_driver.set_thrusts([50, 50, 50, 50, 50, 50, 50, 50])
-        time.sleep(2)
+    # Qualify for robosub
+    sleep(10)  # Time for diver to unplug cable
+    for i in range(2):
+        maestro_driver.set_thrusts([30, 0, 30, 0, 30, 0, 30, 0])
+        time.sleep(1)
         maestro_driver.set_thrusts([0, 0, 0, 0, 0, 0, 0, 0])
-        time.sleep(2)
+        time.sleep(0.5)
+    for i in range(10):
+         maestro_driver.set_thrusts([0, 30, 0, 30, 0, 30, 0, 30])
+        time.sleep(1.5)
+        maestro_driver.set_thrusts([0, 0, 0, 0, 0, 0, 0, 0])
+        time.sleep(0.5)
+    for i in range(5):
+        maestro_driver.set_thrusts([-30, 0, -30, 0, -30, 0, -30, 0])
+        time.sleep(1)
+        maestro_driver.set_thrusts([0, 0, 0, 0, 0, 0, 0, 0])
+        time.sleep(0.5)

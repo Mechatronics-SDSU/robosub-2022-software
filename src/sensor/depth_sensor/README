@@ -1,0 +1,13 @@
+Depthsensor.h library for Arduino. Allows for simple 2-way communication
+between the Arduino and corrisponding python script running on the pc.
+
+Start by creating a Depthsensor object (NOTE, initialize Serial to baud 9600 before using depth sensor)
+	i.e.
+		Depthsensor depthsensor;
+
+Get Depthsensor value (Depthsensor object has float which can be accessed)
+	i.e.
+		Depthsensor.getDepth();
+Check for incoming data from computer (place in loop())
+	i.e.
+		Depthsensor.serialUpdate();

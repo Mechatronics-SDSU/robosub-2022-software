@@ -1,46 +1,32 @@
-"""
-camera_test.py tests camera functionality w/ varying resolutions
-"""
 import cv2
-from datetime import datetime
 
 
-def test_camera(cam: cv2.VideoCapture, input_res: str):
+def list_ports():
     """
-    resizes frames according to input res. Supports screenshotting
-    :param cam:         VideoCapture, device
-    :param input_res:   str, {width}x{height}
-    :return:            n/a
+    Test the ports and returns a tuple with the available ports and the ones that are working.
     """
-    res = list(map(int, input_res.split('x')))  # width, height
-    img_name = f'{res}_{datetime.now()}'
-    cam.set(cv2.CAP_PROP_FRAME_HEIGHT, res[0])
-    cam.set(cv2.CAP_PROP_FRAME_WIDTH, res[1])
+    dev_port = 0
+    dev_max = 500
+    working_ports = []
+    available_ports = []
+    print('Running...')
+    while dev_port < dev_max:
+        camera = cv2.VideoCapture(dev_port)
+        camera.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+        if camera.isOpened():
+            is_reading, img = camera.read()
+            w = camera.get(3)
+            h = camera.get(4)
+            if is_reading:
+                print("Port %s is working and reads images (%s x %s)" %(dev_port,h,w))
+                working_ports.append(dev_port)
+            else:
+                print("Port %s for camera ( %s x %s) is present but does not reads." %(dev_port,h,w))
+                available_ports.append(dev_port)
+        camera.release()
+        dev_port +=1
+    print(available_ports,working_ports)
 
-    while True:
-        access, frame = cam.read()
-        if not access:
-            print("!Can't open camera")
-            break
-        # frame = cv2.resize(frame, res, interpolation=cv2.INTER_AREA)
-        cv2.imshow(img_name, frame)
 
-        key = cv2.waitKey(1)
-        if key & 0xFF == ord('q') or key & 0xFF == ord('Q'):
-            cam.release()
-            break
-        elif key & 0xFF == ord(' '):
-            cv2.imwrite(f'{img_name}.png', frame)
-
-    cv2.destroyWindow(img_name)
-    cv2.destroyAllWindows()
-
-
-if __name__ == '__main__':
-
-    # test cases
-    # for Linux, use cv2.CAP_V4L2 in VideoCapture() parameters
-    test_camera(cv2.VideoCapture(0), '1080x720')
-    test_camera(cv2.VideoCapture(0), '640x360')
-    test_camera(cv2.VideoCapture(0), '1080x300')
-    test_camera(cv2.VideoCapture(0), '700x1000')
+if __name__ == "__main__":
+    list_ports()
