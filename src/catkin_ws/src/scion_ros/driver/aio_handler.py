@@ -2,6 +2,7 @@
 import rospy
 from std_msgs.msg import String
 
+import os
 import sys
 import utils.scion_utils as scion_ut
 import aio.aio_utils as scion_aio

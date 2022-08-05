@@ -23,7 +23,8 @@ def run_server() -> None:
     maestro = None  # Maestro object
     dev = None
     if len(sys.argv) > 1:  # Did we get a device on program start?
-        dev = sys.argv[1].replace(' ', '')
+        dev = sys.argv[2].replace(' ', '')
+        print(dev)
     else:
         print(f'Error: Expected argc > 1, number of args = {len(sys.argv)}. (Did you add the maestro device\'s COM '
               f'port?)')

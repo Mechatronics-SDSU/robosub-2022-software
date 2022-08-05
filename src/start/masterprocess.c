@@ -215,6 +215,7 @@ int main(int argc, char *argv[]) {
 	}
 	/*Load devices from *.cfg into memory*/
 	loaddevs(argstruct.setdarg);
+	thrusterSubsystem[3] = thrusterHandler[3];
 	/*Successful parsing indicates sptr was set, convert to int*/
 	if (NULL != argstruct.sptr)
 		s = atoi(argstruct.sptr);

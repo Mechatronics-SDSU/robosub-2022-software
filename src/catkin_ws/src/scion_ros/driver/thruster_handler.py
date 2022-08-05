@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 """ROS-connected Maestro thruster driver
 """
 import rospy
@@ -18,12 +18,14 @@ def shutdown_callback(maestro: scion_thrusters.MaestroDriver):
 
 
 def thruster_callback(data, maestro: scion_thrusters.MaestroDriver):
-    maestro.set_thrusts(data.data)
+    maestro.set_thrusts([float(i) for i in data.data])
+    print(f'MAESTRO SETTING THRUSTERS TO: {type(data.data[0])}')
 
 
 def thruster_driver(maestro_port: str) -> None:
 
-    thrusters = scion_thrusters.MaestroDriver(com_port=maestro_port, baud_rate=9600)
+    thrusters = scion_thrusters.MaestroDriver(com_port=maestro_port)
+    print(f'[TD] Maestro Driver on {maestro_port}')
     rospy.init_node('thuster_handler', anonymous=True)
     rospy.Subscriber('thruster_output', ByteMultiArray, thruster_callback, thrusters)
     # rospy.Subscriber('pid_thrusts', ByteMultiArray, thruster_callback, thrusters)

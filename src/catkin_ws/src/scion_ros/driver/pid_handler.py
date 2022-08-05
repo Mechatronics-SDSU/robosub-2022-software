@@ -73,7 +73,7 @@ def pid_driver() -> None:
     thrusts = ByteMultiArray()
 
     rospy.on_shutdown(partial(shutdown_callback, thrusts, pid_pub))
-
+    print('[PID] Registered shutdown callback...')
     thrusts.data = [0, 0, 0, 0, 0, 0, 0, 0]
 
     pos_thrusts = np.zeros(8)
@@ -82,13 +82,14 @@ def pid_driver() -> None:
     #update rate of control system
     f = 100.0 #Hz
     dt = 1/f
-
+    print('[PID] Declaring max runtime...')
     max_run_time = 3 #Time to run control system before exiting
 
     #load the pid_controller  parameters from a formatted json file
-    with open(r'pid_params_1.json') as pid_param_file:
+    print('[PID] Loading PID parameters...')
+    with open('catkin_ws/src/scion_ros/driver/pid_params_1.json', 'r') as pid_param_file:
         pid_params = json.load(pid_param_file)
-
+    print('[PID] Loaded PID parameters.')
     # Init the controller
     pos_controller = scion_pid.Scion_Position_PID_Controller(pid_params)
     vel_controller = scion_pid.Scion_Velocity_PID_Controller(pid_params)
@@ -101,11 +102,11 @@ def pid_driver() -> None:
 
     desired_pos_state = np.zeros(12)
     desired_vel_state = np.zeros(12)
-
+    print('[PID] Establishing rate...')
     rate = rospy.Rate(PID_FETCH_HERTZ)
-
+    print('[PID] Starting PID Handler')
     while not rospy.is_shutdown():
-
+        print('[PID] Running PID...')
         #desired state for the control system to reach
     
         desired_pos_state[0] = dw_target_roll.data
@@ -120,7 +121,7 @@ def pid_driver() -> None:
         curr_time = 0.0
         start_time = time.time()
         while(curr_time < max_run_time):
-
+            print('[PID] Iteration of PID in loop')
             #Get the state of the vehicle
             curr_pos_state[0] = dw_ahrs.roll
             curr_pos_state[1] = dw_ahrs.pitch
@@ -171,4 +172,5 @@ def pid_driver() -> None:
 
 if __name__ == '__main__':
     # Init pid controller
+    print('[PID] Starting Program...')
     pid_driver()
