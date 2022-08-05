@@ -18,7 +18,7 @@ typedef struct {
 	char *sptr;
 }argdef;
 
-int AUTONOMOUS_PROG = 4;
+int AUTONOMOUS_PROG = 15384;
 
 /* Help command printout */
 char *helparguments[] = {
@@ -77,6 +77,15 @@ char *aioForward[] = {
 char *sensorApi[] = {
 	"rosrun", "scion_ros", "sensor_listener.py", NULL
 };
+char *thrusterHandler[] = {
+	"rosrun", "scion_ros", "thruster_handler.py", NULL, NULL /*devs[4]*/
+};
+char *pidHandler[] = {
+	"rosrun", "scion_ros", "pid_handler.py", NULL
+};
+char *heuristics[]  = {
+	"rosrun", "scion_ros", "heuristics.py", NULL
+};
 char *ahrsSensor[] = {
     "rosrun", "scion_ros", "ahrs_sensor.py", NULL, NULL /*devs[1]*/
 };
@@ -87,7 +96,7 @@ char *dvlSensor[] = {
     "rosrun", "scion_ros", "dvl_sensor.py", NULL, NULL, /*devs[3]*/
 };
 char *thrusterSubsystem[] = {
-	"python3", "comms/controller_server.py", NULL, NULL  /*devs[4]*/
+	"python3", "comms/controller_server.py", "dummy", NULL, NULL  /*devs[4]*/
 };
 char *cameraDriver[] = {
 	"python3", "comms/camera_scion.py", NULL
@@ -102,7 +111,7 @@ char **syswdev[] = {
 	ahrsSensor,
 	depthSensor,
 	dvlSensor,
-	thrusterSubsystem
+	thrusterHandler
 };
  
 /*Index location where the nullptrs are to change in syswdev.*/
@@ -111,7 +120,7 @@ int syswdevloc[] = {
 	3, /*ahrs*/
 	3, /*depth*/
 	3, /*DVL*/
-	2 /*maestro*/
+	3 /*maestro*/
 };
 
 /**
@@ -131,7 +140,10 @@ char **programStartup[] = {
 	aioForward, /*256*/
 	aioListener, /*512*/
 	dvlSensor, /*1024*/
-	lsCommand /*2048*/
+	thrusterHandler, /*2048*/
+	pidHandler, /*4096*/
+	heuristics, /*8192*/
+	lsCommand /*16384*/
 };
 
 int helpcommand();
